@@ -15,5 +15,6 @@ $zipPath = Join-Path $OutputDirectory $metadata.ZipName
 $files = @(Get-ChildItem -LiteralPath $packageFolder | Select-Object -ExpandProperty FullName)
 Compress-Archive -LiteralPath $files -DestinationPath $zipPath -CompressionLevel Optimal -Force
 $hash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
-Set-Content -LiteralPath ($zipPath + '.sha256') -Value ($hash + '  ' + $metadata.ZipName) -Encoding ascii
+# Use an explicit LF so Linux release jobs can read a checksum produced on Windows.
+Set-Content -LiteralPath ($zipPath + '.sha256') -Value ($hash + '  ' + $metadata.ZipName + [char]10) -Encoding ascii -NoNewline
 Write-Host "Release ready: $zipPath"
