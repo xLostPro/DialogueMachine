@@ -1,0 +1,102 @@
+name: Windows build and release
+
+on:
+  push:
+    branches: [master, main]
+    tags: ['v*']
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  AVALONIA_TELEMETRY_OPTOUT: '1'
+  DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+  NUGET_PACKAGES: ${{ github.workspace }}/.packages
+
+jobs:
+  windows:
+    name: Verify and package Windows
+    runs-on: windows-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: '10.0.x'
+          cache: true
+          cache-dependency-path: '**/packages.lock.json'
+      - name: Check release version
+        run: ./Packaging/Get-ReleaseVersion.ps1 -GitHubOutput $env:GITHUB_OUTPUT
+      - name: Restore locked dependencies
+        run: dotnet restore DialogueMachine.slnx --configfile NuGet.Config --locked-mode
+      - name: Run regression checks
+        run: |
+          dotnet run --project tests/DialogueMachine.Tests.csproj --no-restore -c Release -- artifacts | Tee-Object -FilePath verification.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Regression checks failed.' }
+      - name: Build the self-contained app
+        run: ./build.ps1 -Runtime win-x64
+      - name: Check native Windows startup
+        run: ./Packaging/Test-WindowsPackage.ps1
+      - name: Create release ZIP and checksum
+        run: ./Packaging/New-WindowsRelease.ps1
+      - name: Upload Windows package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-package
+          path: artifacts/release/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+          overwrite: true
+      - name: Upload verification results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-verification
+          path: |
+            verification.txt
+            artifacts/**/*.png
+            artifacts/native/**/*.json
+            artifacts/native/**/*.txt
+          retention-days: 14
+          overwrite: true
+
+  release:
+    name: Publish GitHub Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out release notes
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the verified package
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: windows-package
+          path: release-assets
+      - name: Publish release assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bash Packaging/publish-release.sh

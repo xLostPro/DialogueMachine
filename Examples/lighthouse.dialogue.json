@@ -1,0 +1,188 @@
+{
+  "FormatVersion": 1,
+  "ProjectName": "The last lighthouse",
+  "CharacterId": "mara",
+  "EntryStateId": "arrival",
+  "ListOfCharacterStates": [
+    {
+      "State": "arrival",
+      "Type": "Dialogue",
+      "Text": "You\u0027re late, {player_name}. The tide has already turned.\nBeyond the harbour, a single light flickers in the mist.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "f2e12ab4-3965-4bc7-8b91-bcdfc1d7c63f",
+          "ButtonText": "What happened to the lighthouse?",
+          "NextStateId": "keeper",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 150,
+          "VisualY": 150
+        },
+        {
+          "InternalId": "db53086a-b4c2-4137-9656-29150f2c68b5",
+          "ButtonText": "I brought something for you.",
+          "NextStateId": "gift",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": "\u003E=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -1,
+              "Parameter": null
+            },
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 150,
+          "VisualY": 150
+        },
+        {
+          "InternalId": "1b9caf60-4e31-4a14-a2dc-83c111957595",
+          "ButtonText": "I should go.",
+          "NextStateId": "departure",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 150,
+          "VisualY": 150
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "A light in the fog",
+        "speaker": "Mara",
+        "notes": "Establish the mystery. Let the player decide how much to trust Mara."
+      },
+      "VisualX": 70,
+      "VisualY": 220
+    },
+    {
+      "State": "keeper",
+      "Type": "Dialogue",
+      "Text": "The keeper vanished three nights ago. No footprints. No boat. Just the light, still burning.\n[if aff:trust \u003E= 1]I think you can help me find him.[else]I don\u0027t know if I can trust you with the rest.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "a40ad635-8ec4-478e-b55c-20b9f404a348",
+          "ButtonText": "I\u0027ll help you find him.",
+          "NextStateId": "promise",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 150,
+          "VisualY": 150
+        },
+        {
+          "InternalId": "d59c80f6-5166-426b-a838-d7d067edaa5d",
+          "ButtonText": "This sounds dangerous.",
+          "NextStateId": "departure",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 150,
+          "VisualY": 150
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "The missing keeper",
+        "speaker": "Mara"
+      },
+      "VisualX": 440,
+      "VisualY": 55
+    },
+    {
+      "State": "gift",
+      "Type": "Dialogue",
+      "Text": "A ferryman\u0027s coin? I haven\u0027t seen one of these since I was a child.\nThank you. Perhaps I was wrong about you.",
+      "DefaultNextId": "keeper",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "A small kindness",
+        "speaker": "Mara"
+      },
+      "VisualX": 440,
+      "VisualY": 385
+    },
+    {
+      "State": "promise",
+      "Type": "Dialogue",
+      "Text": "Then meet me at the old jetty at dawn.\nAnd whatever you do\u2026 don\u0027t follow the light alone.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Into the unknown",
+        "speaker": "Mara",
+        "ending": "true"
+      },
+      "VisualX": 810,
+      "VisualY": 70
+    },
+    {
+      "State": "departure",
+      "Type": "Dialogue",
+      "Text": "Of course. The road is safer before dark.\nBehind you, the lighthouse goes out.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "The road home",
+        "speaker": "Mara",
+        "ending": "true"
+      },
+      "VisualX": 810,
+      "VisualY": 400
+    }
+  ],
+  "InitialVariables": {
+    "aff:trust": 0,
+    "inv:coin": 1
+  },
+  "TextVariables": {
+    "player_name": "Traveller",
+    "npc_name": "Mara"
+  }
+}
