@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="DialogueMachine.UI.WelcomeView">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel MaxWidth="1060" Margin="48,42" Spacing="24" HorizontalAlignment="Stretch">
+      <StackPanel Spacing="12">
+        <TextBlock Text="MAKE ROOM FOR YOUR NEXT STORY" Classes="eyebrow" Foreground="{DynamicResource MintInk}"/>
+        <TextBlock x:Name="WelcomeHeading" Text="A place for every possibility." FontSize="36" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        <TextBlock x:Name="WelcomeSubtitle" Text="Start something new, or pick up where you left off." Classes="muted" FontSize="16" TextWrapping="Wrap"/>
+      </StackPanel>
+      <Border x:Name="NoticeBorder" IsVisible="False" Background="{DynamicResource Selection}" CornerRadius="8" Padding="16"><TextBlock x:Name="NoticeText" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite"/></Border>
+      <Grid ColumnDefinitions="*,20,*">
+        <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="24">
+          <StackPanel Spacing="14">
+            <TextBlock Text="＋" Foreground="{DynamicResource MintInk}" FontSize="32"/>
+            <TextBlock Text="Create a project" FontSize="22" FontWeight="SemiBold"/>
+            <TextBlock Text="A blank canvas for your characters, choices, and branching conversations." Classes="muted" TextWrapping="Wrap" MinHeight="48"/>
+            <Button x:Name="NewProjectButton" Content="New project" Classes="primary" HorizontalAlignment="Left" Padding="20,10" ToolTip.Tip="New project · Ctrl/Cmd+N"/>
+          </StackPanel>
+        </Border>
+        <Border Grid.Column="2" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="1" CornerRadius="12" Padding="24">
+          <StackPanel Spacing="14">
+            <TextBlock Text="↗" Foreground="{DynamicResource MintInk}" FontSize="32"/>
+            <TextBlock Text="Open a project" FontSize="22" FontWeight="SemiBold"/>
+            <TextBlock Text="Continue a saved desktop project or open dialogue JSON from the website." Classes="muted" TextWrapping="Wrap" MinHeight="48"/>
+            <Button x:Name="OpenProjectButton" Content="Browse files…" HorizontalAlignment="Left" Padding="20,10" ToolTip.Tip="Open project · Ctrl/Cmd+O"/>
+          </StackPanel>
+        </Border>
+      </Grid>
+      <StackPanel x:Name="RecoverySection" Spacing="12" IsVisible="False">
+        <TextBlock Text="RECOVER YOUR WORK" Classes="eyebrow" Foreground="{DynamicResource MintInk}"/>
+        <StackPanel x:Name="RecoveryCards" Spacing="10"/>
+      </StackPanel>
+      <StackPanel Spacing="12">
+        <Grid ColumnDefinitions="*,Auto"><TextBlock Text="RECENT PROJECTS" Classes="eyebrow" VerticalAlignment="Center"/><Button x:Name="ContinueButton" Grid.Column="1" Content="Continue last project →" Classes="subtle" IsVisible="False"/></Grid>
+        <TextBlock x:Name="EmptyRecentText" Text="Projects you open or save will appear here. Everything stays on your computer." Classes="muted" TextWrapping="Wrap"/>
+        <StackPanel x:Name="RecentCards" Spacing="10"/>
+        <CheckBox x:Name="ReopenLastCheckBox" Content="Reopen my last saved project when I start the app" AutomationProperties.Name="Reopen last saved project on startup"/>
+      </StackPanel>
+      <Border BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="0,20,0,0">
+        <Grid ColumnDefinitions="*,Auto">
+          <StackPanel Spacing="5"><TextBlock Text="New to Dialogue Machine?" FontWeight="SemiBold"/><TextBlock Text="Explore The Last Lighthouse to see choices, conditions, and playtesting in action." Classes="muted" FontSize="12" TextWrapping="Wrap"/></StackPanel>
+          <Button x:Name="ExampleButton" Grid.Column="1" Content="Explore example →" Classes="subtle" Margin="20,0,0,0" VerticalAlignment="Center"/>
+        </Grid>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

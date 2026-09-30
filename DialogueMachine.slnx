@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DialogueMachine.csproj" />
+  <Project Path="Core/DialogueMachine.Core.csproj" />
+  <Project Path="tests/DialogueMachine.Tests.csproj" />
+</Solution>
