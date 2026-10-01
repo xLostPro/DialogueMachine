@@ -9,6 +9,8 @@ Core/                         Platform-independent class library; no UI dependen
   RecoveryStore.cs            Validated recovery storage and saved-file comparison
   WorkspaceStore.cs           Preferences migration, titled recents and startup decisions
   DialogueEngine.cs           Conditions, validation, safe renaming, layout, simulation
+  DialogueText.cs             Structural conditional and formatting checks for all text fields
+  GraphGeometry.cs            Node dimensions shared by layout and drawing
   Templates.cs                Blank and lighthouse example stories
 UI/
   MainWindow.axaml             Declarative shell; menus, outline, graph, editor, status
@@ -39,11 +41,15 @@ Retain original PascalCase field names and website enum ordering: Hide=0, Disabl
 
 State IDs are graph identity; titles are editable metadata. Every rename goes through `DialogueEngine.Rename` so entry, choice and continue connections stay consistent. Export starts with the chosen entry because the website starts at index zero. An intentional ending is `[EXIT]`, never an invalid target. Import sanitation is separate from graph validation so damaged graphs can be opened and repaired without losing data.
 
+Only desktop format version 1 is currently supported. Files without a version use that default for website compatibility; explicitly unsupported versions are rejected before document replacement. Reserved scene IDs, unsupported scene types and invalid numeric visibility values remain openable for repair, but validation blocks playtest/export. Repairing an imported `[EXIT]` ID updates the entry without rewriting intentional ending targets.
+
 ## Changes, history and persistence
 
 Text and picker changes update the document immediately. Text edits are grouped after 700 ms, on focus changes, and before operations such as selection, undo and save. Graph drags commit once on release. Each history entry is a complete JSON snapshot, bounded to 100 entries; dirty state compares the document with the last successfully saved snapshot. This favors correctness for ordinary-sized stories. For extremely large projects, replace snapshots with reversible commands behind the same history API.
 
 Never replace the current document until an import has parsed successfully and the user has resolved unsaved edits. Save updates the saved snapshot only after the atomic write succeeds. Recovery has its own file and never writes over the project. Restoring keeps the source recovery ID so a later successful Save or explicit Discard removes that active recovery.
+
+Recovery discovery validates each record separately and skips both JSON syntax failures and semantic `InvalidDataException` failures. Keep damaged files for investigation and continue offering valid records.
 
 The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
 
@@ -52,6 +58,10 @@ The window starts without a document. Welcome is a separate view; project contro
 Simulation clones the document. Entering a scene does not fire exit actions. Choosing a response verifies its conditions, validates its destination, snapshots the runtime, runs response actions, then scene exit actions, and enters the target. Page advances also snapshot runtime. Back restores scene, pages, variables, transcript and event log. Inventory is nonnegative and arithmetic saturates at integer limits. All transitions are user-driven; graph cycles are allowed. Script and Event actions are recorded rather than executed, keeping a local preview independent from game code.
 
 Inline condition processing resolves innermost tags first, with a bounded pass count. Rich formatting uses typed text runs rather than HTML or script execution. Text substitutions are evaluated after conditions.
+
+Structural validation checks dialogue and response labels without evaluating their branches. It rejects malformed conditions and nesting beyond the runtime's 64-pass limit; formatting and unknown-substitution diagnostics are advisory. Ending reachability traverses reverse edges from `[EXIT]`, avoiding repeated whole-graph scans.
+
+Use `Simulation.SetVariable` for live test edits. It snapshots runtime, records the value change and any refreshed page text, and lets Back restore everything together. Random delivery retains the chosen candidate index for a scene visit, clamped temporarily if resolved text has fewer lines. Explicit reroll snapshots and selects again; Back also restores that selection. Automatic layout uses the canvas node height and a vertical gap, with a minimum 300-unit row pitch for smaller nodes.
 
 ## Adding features
 

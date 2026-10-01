@@ -46,6 +46,7 @@ public sealed class PlaytestWindow : Window
             location.Text = current.State + "  ·  Page " + (simulation.PageIndex + 1) + " of " + simulation.Pages.Length;
             var name = Ui.Text(current.Speaker.ToUpperInvariant(), 12); name.Foreground = Ui.Brush("MintInk"); name.LetterSpacing = 1.5; story.Children.Add(name);
             story.Children.Add(RichDialogue.Create(simulation.Pages[simulation.PageIndex]));
+            if (!current.SayItAll) story.Children.Add(Ui.Button("Reroll line", () => { simulation.RerollLine(); Refresh(); }, "subtle"));
             if (current.Type == "Shop") story.Children.Add(Ui.Card(Ui.Text("Shop preview · " + current.ShopData.ShopId + "\nYour game handles this shop after export.", 13, true)));
             if (simulation.MorePages) story.Children.Add(Ui.Button("Continue →", () => { simulation.NextPage(); Refresh(); }, "primary"));
             else
@@ -74,7 +75,7 @@ public sealed class PlaytestWindow : Window
             foreach (var key in simulation.Variables.Keys.Order().ToArray())
             {
                 var k = key; var input = new NumericUpDown { Value = simulation.Variables[k], Minimum = k.StartsWith("inv:") ? 0 : int.MinValue, Maximum = int.MaxValue, FormatString = "0", Increment = 1 };
-                input.ValueChanged += (_, _) => { if (input.Value is { } v) { simulation.Variables[k] = (int)v; simulation.RefreshText(); Refresh(false); } };
+                input.ValueChanged += (_, _) => { if (input.Value is { } v) { simulation.SetVariable(k, (int)v); Refresh(false); } };
                 variablePanel.Children.Add(Ui.Field(k, input));
             }
             if (simulation.Variables.Count == 0) variablePanel.Children.Add(Ui.Text("This story has no numeric variables.", 12, true));
