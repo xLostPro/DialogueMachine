@@ -21,19 +21,7 @@ public static class DialogueEngine
         }
         reason = ""; return true;
     }
-    public static IEnumerable<string> DiscoverVariables(DialogueProject p)
-    {
-        var keys = new HashSet<string>(p.InitialVariables.Keys, StringComparer.Ordinal);
-        foreach (var s in p.ListOfCharacterStates)
-        {
-            foreach (var a in s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)))
-                if (a.Type is "Affinity" or "Inventory" && !string.IsNullOrWhiteSpace(a.TargetId)) keys.Add(Key(a.Type, a.TargetId));
-            foreach (var r in s.Choices.SelectMany(c => c.Requirements))
-                if (r.Type is "Affinity" or "Inventory" && !string.IsNullOrWhiteSpace(r.TargetId)) keys.Add(Key(r.Type, r.TargetId));
-            foreach (Match m in Regex.Matches(s.Text + " " + string.Join(" ", s.Choices.Select(c => c.ButtonText)), @"(?:aff|inv):[\w.\-]+", RegexOptions.IgnoreCase)) keys.Add(m.Value);
-        }
-        return keys.Order(StringComparer.Ordinal);
-    }
+    public static IEnumerable<string> DiscoverVariables(DialogueProject p) => VariableStore.DiscoverNumeric(p);
     public static string ResolveText(string text, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars)
     {
         // Match the innermost block first, allowing nested conditions and signed thresholds.

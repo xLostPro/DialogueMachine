@@ -42,6 +42,44 @@ var invalidKinds = ProjectStore.Parse("""{"ListOfCharacterStates":[{"State":"sta
 Check(DialogueEngine.Validate(invalidKinds).Count(d => d.Severity == "Error") == 2, "unsupported scene types and numeric visibility values cannot pass validation");
 
 var vars = new Dictionary<string,int> { ["aff:trust"] = -2, ["inv:coin"] = 1 };
+var variableStory = Templates.Blank(); variableStory.InitialVariables = new() { ["aff:trust"] = 3, ["inv:trust"] = 2, ["aff:trust_more"] = 8, ["aff:unused"] = 0 };
+var variableScene = variableStory.ListOfCharacterStates[0];
+variableScene.Text = "[IF aff:trust >= 1]{aff:trust}[else]none[/if] [if trust >= 1]inventory[/if] {player_name} literal aff:trust {aff:trust_more}";
+variableScene.DefaultAfterActions = [new() { TargetId = "trust", Amount = 1 }, new() { Type = "Event", TargetId = "trust" }];
+variableScene.Choices = [new() { ButtonText = "{player_name} [if aff:trust > 0]Yes[/if]", NextStateId = "[EXIT]", Requirements = [new() { TargetId = "trust", Value = "1" }], AfterChoiceActions = [new() { TargetId = "trust", Amount = 1 }] }];
+Check(VariableStore.References(variableStory, "aff:trust").Count == 6 && VariableStore.References(variableStory, "inv:trust").Count == 1, "reference counts distinguish typed logic, substitutions and inventory-first bare conditions");
+var variableBefore = ProjectStore.Serialize(variableStory);
+Throws(() => VariableStore.Rename(variableStory, "aff:trust", "aff:trust_more"), "rename rejects an existing variable ID");
+Throws(() => VariableStore.Rename(variableStory, "aff:trust", "inv:rapport"), "numeric rename cannot change variable type");
+Throws(() => VariableStore.Rename(variableStory, "aff:trust", "aff:rapport\n"), "numeric IDs reject embedded or trailing line breaks");
+Throws(() => VariableStore.Delete(variableStory, "aff:trust"), "referenced numeric variables cannot be deleted");
+Check(ProjectStore.Serialize(variableStory) == variableBefore, "rejected variable operations leave the entire project unchanged");
+VariableStore.Rename(variableStory, "aff:trust", "aff:rapport");
+Check(variableStory.InitialVariables["aff:rapport"] == 3 && !variableStory.InitialVariables.ContainsKey("aff:trust") && variableScene.DefaultAfterActions[0].TargetId == "rapport" && variableScene.Choices[0].Requirements[0].TargetId == "rapport" && variableScene.Choices[0].AfterChoiceActions[0].TargetId == "rapport", "rename moves starting values and rewrites scene and response logic");
+Check(variableScene.Text.Contains("[IF aff:rapport >= 1]{aff:rapport}") && variableScene.Text.Contains("[if trust >= 1]") && variableScene.Text.Contains("literal aff:trust {aff:trust_more}") && variableScene.DefaultAfterActions[1].TargetId == "trust", "numeric rename preserves text literals, similar IDs, unrelated events and inventory aliases");
+VariableStore.Rename(variableStory, "inv:trust", "inv:tokens");
+Check(variableScene.Text.Contains("[if inv:tokens >= 1]inventory[/if]"), "renaming an inventory variable qualifies its bare inline references");
+Check(VariableStore.References(variableStory, "player_name", true).Count == 2, "text references include dialogue and response labels");
+VariableStore.Rename(variableStory, "player_name", "hero_name", true);
+Check(variableStory.TextVariables["hero_name"] == "Traveller" && variableScene.Text.Contains("{hero_name}") && variableScene.Choices[0].ButtonText.StartsWith("{hero_name}"), "text rename preserves its value and updates all runtime substitution fields");
+VariableStore.Delete(variableStory, "aff:unused"); VariableStore.Delete(variableStory, "npc_name", true);
+Check(!variableStory.InitialVariables.ContainsKey("aff:unused") && !variableStory.TextVariables.ContainsKey("npc_name"), "unused numeric and text variables can be deleted");
+var variableRoundtrip = ProjectStore.Parse(ProjectStore.Serialize(variableStory));
+Check(VariableStore.References(variableRoundtrip, "aff:rapport").Count == 6 && !DialogueEngine.Validate(variableRoundtrip).Any(), "renamed references survive desktop round trips and validation");
+var bareStory = Templates.Blank(); bareStory.ListOfCharacterStates[0].Text = "[if courage >= 1]Brave[else]Careful[/if] literal aff:not_a_reference";
+Check(DialogueEngine.DiscoverVariables(bareStory).SequenceEqual(new[] { "aff:courage" }), "discovery includes bare inline conditions and excludes numeric-looking prose");
+VariableStore.Rename(bareStory, "aff:courage", "aff:bravery");
+var bareSimulation = new Simulation(bareStory); bareSimulation.SetVariable("aff:bravery", 1);
+Check(bareSimulation.Pages[0].StartsWith("Brave"), "renamed inline-only variables are initialized and work during playtesting");
+var shadowStory = Templates.Blank(); shadowStory.InitialVariables["aff:trust"] = 1; shadowStory.TextVariables["aff:trust"] = "label"; shadowStory.ListOfCharacterStates[0].Text = "{aff:trust} [if aff:trust >= 1]yes[/if]";
+VariableStore.Rename(shadowStory, "aff:trust", "aff:confidence");
+Check(shadowStory.ListOfCharacterStates[0].Text == "{aff:trust} [if aff:confidence >= 1]yes[/if]", "numeric renames preserve legacy text substitutions that shadow the same ID");
+var aliasStory = Templates.Blank(); aliasStory.InitialVariables["aff:courage"] = 1; aliasStory.InitialVariables["inv:coin"] = 0;
+aliasStory.ListOfCharacterStates[0].Text = "[if courage >= 1]Brave[else]Careful[/if]";
+VariableStore.Rename(aliasStory, "inv:coin", "inv:courage");
+Check(aliasStory.ListOfCharacterStates[0].Text.StartsWith("[if aff:courage") && new Simulation(aliasStory).Pages[0] == "Brave", "renaming another variable cannot redirect existing bare condition aliases");
+var legacyVariableStory = Templates.Blank(); legacyVariableStory.InitialVariables["aff:old:id"] = 1;
+Throws(() => VariableStore.Rename(legacyVariableStory, "aff:old:id", "inv:tokens"), "repairing a legacy malformed numeric ID preserves its original type");
 Check(DialogueEngine.ResolveText("[IF aff:trust <= -1]low [if inv:coin > 0]coin[else]none[/if][else]high[/if] {player_name}", vars, p.TextVariables) == "low coin Traveller", "nested, case-insensitive inline conditions support negative values");
 var textStory = Templates.Blank(); textStory.ListOfCharacterStates[0].Text = "Hello";
 textStory.ListOfCharacterStates[0].Choices = [new() { NextStateId = "[EXIT]" }];
@@ -248,6 +286,66 @@ void Pump(Task task)
 void Press(Button button) { button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
 Window Modal(MainWindow owner) { Dispatcher.UIThread.RunJobs(); return owner.OwnedWindows.Single(w => w.IsVisible); }
 void Answer(MainWindow owner, string answer) => Press(Modal(owner).GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, answer)));
+var variableWorkspace = new MainWindow(null, true); variableWorkspace.Show(); Pump(variableWorkspace.LoadExampleAsync());
+variableWorkspace.Project.InitialVariables["aff:unused"] = 0;
+variableWorkspace.Project.ListOfCharacterStates[0].Text = "Hello {player_name}. [if aff:trust >= 1]Friend[else]Stranger[/if] {aff:trust}";
+var beforeManager = ProjectStore.Serialize(variableWorkspace.Project);
+Button NamedButton(Window owner, string name) => owner.GetVisualDescendants().OfType<Button>().Single(b => AutomationProperties.GetName(b) == name);
+T NamedControl<T>(Window owner, string name) where T : Control => owner.GetVisualDescendants().OfType<T>().Single(c => c.Name == name);
+void OpenManager() => Press(variableWorkspace.FindControl<Button>("VariablesButton")!);
+void RenameInManager(Window manager, string oldId, string newId)
+{
+    Press(NamedButton(manager, "Rename " + oldId)); var prompt = manager.OwnedWindows.Single(w => w.IsVisible);
+    prompt.GetVisualDescendants().OfType<TextBox>().Single().Text = newId;
+    Press(prompt.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Continue")));
+}
+void AddInManager(Window manager, string label, string id)
+{
+    Press(NamedButton(manager, label)); var prompt = manager.OwnedWindows.Single(w => w.IsVisible);
+    prompt.GetVisualDescendants().OfType<TextBox>().Single().Text = id;
+    Press(prompt.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Continue")));
+}
+void PressAnswer(Window owner, string label) => Press(owner.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, label)));
+void UndoWorkspace() { variableWorkspace.KeyPress(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, "z"); variableWorkspace.KeyRelease(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, "z"); Dispatcher.UIThread.RunJobs(); }
+OpenManager(); var manager = Modal(variableWorkspace);
+Check(!NamedButton(manager, "Delete aff:trust").IsEnabled && NamedButton(manager, "Delete aff:unused").IsEnabled, "manager allows unused deletion and protects referenced variables");
+RenameInManager(manager, "aff:trust", "aff:rapport");
+manager.GetVisualDescendants().OfType<NumericUpDown>().Single(n => AutomationProperties.GetName(n) == "aff:rapport").Value = 7;
+Check(ProjectStore.Serialize(variableWorkspace.Project) == beforeManager, "renaming and editing manager values does not mutate the live project before Apply");
+PressAnswer(manager, "Cancel");
+Check(ProjectStore.Serialize(variableWorkspace.Project) == beforeManager, "Cancel discards variable renames and value changes together");
+OpenManager(); manager = Modal(variableWorkspace); RenameInManager(manager, "aff:trust", "aff:rapport"); RenameInManager(manager, "player_name", "hero_name");
+AddInManager(manager, "＋ Add numeric variable", "inv:tokens");
+manager.GetVisualDescendants().OfType<NumericUpDown>().Single(n => AutomationProperties.GetName(n) == "inv:tokens").Value = 2;
+AddInManager(manager, "＋ Add text substitution", "town_name");
+manager.GetVisualDescendants().OfType<TextBox>().Single(t => AutomationProperties.GetName(t) == "{town_name}").Text = "Harbour";
+Press(NamedButton(manager, "Delete aff:unused"));
+Press(NamedButton(manager, "References for aff:rapport")); var referenceDialog = manager.OwnedWindows.Single(w => w.IsVisible);
+Check(referenceDialog.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text?.Contains("arrival") == true), "reference details identify actual scene locations");
+PressAnswer(referenceDialog, "Close"); NamedControl<TextBox>(manager, "VariableSearch").Text = "rapport"; Dispatcher.UIThread.RunJobs();
+Check(manager.GetVisualDescendants().OfType<NumericUpDown>().Count() == 1 && !manager.GetVisualDescendants().OfType<TextBox>().Any(t => AutomationProperties.GetName(t) == "{hero_name}"), "variable search filters numeric and text cards");
+Capture(manager, "variables-filtered"); NamedControl<TextBox>(manager, "VariableSearch").Text = ""; Dispatcher.UIThread.RunJobs(); Capture(manager, "variables-dark");
+Check(manager.GetVisualDescendants().Where(c => c.TemplatedParent is null && c is TextBox or NumericUpDown).All(c => !string.IsNullOrEmpty(AutomationProperties.GetName(c))), "manager search and value fields have accessibility labels");
+PressAnswer(manager, "Apply changes");
+Check(variableWorkspace.Project.InitialVariables.ContainsKey("aff:rapport") && !variableWorkspace.Project.InitialVariables.ContainsKey("aff:unused") && VariableStore.References(variableWorkspace.Project, "aff:trust").Count == 0 && variableWorkspace.Project.ListOfCharacterStates[0].Text.Contains("{hero_name}"), "Apply updates numeric/text references and deletions together");
+Check(variableWorkspace.Project.InitialVariables["inv:tokens"] == 2 && variableWorkspace.Project.TextVariables["town_name"] == "Harbour", "new numeric and text variables retain their edited values on Apply");
+UndoWorkspace(); Check(ProjectStore.Serialize(variableWorkspace.Project) == beforeManager, "one Undo restores every applied manager operation and its references");
+foreach (var theme in new[] { "Light", "High contrast" }) { variableWorkspace.ChangeAppearance(theme); OpenManager(); manager = Modal(variableWorkspace); Capture(manager, "variables-" + theme.ToLowerInvariant().Replace(' ', '-')); PressAnswer(manager, "Cancel"); }
+variableWorkspace.ChangeAppearance("Dark", 1.3); OpenManager(); manager = Modal(variableWorkspace);
+Check(manager.Content is LayoutTransformControl && Math.Abs(manager.Width - 845) < 1, "variable manager honors the 130 percent interface size"); Capture(manager, "variables-large-text");
+RenameInManager(manager, "aff:trust", "aff:rapport"); manager.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, ""); Dispatcher.UIThread.RunJobs();
+Check(!manager.IsVisible && ProjectStore.Serialize(variableWorkspace.Project) == beforeManager, "Escape cancels the complete manager draft");
+variableWorkspace.ChangeAppearance("Dark");
+var insertNarrative = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.GetVisualDescendants().OfType<TextBox>().Single(t => AutomationProperties.GetName(t) == "Dialogue text"); insertNarrative.SelectionStart = 0; insertNarrative.SelectionEnd = 0;
+Press(NamedButton(variableWorkspace, "Variable…")); var insertion = Modal(variableWorkspace); NamedControl<TextBox>(insertion, "InsertVariableSearch").Text = "coin"; Dispatcher.UIThread.RunJobs();
+Check(NamedControl<ListBox>(insertion, "InsertVariableList").Items.Count == 1, "inline variable picker searches available IDs"); Capture(insertion, "variable-insertion"); PressAnswer(insertion, "Insert");
+Check(variableWorkspace.Project.ListOfCharacterStates[0].Text.StartsWith("{inv:coin}Hello"), "inline picker inserts the selected substitution at the cursor"); UndoWorkspace();
+Press(variableWorkspace.FindControl<Button>("LogicTab")!); var beforePickerEdit = ProjectStore.Serialize(variableWorkspace.Project);
+var variablePicker = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.GetVisualDescendants().OfType<AutoCompleteBox>().First();
+Check(variablePicker.ItemsSource!.Cast<string>().Contains("coin") && !variablePicker.ItemsSource!.Cast<string>().Contains("trust") && AutomationProperties.GetName(variablePicker) == "Variable ID", "logic variable picker offers IDs for the selected numeric type and has a label");
+variablePicker.Text = "tokens"; Dispatcher.UIThread.RunJobs();
+Check(DialogueEngine.DiscoverVariables(variableWorkspace.Project).Contains("inv:tokens"), "typing a new ID in the logic picker updates the actual condition");
+UndoWorkspace(); Check(ProjectStore.Serialize(variableWorkspace.Project) == beforePickerEdit, "logic picker edits are undoable"); variableWorkspace.Close();
 var picker = new TestFilePicker(); var workspace = new MainWindow(null, true, settingsRoot, picker); workspace.Show(); Dispatcher.UIThread.RunJobs();
 var welcome = workspace.FindControl<WelcomeView>("Welcome")!;
 Pump(workspace.InitialiseWorkspaceAsync());

@@ -46,18 +46,18 @@ internal static class Ui
         var previous = value;
         input.TextChanged += (_, _) => { var current = input.Text ?? ""; if (current != previous) { previous = current; changed(current); } }; return input;
     }
-    public static Window Dialog(Window owner, string title, Control content, double width = 540, double height = 500)
+    public static Window Dialog(Window owner, string title, Control content, double width = 540, double height = 500, double scale = 1)
     {
-        var window = new Window { Title = title + " · Dialogue Machine", Content = content, Width = width, Height = height, MinWidth = 380, MinHeight = 250, WindowStartupLocation = WindowStartupLocation.CenterOwner };
+        var window = new Window { Title = title + " · Dialogue Machine", Content = scale == 1 ? content : new LayoutTransformControl { Child = content, LayoutTransform = new ScaleTransform(scale, scale) }, Width = width * scale, Height = height * scale, MinWidth = 380 * scale, MinHeight = 250 * scale, WindowStartupLocation = WindowStartupLocation.CenterOwner };
         window.KeyDown += (_, e) => { if (e.Key == Key.Escape) { window.Close(); e.Handled = true; } };
         return window;
     }
-    public static async Task<string?> Prompt(Window owner, string title, string label, string initial)
+    public static async Task<string?> Prompt(Window owner, string title, string label, string initial, double scale = 1)
     {
         var input = new TextBox { Text = initial }; AutomationProperties.SetName(input, label);
         Window? window = null;
-        window = Dialog(owner, title, Stack(Text(title, 22), Text(label, 13, true), input, Row(Button("Cancel", () => window!.Close(null)), Button("Continue", () => window!.Close(input.Text), "primary"))), 480, 240);
-        ((StackPanel)window.Content!).Margin = new Thickness(24);
+        var content = Stack(Text(title, 22), Text(label, 13, true), input, Row(Button("Cancel", () => window!.Close(null)), Button("Continue", () => window!.Close(input.Text), "primary"))); content.Margin = new Thickness(24);
+        window = Dialog(owner, title, content, 480, 240, scale);
         window.Opened += (_, _) => { input.Focus(); input.SelectAll(); };
         return await window.ShowDialog<string?>(owner);
     }

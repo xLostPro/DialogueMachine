@@ -10,6 +10,7 @@ Core/                         Platform-independent class library; no UI dependen
   WorkspaceStore.cs           Preferences migration, titled recents and startup decisions
   DialogueEngine.cs           Conditions, validation, safe renaming, layout, simulation
   DialogueText.cs             Structural conditional and formatting checks for all text fields
+  VariableStore.cs            Discovery, typed references, safe variable rename/delete
   GraphGeometry.cs            Node dimensions shared by layout and drawing
   Templates.cs                Blank and lighthouse example stories
 UI/
@@ -20,7 +21,7 @@ UI/
   MainWindow.Welcome.cs       New-project, welcome and startup orchestration
   WelcomeView.axaml / .cs     Welcome cards, recent projects and recovery presentation
   ProjectFilePicker.cs        Native storage boundary, injectable for workflow checks
-  MainWindow.Variables.cs     Cancel-safe project variable editing
+  MainWindow.Variables.cs     Searchable variable drafts, reference lists and insertion picker
   GraphCanvas.cs              Graph drawing and pointer/keyboard interaction
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
@@ -50,6 +51,10 @@ Text and picker changes update the document immediately. Text edits are grouped 
 Never replace the current document until an import has parsed successfully and the user has resolved unsaved edits. Save updates the saved snapshot only after the atomic write succeeds. Recovery has its own file and never writes over the project. Restoring keeps the source recovery ID so a later successful Save or explicit Discard removes that active recovery.
 
 Recovery discovery validates each record separately and skips both JSON syntax failures and semantic `InvalidDataException` failures. Keep damaged files for investigation and continue offering valid records.
+
+Variable management clones the full project into a draft. Apply replaces it through `Mutate`, preserving scene selection and recording one undo entry; Cancel and Escape discard the draft. `VariableStore` counts runtime references in typed actions/requirements, dialogue and response substitutions, and inline conditions. Renames preserve the numeric type and starting value, reject collisions before mutation, and rewrite only actual references. Unprefixed conditions resolve direct known keys, then inventory, then affinity; renames qualify those aliases to preserve the binding. Text substitutions take precedence over numeric placeholders with the same legacy ID. Notes, ordinary prose, Event/Script IDs and unknown extension fields remain untouched. Deletion is limited to unused definitions. Discovery includes inline-only numeric variables, but excludes numeric-looking prose.
+
+Logic fields suggest IDs of the selected numeric type while allowing new IDs. The Content picker inserts a known substitution at the caret. Variable dialogs pass the interface scale to the shared dialog builder, which scales both content and window dimensions; other callers retain its default scale.
 
 The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
 

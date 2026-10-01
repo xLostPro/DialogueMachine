@@ -6,7 +6,9 @@ This is a proposed order of work based on the repository, not an existing releas
 
 ## Recommendation
 
-The initial recommendation was a focused reliability patch. **Stage 1 is now implemented locally for version 1.1.1**, with 124 passing regression checks and passing native Windows welcome/project startup checks. The original findings below describe the assessment baseline. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed.
+The initial recommendation was a focused reliability patch. **Stage 1 is merged in [PR #2](https://github.com/xLostPro/DialogueMachine/pull/2) for version 1.1.1**, with passing Windows CI. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed. The original findings below describe the assessment baseline.
+
+**Stage 2 priority 1 is implemented**, with 158 passing regression checks: searchable variable management and insertion, typed logic suggestions, reference counts and locations, reference-aware rename, unused-variable deletion, cancel-safe drafts and one-step undo. The next feature is project-wide find and replace. These source changes do not imply a published release.
 
 The next work is Stage 2: improve the daily writing workflow, then add repeatable story testing and prove one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
 
@@ -59,9 +61,9 @@ These are directional measurements, not a full UI benchmark. Validation's repeat
 
 After replacing the repeated ending scan with reverse-edge traversal in Stage 1, the same synthetic 10,000-scene chain validated in **44.0 ms** in a one-run local follow-up, including the expanded diagnostics, versus 2,163.4 ms at baseline. This does not measure full editor responsiveness. Follow-up results are in `artifacts/reliability-patch/benchmark-results.txt`.
 
-## Stage 1 — reliability patch: implemented locally
+## Stage 1 — reliability patch: merged
 
-Implemented in version 1.1.1. The scope and completion criteria are retained here for review; publication is separate from local verification.
+Merged for version 1.1.1. The scope and completion criteria are retained here for review; publishing a release remains separate.
 
 1. **Handle damaged recovery records safely.** Catch semantic validation failures per record, retain damaged files for investigation, and keep valid recovery choices available. Add a startup regression using a structurally valid but semantically invalid recovery.
 2. **Align import, validation, and runtime invariants.** Diagnose reserved IDs, invalid enum values, unsupported scene types, and unsupported format versions consistently. Keep the existing policy of opening repairable graphs; do not reject every missing connection during import. Preserve the current document on rejected imports.
@@ -77,7 +79,7 @@ Recommended first feature release after the patch:
 
 | Priority | Feature | What done looks like |
 | --- | --- | --- |
-| 1 | Variable management and reference assistance | Searchable variable pickers, rename/delete with reference counts, cancel-safe changes, updates to actions/requirements/inline text/starting values, one-step undo |
+| 1 — implemented | Variable management and reference assistance | Searchable manager and inline insertion, typed logic suggestions, reference counts/locations, rename across actions/requirements/inline text/starting values, unused deletion, cancel-safe changes and one-step undo |
 | 2 | Project-wide find and replace | Search dialogue, responses, titles and notes; preview matches; scope replacement; undo the complete operation |
 | 3 | Destination search and better navigation | Type to find a destination; jump directly to incoming/outgoing scenes; filter outline by speaker/tag/diagnostic; retain a keyboard path |
 | 4 | Reusable authoring operations | Create a connected scene from a choice; copy/paste multiple scenes with remapped internal links; reusable scene/choice templates |
@@ -131,4 +133,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Begin variable/reference management, then project-wide find/replace. Add searchable destinations and outline filters next, with performance measurements guiding each change. External modification detection should precede broader shared-file workflows. Stage 1 is locally verified; publication and native Mac/Linux verification remain separate release work.
+Implement project-wide find/replace next, with match previews, replacement scope and one-step undo. Follow with searchable destinations and outline filters, using performance measurements to guide each change. Variable/reference management is implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. External modification detection should precede broader shared-file workflows.

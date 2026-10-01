@@ -1,5 +1,14 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## Unreleased
+
+- Search numeric starting values and text substitutions in Variables & characters, inspect reference counts and scene locations, and rename IDs across actions, requirements and inline text. Unused variables can be deleted; referenced variables remain protected until their uses are resolved.
+- Variable edits stay in a draft until Apply changes. Cancel or Escape preserves the story, and one Undo restores all applied changes and reference rewrites.
+- Logic fields suggest IDs for their selected affinity/inventory type. The Content toolbar's Variable… picker searches known IDs and inserts a substitution at the cursor.
+- Inline-only numeric variables are discovered for editing and playtesting; ordinary prose no longer creates variables. Reference rewrites preserve inventory-first condition aliases and legacy text substitutions.
+
+## 1.1.1
+
 Version 1.1.1 improves recovery, validation, graph arrangement and playtesting:
 
 - Damaged recovery records no longer block startup or hide valid unsaved stories. Damaged files remain available for manual investigation.
