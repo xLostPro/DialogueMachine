@@ -23,6 +23,14 @@ public sealed partial class MainWindow
         var t = Ui.Input(text, v => { apply(v); Edited(); }, multiline);
         t.LostFocus += (_, _) => { Commit(); RefreshOutline(); C<TextBlock>("EditorTitle").Text = selected?.Title; }; return t;
     }
+    private AutoCompleteBox VariableInput(string type, string id, Action<string> apply)
+    {
+        var prefix = type == "Inventory" ? "inv:" : "aff:";
+        var input = new AutoCompleteBox { Text = id, ItemsSource = DialogueEngine.DiscoverVariables(project).Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).Select(k => k[4..]).ToList(), MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = "Choose or type a variable ID", PlaceholderForeground = Ui.Brush("Muted") };
+        var previous = id;
+        input.TextChanged += (_, _) => { var current = input.Text ?? ""; if (current != previous) { previous = current; apply(current); Edited(); } };
+        input.LostFocus += (_, _) => Commit(); return input;
+    }
     private ComboBox Destination(string? value, Action<string?> apply, bool allowFallback = false)
     {
         var options = new List<DestinationOption> { new(allowFallback ? "Use scene's continue destination" : "No continue destination", null), new("○  End conversation", "[EXIT]") };
@@ -51,6 +59,13 @@ public sealed partial class MainWindow
             }, "subtle"); button.Margin = new Thickness(0,0,4,0); ToolTip.SetTip(button, "Insert " + label + " at the cursor or around selected text"); tools.Children.Add(button);
         }
         InsertButton("Bold", "[b]", "[/b]"); InsertButton("Italic", "[i]", "[/i]"); InsertButton("Condition", "[if aff:trust >= 1]", "[else]Alternative text[/if]"); InsertButton("{player}", "{player_name}", "");
+        tools.Children.Add(Ui.AsyncButton("Variable…", async () =>
+        {
+            var key = await PickVariable(); if (key is null) return;
+            var start = Math.Min(narrative.SelectionStart, narrative.SelectionEnd); var end = Math.Max(narrative.SelectionStart, narrative.SelectionEnd);
+            var text = narrative.Text ?? ""; var inserted = "{" + key + "}";
+            narrative.Text = text[..start] + inserted + text[end..]; narrative.Focus(); narrative.CaretIndex = start + inserted.Length; Commit();
+        }, "subtle"));
         Editor.Children.Add(Ui.Field("Dialogue", Ui.Stack(tools, narrative, Ui.Text("One page per line. Playtest to preview formatting and conditions.", 11, true))));
         var delivery = Ui.Select(["All pages, in order", "One random line"], s.SayItAll ? "All pages, in order" : "One random line", v => { s.SayItAll = v == "All pages, in order"; Edited(); });
         Editor.Children.Add(Ui.Field("Delivery", delivery));
@@ -93,10 +108,10 @@ public sealed partial class MainWindow
             foreach (var requirement in choice.Requirements.ToArray())
             {
                 var r = requirement;
-                var type = Ui.Select(["Affinity", "Inventory"], r.Type, v => { r.Type = v; Edited(); });
+                var type = Ui.Select(["Affinity", "Inventory"], r.Type, v => { r.Type = v; Commit(); RefreshEditor(); });
                 var op = Ui.Select(["==", "!=", ">", "<", ">=", "<="], r.Operator, v => { r.Operator = v; Edited(); });
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,8,80") }; row.Children.Add(type); Grid.SetColumn(op, 2); row.Children.Add(op);
-                panel.Children.Add(Ui.Card(Ui.Stack(row, Ui.Field("Variable ID", EditText(r.TargetId, v => r.TargetId = v)), Ui.Field("Compare with (integer)", EditText(r.Value, v => r.Value = v)), Ui.Button("Remove condition", () => Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
+                panel.Children.Add(Ui.Card(Ui.Stack(row, Ui.Field("Variable ID", VariableInput(r.Type, r.TargetId, v => r.TargetId = v)), Ui.Field("Compare with (integer)", EditText(r.Value, v => r.Value = v)), Ui.Button("Remove condition", () => Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
             }
             panel.Children.Add(Ui.Button("＋ Add condition", () => Mutate(() => choice.Requirements.Add(new Requirement { TargetId = "trust" })), "subtle"));
             panel.Children.Add(Ui.Text("After this response", 13));
@@ -111,7 +126,7 @@ public sealed partial class MainWindow
         {
             var a = action;
             var type = Ui.Select(["Affinity", "Inventory", "Event", "Script"], a.Type, v => { a.Type = v; Commit(); RefreshEditor(); });
-            var group = Ui.Stack(Ui.Field("Action type", type), Ui.Field(a.Type is "Event" or "Script" ? "Event / method ID" : "Variable ID", EditText(a.TargetId, v => a.TargetId = v)));
+            var group = Ui.Stack(Ui.Field("Action type", type), Ui.Field(a.Type is "Event" or "Script" ? "Event / method ID" : "Variable ID", a.Type is "Event" or "Script" ? EditText(a.TargetId, v => a.TargetId = v) : VariableInput(a.Type, a.TargetId, v => a.TargetId = v)));
             if (a.Type is "Event" or "Script") group.Children.Add(Ui.Field("Parameter", EditText(a.Parameter ?? "", v => a.Parameter = v)));
             else
             {
