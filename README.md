@@ -104,6 +104,8 @@ Pull requests and pushes to `master` or `main` run the regression harness, build
 
 Routine source delivery follows [AGENTS.md](AGENTS.md). The default is to verify the change, commit the intended files on a `codex/` feature branch, push it to `origin`, open a pull request against `master`, and inspect Windows CI. A feature-branch push by itself does not run the current workflow. Report explicitly whether work remains local or has reached GitHub. The user's current instructions can override this default; release tags are a separate publishing step.
 
+After an authorized merge, update local `master`, delete the merged feature branch locally and on GitHub, and prune stale remote-tracking refs. Older finished branches can be removed after confirming their PRs are merged and their tips are contained in `origin/master`; retain branches with unmerged work or active worktrees.
+
 To publish a release:
 
 1. Update `Version` in `DialogueMachine.csproj` and `RELEASE_NOTES.md` for the new version. Keep the Mac version in `Packaging/Info.plist` aligned if building Mac packages.
