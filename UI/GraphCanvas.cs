@@ -22,8 +22,8 @@ public sealed class GraphCanvas : Control
     private Choice? linkChoice;
     private Point linkEnd;
     public GraphCanvas() { Focusable = true; ClipToBounds = true; }
-    private const double NodeWidth = 270;
-    private static double NodeHeight(DialogueState s) => 158 + s.Choices.Count * 34;
+    private const double NodeWidth = GraphGeometry.NodeWidth;
+    private static double NodeHeight(DialogueState s) => GraphGeometry.NodeHeight(s);
     private static Rect BoundsOf(DialogueState s) => new(s.VisualX, s.VisualY, NodeWidth, NodeHeight(s));
     private Point World(Point p) => new((p.X - offset.X) / Zoom, (p.Y - offset.Y) / Zoom);
     public Point WorldToViewport(Point point) => new(point.X * Zoom + offset.X, point.Y * Zoom + offset.Y);
@@ -38,7 +38,7 @@ public sealed class GraphCanvas : Control
         {
             foreach (var s in Project.ListOfCharacterStates)
             {
-                for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, s.Choices[i].NextStateId ?? s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false);
+                for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false);
                 if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true);
             }
             foreach (var s in Project.ListOfCharacterStates) DrawNode(dc, s);

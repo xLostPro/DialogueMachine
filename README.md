@@ -27,16 +27,16 @@ To open a project at launch, pass its JSON path as the executable's first argume
 - **Logic:** add conditions and actions, set condition failure to Disable/Hide/Always, and configure shop scenes. All conditions on a response must pass. Actions support affinity, inventory, Event and Script; inventory never drops below zero.
 - **Notes:** writer's notes, tags, safe ID renaming, incoming connections, duplication and the story's start scene.
 - **Script:** a readable overview alongside the editor.
-- **Diagnostics:** missing targets, duplicate IDs, invalid conditions, malformed inline tags, unreachable scenes and regions without an ending. Cycles with an exit are allowed.
-- **Playtest:** F5 from the story start; Shift+F5 from the selected scene. Test variables live, revisit decisions with Back, and export the transcript. Events, scripts and shops are **logged**, not executed; your game supplies those integrations.
+- **Diagnostics:** missing targets, duplicate/reserved IDs, unsupported scene types or visibility values, invalid conditions, unreachable scenes and regions without an ending. Inline conditions are checked in dialogue and responses, including unused branches. Formatting problems and unknown substitutions produce warnings. Cycles with an exit are allowed.
+- **Playtest:** F5 from the story start; Shift+F5 from the selected scene. Test variables live, revisit decisions with Back, and export the transcript. Live edits and refreshed text are recorded; Back restores those edits too. Random delivery keeps its selected line during refresh; **Reroll line** explicitly samples again. Events, scripts and shops are **logged**, not executed; your game supplies those integrations.
 
 ## Files and recovery
 
-**Save project** stores desktop settings, entry point, variable starting values, scene metadata, graph positions, and all dialogue data. **Export website / game JSON** writes the original root schema with numeric visibility enums, and moves the chosen start scene to the first position for the website's simulator. Existing web JSON files import directly. Unknown object fields are retained when editing desktop projects.
+**Save project** stores desktop settings, entry point, variable starting values, scene metadata, graph positions, and all dialogue data. **Export website / game JSON** writes the original root schema with numeric visibility enums, and moves the chosen start scene to the first position for the website's simulator. Existing web JSON files import directly. Unknown object fields are retained when editing desktop projects. Desktop format version 1 is supported; incompatible format versions report an error while retaining the open story.
 
 Web exports do not contain desktop variable starting values or text substitutions; provide these through your game's runtime or the web player's simulation setup. Script exports preserve inline condition syntax so both branches remain visible to writers. Graph export captures the visible viewport as a PNG; fit the story first to include every scene.
 
-Writes use a flushed temporary file and atomic replacement. Recovery copies protect unsaved work every 10 seconds; they do not overwrite the open project. Save or Discard removes the active recovery file. Welcome shows unsaved recovery copies, including those newer than a saved project, for explicit restoration. Other recoveries are available from File → Recovery saves. Canceling project creation, file browsing, Save as, or the unsaved-changes prompt keeps your current work. Invalid imports report the problem without replacing the current story.
+Writes use a flushed temporary file and atomic replacement. Recovery copies protect unsaved work every 10 seconds; they do not overwrite the open project. Save or Discard removes the active recovery file. Welcome shows unsaved recovery copies, including those newer than a saved project, for explicit restoration. Damaged recovery records are skipped and retained for manual investigation, allowing startup and valid recovery choices to remain available. Other recoveries are available from File → Recovery saves. Canceling project creation, file browsing, Save as, or the unsaved-changes prompt keeps your current work. Invalid imports report the problem without replacing the current story.
 
 Preferences, recent files and recovery copies are stored under:
 
@@ -101,6 +101,8 @@ This desktop app has its own private repository, [xLostPro/DialogueMachine](http
 
 Pull requests and pushes to `master` or `main` run the regression harness, build Windows x64 with its runtime included, verify native welcome/project startup, and upload a ZIP and SHA-256 checksum as workflow artifacts. The workflow can also be run manually from Actions. Verification screenshots and logs are retained as a separate artifact.
 
+Routine source delivery follows [AGENTS.md](AGENTS.md). The default is to verify the change, commit the intended files on a `codex/` feature branch, push it to `origin`, open a pull request against `master`, and inspect Windows CI. A feature-branch push by itself does not run the current workflow. Report explicitly whether work remains local or has reached GitHub. The user's current instructions can override this default; release tags are a separate publishing step.
+
 To publish a release:
 
 1. Update `Version` in `DialogueMachine.csproj` and `RELEASE_NOTES.md` for the new version. Keep the Mac version in `Packaging/Info.plist` aligned if building Mac packages.
@@ -123,6 +125,8 @@ $env:AVALONIA_TELEMETRY_OPTOUT = '1'
 dotnet run --project tests/DialogueMachine.Tests.csproj -c Release -- artifacts
 ```
 
-The executable test harness exits nonzero on failure. Its 91 checks cover imports, exports, validation, conditions, simulations, atomic saves, recovery, history, actual graph mouse input, editor operations, accessibility labels, and welcome/open/save-as/cancel/reopen workflows. File workflow checks use isolated preferences, actual disk writes and an injected file picker; they preserve original website-format files. Headless rendering creates screenshots of welcome, recent/recovery lists, workspace themes, compact/large-text layouts and playtest in `artifacts` without opening windows. The Windows package has also passed native welcome and project startup/render smoke tests; `--smoke-test --smoke-output <directory>` runs offscreen, and `--smoke-project <path>` also tests opening a project. These checks do not replace manual screen-reader, OS file-picker or platform testing.
+The executable test harness exits nonzero on failure. Its 124 checks cover imports, exports, validation, conditions, simulations, atomic saves, recovery, history, actual graph mouse input, editor operations, accessibility labels, and welcome/open/save-as/cancel/reopen workflows. Reliability regressions include damaged recovery at startup, incompatible format imports, hidden malformed conditions, tall-node layout, 10,000-scene ending checks, and actual live-variable/Back/reroll controls. File workflow checks use isolated preferences, actual disk writes and an injected file picker; they preserve original website-format files. Headless rendering creates screenshots of welcome, recent/recovery lists, workspace themes, compact/large-text layouts and playtest in `artifacts` without opening windows. The Windows package has also passed native welcome and project startup/render smoke tests; `--smoke-test --smoke-output <directory>` runs offscreen, and `--smoke-project <path>` also tests opening a project. These checks do not replace manual screen-reader, OS file-picker or platform testing.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for the project boundaries, design decisions, and extension points.
+
+See [ROADMAP.md](ROADMAP.md) for the project assessment, completed reliability work, and proposed next features.

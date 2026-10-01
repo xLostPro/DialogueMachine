@@ -6,7 +6,8 @@ namespace DialogueMachine.Core;
 // The website's PascalCase schema is intentionally retained for round-trip compatibility.
 public sealed class DialogueProject
 {
-    public int FormatVersion { get; set; } = 1;
+    public const int CurrentFormatVersion = 1;
+    public int FormatVersion { get; set; } = CurrentFormatVersion;
     public string ProjectName { get; set; } = "Untitled story";
     public string CharacterId { get; set; } = "new_character";
     public string? EntryStateId { get; set; }

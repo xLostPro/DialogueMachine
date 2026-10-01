@@ -30,9 +30,37 @@ Check(ProjectStore.Parse(ProjectStore.Serialize(imported)).ListOfCharacterStates
 Throws(() => ProjectStore.Parse("{}"), "reject unrelated JSON without replacing data");
 Throws(() => ProjectStore.Parse("""{"ListOfCharacterStates":[null]}"""), "reject null scenes safely");
 Throws(() => ProjectStore.Parse("""{"ListOfCharacterStates":[{"State":"a","Choices":[{"Requirements":[null]}]}]}"""), "reject null condition rows safely");
+Throws(() => ProjectStore.Parse("""{"FormatVersion":999,"ListOfCharacterStates":[]}"""), "reject newer project formats rather than silently editing them");
+Throws(() => ProjectStore.Parse("""{"FormatVersion":0,"ListOfCharacterStates":[]}"""), "reject unsupported older project formats");
+Check(imported.FormatVersion == DialogueProject.CurrentFormatVersion, "website files without a format version remain compatible");
+var reservedImport = ProjectStore.Parse("""{"EntryStateId":"[EXIT]","ListOfCharacterStates":[{"State":"[EXIT]","Text":"Hello","DefaultNextId":"[EXIT]"}]}""");
+Check(DialogueEngine.Validate(reservedImport).Any(d => d.Severity == "Error" && d.Message.Contains("reserved")), "imported reserved IDs are diagnosed while remaining repairable");
+Throws(() => new Simulation(reservedImport), "Core refuses to simulate a reserved scene ID");
+DialogueEngine.Rename(reservedImport, reservedImport.ListOfCharacterStates[0], "repaired");
+Check(reservedImport.Entry == "repaired" && reservedImport.ListOfCharacterStates[0].DefaultNextId == "[EXIT]" && !DialogueEngine.Validate(reservedImport).Any(), "repairing a reserved ID preserves intentional endings");
+var invalidKinds = ProjectStore.Parse("""{"ListOfCharacterStates":[{"State":"start","Type":"Unknown","Text":"Hello","Choices":[{"ButtonText":"Bye","Visibility":99,"NextStateId":"[EXIT]"}]}]}""");
+Check(DialogueEngine.Validate(invalidKinds).Count(d => d.Severity == "Error") == 2, "unsupported scene types and numeric visibility values cannot pass validation");
 
 var vars = new Dictionary<string,int> { ["aff:trust"] = -2, ["inv:coin"] = 1 };
 Check(DialogueEngine.ResolveText("[IF aff:trust <= -1]low [if inv:coin > 0]coin[else]none[/if][else]high[/if] {player_name}", vars, p.TextVariables) == "low coin Traveller", "nested, case-insensitive inline conditions support negative values");
+var textStory = Templates.Blank(); textStory.ListOfCharacterStates[0].Text = "Hello";
+textStory.ListOfCharacterStates[0].Choices = [new() { NextStateId = "[EXIT]" }];
+foreach (var malformed in new[] {
+    "[if aff:trust >= 1]unfinished", "[else]orphan", "[/if]orphan", "[if aff:trust >= 0]one[else]two[else]three[/if]",
+    "[if aff:trust >= 0]valid[else][if inv:coin >= 999999999999]hidden[/if][/if]",
+    "[if aff:trust >= 0]valid[else][if invalid]hidden[/if][/if]", "[if aff:trust >= 0", "[if invalid [b]text[/b]" })
+{
+    textStory.ListOfCharacterStates[0].Choices[0].ButtonText = malformed;
+    Check(DialogueEngine.Validate(textStory).Any(d => d.Severity == "Error" && d.Message.StartsWith("Choice 1 response:")), "choice diagnostics identify malformed conditional: " + malformed);
+}
+textStory.ListOfCharacterStates[0].Choices[0].ButtonText = "[IF aff:trust <= -1]low [if inv:coin > 0]coin[else]none[/if][else]high[/if] {player_name}";
+Check(!DialogueEngine.Validate(textStory).Any(d => d.Severity == "Error"), "valid nested choice condition syntax remains exportable");
+textStory.ListOfCharacterStates[0].Text = string.Concat(Enumerable.Repeat("[if aff:trust >= 0]", 65)) + "deep" + string.Concat(Enumerable.Repeat("[/if]", 65));
+Check(DialogueEngine.Validate(textStory).Any(d => d.Severity == "Error" && d.Message.StartsWith("Dialogue:")), "conditions beyond the runtime nesting limit are diagnosed");
+textStory.ListOfCharacterStates[0].Text = "[b]unclosed {missing_name}";
+Check(DialogueEngine.Validate(textStory).Count(d => d.Severity == "Warning") == 2, "unclosed formatting and unknown substitutions are advisory warnings");
+textStory.ListOfCharacterStates[0].Text = "[b][i]Hello[/i][/b] [colour=#79DFC8]world[/colour] {inv:coin}";
+Check(!DialogueEngine.Validate(textStory).Any(), "valid formatting and discovered numeric substitutions have no warnings");
 var locked = new Choice { Requirements = [new() { TargetId = "trust", Value = "2" }] };
 Check(!DialogueEngine.RequirementsMet(locked, vars, out _), "locked choices fail their numeric conditions");
 locked.Requirements[0].Value = "invalid";
@@ -47,6 +75,24 @@ Check(sim.Current!.State == "arrival" && sim.PageIndex == 1 && sim.Variables["in
 sim.Choose(sim.Current.Choices[0]); sim.NextPage(); sim.Choose(sim.Current!.Choices[0]); sim.NextPage(); sim.Continue();
 Check(sim.Current is null && sim.Variables["aff:trust"] == 1, "playtest reaches an explicit ending");
 sim.Back(); Check(sim.Current!.State == "promise", "Back can revisit an ending");
+var previewStory = Templates.Blank(); previewStory.InitialVariables["aff:trust"] = 0;
+previewStory.ListOfCharacterStates[0].Text = "[if aff:trust >= 1]Friend[else]Stranger[/if]";
+var preview = new Simulation(previewStory); var originalTranscript = preview.Transcript.ToArray();
+preview.SetVariable("aff:trust", 1);
+Check(preview.Pages[0] == "Friend" && preview.Transcript[^1] == "Character: Friend" && preview.Transcript.Any(t => t.Contains("Test variable aff:trust: 0 → 1")), "live edits record the variable change and refreshed display in the transcript");
+preview.Back();
+Check(preview.Variables["aff:trust"] == 0 && preview.Pages[0] == "Stranger" && preview.Transcript.SequenceEqual(originalTranscript), "Back restores a live variable edit and its transcript together");
+preview.SetVariable("aff:trust", 0);
+Check(!preview.CanBack && preview.Transcript.SequenceEqual(originalTranscript), "unchanged live values do not create history or transcript noise");
+var randomStory = Templates.Blank(); randomStory.InitialVariables["aff:trust"] = 0;
+randomStory.ListOfCharacterStates[0].SayItAll = false;
+randomStory.ListOfCharacterStates[0].Text = string.Join('\n', Enumerable.Range(0, 20).Select(i => $"Line {i}: [if aff:trust >= 1]Friend[else]Stranger[/if]"));
+var randomPreview = new Simulation(randomStory); var originalRandomPage = randomPreview.Pages[0]; var originalRandomPrefix = originalRandomPage.Split(':')[0];
+var randomLineStable = true;
+for (var i = 0; i < 20; i++) { randomPreview.SetVariable("aff:trust", i % 2 == 0 ? 1 : 0); randomLineStable &= randomPreview.Pages[0].Split(':')[0] == originalRandomPrefix; }
+Check(randomLineStable, "live refresh retains the selected random line throughout a scene visit");
+randomPreview.RerollLine(); randomPreview.Back(); randomPreview.RefreshText();
+Check(randomPreview.Pages[0] == originalRandomPage, "Back restores the random line selection after an explicit reroll");
 var broken = Templates.Blank(); broken.ListOfCharacterStates[0].DefaultNextId = "missing"; broken.ListOfCharacterStates[0].DefaultAfterActions = [new() { TargetId = "trust", Amount = 10 }];
 var failed = new Simulation(broken); Throws(failed.Continue, "missing destination stops transition");
 Check(failed.Current!.State == "start" && failed.Variables["aff:trust"] == 0 && !failed.CanBack, "failed transitions do not mutate actions or history");
@@ -73,6 +119,16 @@ Check(DialogueEngine.Validate(duplicate).Any(d => d.Message.Contains("Duplicate"
 var unreachable = Templates.Blank(); unreachable.ListOfCharacterStates.Add(Templates.Scene("unused", "Unused", "A", "Hi", 0, 0));
 Check(DialogueEngine.Validate(unreachable).Any(d => d.Message.Contains("unreachable")), "unreachable scenes diagnosed");
 DialogueEngine.AutoLayout(renamed); Check(renamed.ListOfCharacterStates.Select(s => (s.VisualX,s.VisualY)).Distinct().Count() == 5, "layout assigns distinct positions");
+var tallStory = Templates.Blank(); tallStory.ListOfCharacterStates[0].Choices = [new() { NextStateId = "tall" }, new() { NextStateId = "short" }];
+var tall = Templates.Scene("tall", "Tall", "A", "Hi", 0, 0); tall.Choices = Enumerable.Range(0, 10).Select(_ => new Choice { NextStateId = "[EXIT]" }).ToList();
+var shortScene = Templates.Scene("short", "Short", "A", "Hi", 0, 0); tallStory.ListOfCharacterStates.AddRange([tall, shortScene]);
+DialogueEngine.AutoLayout(tallStory);
+Check(tall.VisualX == shortScene.VisualX && shortScene.VisualY >= tall.VisualY + GraphGeometry.NodeHeight(tall) + 48, "Arrange leaves a gap below choice-heavy scenes on the same layer");
+var chain = new DialogueProject { EntryStateId = "s0" };
+for (var i = 0; i < 10000; i++) chain.ListOfCharacterStates.Add(new DialogueState { State = "s" + i, Text = "Hi", DefaultNextId = i == 9999 ? "[EXIT]" : "s" + (i + 1) });
+Check(!DialogueEngine.Validate(chain).Any(), "ending reachability handles a 10,000-scene chain");
+chain.ListOfCharacterStates[^1].DefaultNextId = "s0";
+Check(DialogueEngine.Validate(chain).Count(d => d.Message.Contains("No path")) == 10000, "ending reachability diagnoses a large closed cycle");
 var temp = Path.Combine(AppContext.BaseDirectory, "atomic-test.json"); ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(p)); ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(renamed));
 Check(ProjectStore.Load(temp).Entry == "opening" && !Directory.EnumerateFiles(AppContext.BaseDirectory, "atomic-test.json.*.tmp").Any(), "atomic saves replace completely and clean up temporary files"); File.Delete(temp);
 var recoveryFolder = Path.Combine(AppContext.BaseDirectory, "recovery-test"); var recovery = new RecoveryStore(recoveryFolder); var recoveryId = Guid.NewGuid().ToString("N");
@@ -82,6 +138,12 @@ recovery.Remove(recoveryId); Check(recovery.FindUnsaved().Count == 0, "completed
 Throws(() => recovery.Save("../escape", new RecoveryRecord(null, DateTimeOffset.UtcNow, Templates.Blank())), "recovery paths reject traversal");
 var badRecoveryId = Guid.NewGuid().ToString("N"); File.WriteAllText(Path.Combine(recoveryFolder, badRecoveryId + ".json"), "invalid");
 Check(recovery.FindUnsaved().Count == 0, "invalid recovery records are ignored without destroying them"); File.Delete(Path.Combine(recoveryFolder, badRecoveryId + ".json"));
+var semanticRecoveryId = Guid.NewGuid().ToString("N"); var semanticRecoveryPath = Path.Combine(recoveryFolder, semanticRecoveryId + ".json");
+var semanticDamage = Templates.Blank(); semanticDamage.ListOfCharacterStates[0].State = "";
+recovery.Save(semanticRecoveryId, new RecoveryRecord(null, DateTimeOffset.UtcNow, semanticDamage));
+recovery.Save(recoveryId, new RecoveryRecord(null, DateTimeOffset.UtcNow, Templates.Harbour()));
+Check(recovery.FindUnsaved().Count == 1 && File.Exists(semanticRecoveryPath), "semantically invalid recovery is retained and skipped without hiding a valid recovery");
+recovery.Remove(semanticRecoveryId); recovery.Remove(recoveryId);
 ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(Templates.Blank())); var recoveryTime = DateTimeOffset.UtcNow.AddMinutes(1);
 recovery.Save(recoveryId, new RecoveryRecord(temp, recoveryTime, Templates.Harbour()));
 Check(recovery.FindUnsaved().Count == 1, "recovery newer than a project file is offered"); File.SetLastWriteTimeUtc(temp, recoveryTime.UtcDateTime.AddSeconds(1));
@@ -140,6 +202,20 @@ Check(playtest.Session.PageIndex == 1, "playtest Continue reveals choices after 
 var response = playtest.GetVisualDescendants().OfType<Button>().First(b => b.Content is TextBlock t && t.Text!.Contains("I brought")); response.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
 Check(playtest.Session.Current!.State == "gift" && playtest.Session.Variables["inv:coin"] == 0, "playtest response button applies actions and follows its destination"); Capture(playtest,"playtest-choice");
 playtest.Close(); main.Close();
+var livePlaytest = new PlaytestWindow(previewStory, null); livePlaytest.Show(); Dispatcher.UIThread.RunJobs();
+var trustInput = livePlaytest.GetVisualDescendants().OfType<NumericUpDown>().Single(t => AutomationProperties.GetName(t) == "aff:trust");
+trustInput.Value = 1; Dispatcher.UIThread.RunJobs();
+var liveBack = livePlaytest.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "← Back"));
+Check(livePlaytest.Session.Pages[0] == "Friend" && livePlaytest.Session.Transcript[^1] == "Character: Friend" && liveBack.IsEnabled, "actual playtest variable input updates text, transcript and Back");
+Capture(livePlaytest, "playtest-live-edit"); liveBack.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
+Check(livePlaytest.Session.Pages[0] == "Stranger" && livePlaytest.GetVisualDescendants().OfType<NumericUpDown>().Single(t => AutomationProperties.GetName(t) == "aff:trust").Value == 0, "actual playtest Back restores the displayed variable input");
+livePlaytest.Close();
+var randomPlaytest = new PlaytestWindow(randomStory, null); randomPlaytest.Show(); Dispatcher.UIThread.RunJobs();
+randomPlaytest.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Reroll line")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+Check(randomPlaytest.Session.CanBack && randomPlaytest.Session.Transcript.Any(t => t.Contains("Random line rerolled")), "random delivery offers an explicit undoable reroll button");
+Capture(randomPlaytest, "playtest-random-line"); randomPlaytest.Close();
+var arrangedGraph = new GraphCanvas { Project = tallStory }; var arrangedWindow = new Window { Width = 1200, Height = 900, Content = arrangedGraph };
+arrangedWindow.Show(); Dispatcher.UIThread.RunJobs(); arrangedGraph.Fit(); Capture(arrangedWindow, "graph-tall-arranged"); arrangedWindow.Close();
 
 // Exercise file and modal workflows with real disk writes and an isolated workspace.
 var workflowRoot = Path.Combine(Path.GetFullPath(output), "workflow-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(workflowRoot);
@@ -208,6 +284,9 @@ Check(File.ReadAllText(sourceFile) == sourceJson && savedProject.ListOfCharacter
 var badFile = Path.Combine(workflowRoot, "invalid.json"); File.WriteAllText(badFile, "{}"); var beforeBadOpen = ProjectStore.Serialize(workspace.Project);
 var openBad = workspace.OpenProjectAsync(badFile); Answer(workspace, "Close"); Pump(openBad);
 Check(!openBad.Result && workspace.CurrentFilePath == savedFile && ProjectStore.Serialize(workspace.Project) == beforeBadOpen, "invalid imports show an error and preserve the open story");
+File.WriteAllText(badFile, """{"FormatVersion":999,"ListOfCharacterStates":[]}""");
+openBad = workspace.OpenProjectAsync(badFile); Answer(workspace, "Close"); Pump(openBad);
+Check(!openBad.Result && workspace.CurrentFilePath == savedFile && ProjectStore.Serialize(workspace.Project) == beforeBadOpen, "unsupported project versions preserve the currently open story");
 Pump(workspace.ReturnHomeAsync());
 Check(welcome.FindControl<StackPanel>("RecentCards")!.GetVisualDescendants().OfType<Button>().Count(b => b.Tag is string) == 2, "welcome lists the saved and imported projects with their titles");
 Capture(workspace, "welcome-recent");
@@ -226,10 +305,12 @@ Check(!missing.HasProject && missingWelcome.FindControl<Border>("NoticeBorder")!
 missing.Close();
 var restoreId = Guid.NewGuid().ToString("N"); var restoreStore = new RecoveryStore(Path.Combine(settingsRoot, "Recovery"));
 var recovered = Templates.Harbour(); recovered.ProjectName = "Recovered work"; restoreStore.Save(restoreId, new RecoveryRecord(null, DateTimeOffset.Now, recovered));
+var damagedStartupId = Guid.NewGuid().ToString("N"); restoreStore.Save(damagedStartupId, new RecoveryRecord(null, DateTimeOffset.Now, semanticDamage));
 prefs = store.Load(); prefs.LastProjectPath = savedFile; store.Save(prefs);
 picker = new TestFilePicker(); var recoverWindow = new MainWindow(null, true, settingsRoot, picker); recoverWindow.Show(); Pump(recoverWindow.InitialiseWorkspaceAsync());
 var recoveryWelcome = recoverWindow.FindControl<WelcomeView>("Welcome")!;
 Check(!recoverWindow.HasProject && recoveryWelcome.FindControl<StackPanel>("RecoverySection")!.IsVisible, "unsaved recovery is presented before automatically reopening a saved project"); Capture(recoverWindow,"welcome-recovery");
+Check(File.Exists(Path.Combine(settingsRoot, "Recovery", damagedStartupId + ".json")) && restoreStore.FindUnsaved().Count == 1, "Welcome starts with damaged recovery and still offers valid unsaved work");
 Press(recoveryWelcome.FindControl<StackPanel>("RecoveryCards")!.GetVisualDescendants().OfType<Button>().First(b => Equals(b.Content, "Restore story")));
 Check(recoverWindow.Project.ProjectName == "Recovered work" && recoverWindow.HasUnsavedChanges && restoreStore.FindUnsaved().Count == 1 && ProjectStore.Load(savedFile).ProjectName == "Saved on Home", "restoring opens unsaved work without overwriting or removing its recovery");
 picker.SavePaths.Enqueue(Path.Combine(workflowRoot, "recovered.dialogue.json")); Pump(recoverWindow.SaveProjectAsync());

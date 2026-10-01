@@ -59,12 +59,24 @@ public static class DialogueEngine
         var issues = new List<Diagnostic>();
         void Error(string id, string msg) => issues.Add(new(id, "Error", msg));
         void Warning(string id, string msg) => issues.Add(new(id, "Warning", msg));
+        var variables = DiscoverVariables(p).ToHashSet(StringComparer.Ordinal);
+        void CheckText(string id, string text, string field)
+        {
+            if (!DialogueText.ValidConditions(text)) Error(id, $"{field}: inline conditional tags are malformed. Use [if aff:trust >= 1]…[else]…[/if], with at most one else per block and up to 64 nested blocks.");
+            if (!DialogueText.ValidFormatting(text)) Warning(id, $"{field}: formatting tags are unclosed, mismatched or malformed. Check [b], [i], [u] and [colour=…] tags.");
+            foreach (Match m in Regex.Matches(text, @"\{([\w:.\-]+)\}"))
+                if (!p.TextVariables.ContainsKey(m.Groups[1].Value) && !variables.Contains(m.Groups[1].Value)) Warning(id, $"{field}: unknown substitution {{{m.Groups[1].Value}}}. Add it in Variables & characters or correct its ID.");
+        }
+        if (p.FormatVersion != DialogueProject.CurrentFormatVersion) Error("", $"Unsupported project format {p.FormatVersion}.");
         var ids = p.ListOfCharacterStates.Select(s => s.State).ToHashSet();
         foreach (var group in p.ListOfCharacterStates.GroupBy(s => s.State).Where(g => g.Count() > 1)) Error(group.Key, "Duplicate scene ID. Rename one of these scenes before playtesting.");
         if (!ids.Contains(p.Entry)) Error("", "Choose an existing scene as the story's start.");
         var edges = new Dictionary<string, HashSet<string>>();
         foreach (var s in p.ListOfCharacterStates)
         {
+            if (s.State == "[EXIT]") Error(s.State, "[EXIT] is reserved for endings. Rename this scene before playtesting or exporting.");
+            if (s.Type is not ("Dialogue" or "Shop")) Error(s.State, "Scene type must be Dialogue or Shop.");
+            CheckText(s.State, s.Text, "Dialogue");
             var targets = new HashSet<string>(); edges[s.State] = targets;
             void Check(string? target, string label)
             {
@@ -76,8 +88,11 @@ public static class DialogueEngine
             if (s.Choices.Count == 0 && string.IsNullOrWhiteSpace(s.DefaultNextId)) Error(s.State, "Scene has no choices or continue destination. Select End conversation for an ending.");
             if (string.IsNullOrWhiteSpace(s.Text)) Warning(s.State, "This scene has no dialogue yet.");
             if (s.Type == "Shop" && string.IsNullOrWhiteSpace(s.ShopData.ShopId)) Warning(s.State, "Shop scene needs a shop ID for the game integration.");
-            foreach (var c in s.Choices)
+            for (var choiceIndex = 0; choiceIndex < s.Choices.Count; choiceIndex++)
             {
+                var c = s.Choices[choiceIndex];
+                CheckText(s.State, c.ButtonText, $"Choice {choiceIndex + 1} response");
+                if (!Enum.IsDefined(c.Visibility)) Error(s.State, $"Choice {choiceIndex + 1}: visibility must be Hide, Disable or Always.");
                 Check(string.IsNullOrWhiteSpace(c.NextStateId) ? s.DefaultNextId : c.NextStateId, $"Choice ‘{PlainText(c.ButtonText)}’");
                 if (string.IsNullOrWhiteSpace(c.ButtonText)) Warning(s.State, "A player choice has no label.");
                 foreach (var r in c.Requirements)
@@ -85,17 +100,23 @@ public static class DialogueEngine
             }
             foreach (var a in s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)))
                 if (string.IsNullOrWhiteSpace(a.TargetId) || a.Type is not ("Affinity" or "Inventory" or "Event" or "Script")) Error(s.State, "An action needs a supported type and target ID.");
-            var open = Regex.Matches(s.Text, @"\[if\s", RegexOptions.IgnoreCase).Count;
-            var close = Regex.Matches(s.Text, @"\[/if\]", RegexOptions.IgnoreCase).Count;
-            if (open != close || Regex.IsMatch(ResolveText(s.Text, p.InitialVariables, p.TextVariables), @"\[if\s|\[/if\]", RegexOptions.IgnoreCase)) Error(s.State, "Inline conditional tags are malformed. Use [if aff:trust >= 1]…[else]…[/if].");
         }
         var reachable = new HashSet<string>(); var queue = new Queue<string>(); queue.Enqueue(p.Entry);
         while (queue.TryDequeue(out var id)) if (reachable.Add(id) && edges.TryGetValue(id, out var next)) foreach (var n in next) queue.Enqueue(n);
         foreach (var s in p.ListOfCharacterStates.Where(s => !reachable.Contains(s.State))) Warning(s.State, "This scene is unreachable from the story's start.");
         // Cycles are valid dialogue. Warn only when there is no path to an explicit exit.
         var canEnd = new HashSet<string> { "[EXIT]" };
-        bool grew;
-        do { grew = false; foreach (var (id, targets) in edges) if (targets.Any(canEnd.Contains)) grew |= canEnd.Add(id); } while (grew);
+        var incoming = new Dictionary<string, HashSet<string>>();
+        foreach (var (id, targets) in edges)
+            foreach (var target in targets)
+            {
+                if (!incoming.TryGetValue(target, out var sources)) incoming[target] = sources = [];
+                sources.Add(id);
+            }
+        queue.Enqueue("[EXIT]");
+        while (queue.TryDequeue(out var end))
+            if (incoming.TryGetValue(end, out var sources))
+                foreach (var source in sources) if (canEnd.Add(source)) queue.Enqueue(source);
         foreach (var s in p.ListOfCharacterStates.Where(s => reachable.Contains(s.State) && !canEnd.Contains(s.State))) Warning(s.State, "No path from this scene reaches an ending. Check for a closed loop.");
         return issues;
     }
@@ -104,6 +125,8 @@ public static class DialogueEngine
         if (string.IsNullOrWhiteSpace(id) || id == "[EXIT]" || p.ListOfCharacterStates.Any(s => s != state && s.State == id)) throw new ArgumentException("Use a unique, non-empty ID. [EXIT] is reserved.");
         var old = state.State; state.State = id;
         if (p.EntryStateId == old) p.EntryStateId = id;
+        // Repairing an imported reserved ID must keep intentional ending targets intact.
+        if (old == "[EXIT]") return;
         foreach (var s in p.ListOfCharacterStates)
         {
             if (s.DefaultNextId == old) s.DefaultNextId = id;
@@ -112,19 +135,22 @@ public static class DialogueEngine
     }
     public static void AutoLayout(DialogueProject p)
     {
+        var scenes = p.ListOfCharacterStates.GroupBy(s => s.State).ToDictionary(g => g.Key, g => g.First());
         var layers = new Dictionary<string, int>(); var queue = new Queue<(string Id, int Layer)>(); queue.Enqueue((p.Entry, 0));
         while (queue.TryDequeue(out var pair))
         {
             if (layers.ContainsKey(pair.Id)) continue;
-            var s = p.ListOfCharacterStates.FirstOrDefault(s => s.State == pair.Id); if (s is null) continue;
+            if (!scenes.TryGetValue(pair.Id, out var s)) continue;
             layers[pair.Id] = pair.Layer;
-            foreach (var id in s.Choices.Select(c => c.NextStateId ?? s.DefaultNextId).Append(s.DefaultNextId).Where(id => id is not null && id != "[EXIT]")) queue.Enqueue((id!, pair.Layer + 1));
+            foreach (var id in s.Choices.Select(c => string.IsNullOrWhiteSpace(c.NextStateId) ? s.DefaultNextId : c.NextStateId).Append(s.DefaultNextId).Where(id => !string.IsNullOrWhiteSpace(id) && id != "[EXIT]")) queue.Enqueue((id!, pair.Layer + 1));
         }
-        var rows = new Dictionary<int, int>();
+        var nextY = new Dictionary<int, double>();
+        var disconnectedLayer = layers.Values.DefaultIfEmpty(0).Max() + 1;
         foreach (var s in p.ListOfCharacterStates)
         {
-            var layer = layers.GetValueOrDefault(s.State, layers.Values.DefaultIfEmpty(0).Max() + 1);
-            s.VisualX = 80 + layer * 360; s.VisualY = 80 + rows.GetValueOrDefault(layer) * 300; rows[layer] = rows.GetValueOrDefault(layer) + 1;
+            var layer = layers.GetValueOrDefault(s.State, disconnectedLayer);
+            s.VisualX = 80 + layer * 360; s.VisualY = nextY.GetValueOrDefault(layer, 80);
+            nextY[layer] = s.VisualY + Math.Max(300, GraphGeometry.NodeHeight(s) + 48);
         }
     }
 }
@@ -138,11 +164,13 @@ public sealed class Simulation
     public int PageIndex { get; private set; }
     public string[] Pages { get; private set; } = [];
     public List<string> Transcript { get; private set; } = [];
+    private int randomLine = -1;
     private readonly Stack<Snapshot> history = new();
     public bool CanBack => history.Count > 0;
     public bool MorePages => PageIndex < Pages.Length - 1;
     public Simulation(DialogueProject p, string? start = null)
     {
+        if (p.ListOfCharacterStates.Any(s => s.State == "[EXIT]")) throw new InvalidOperationException("[EXIT] is reserved for endings. Rename the scene before playtesting.");
         Project = ProjectStore.Clone(p);
         Variables = DialogueEngine.DiscoverVariables(p).ToDictionary(k => k, k => k.StartsWith("inv:") ? Math.Max(0, p.InitialVariables.GetValueOrDefault(k)) : p.InitialVariables.GetValueOrDefault(k));
         Enter(start ?? p.Entry);
@@ -150,16 +178,48 @@ public sealed class Simulation
     public void RefreshText()
     {
         if (Current is null) return;
+        var previous = Pages.ElementAtOrDefault(PageIndex);
+        RebuildText();
+        if (previous is not null && previous != Pages[PageIndex])
+        {
+            Transcript.Add("— Preview refreshed —");
+            Transcript.Add(Current.Speaker + ": " + DialogueEngine.PlainText(Pages[PageIndex]));
+        }
+    }
+    public void SetVariable(string key, int value)
+    {
+        if (!Variables.TryGetValue(key, out var previous)) throw new ArgumentException("Choose an existing test variable.", nameof(key));
+        if (key.StartsWith("inv:", StringComparison.Ordinal)) value = Math.Max(0, value);
+        if (value == previous) return;
+        SaveSnapshot(); Variables[key] = value;
+        Transcript.Add($"— Test variable {key}: {previous} → {value} —");
+        RefreshText();
+    }
+    public void RerollLine()
+    {
+        if (Current is null || Current.SayItAll) return;
+        SaveSnapshot(); randomLine = -1;
+        Transcript.Add("— Random line rerolled —"); RefreshText();
+    }
+    private void RebuildText()
+    {
+        if (Current is null) return;
         var text = DialogueEngine.ResolveText(Current.Text, Variables, Project.TextVariables);
         var pages = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        Pages = pages.Length == 0 ? ["(No dialogue)"] : !Current.SayItAll ? [pages[Random.Shared.Next(pages.Length)]] : pages;
+        if (pages.Length == 0) Pages = ["(No dialogue)"];
+        else if (!Current.SayItAll)
+        {
+            if (randomLine < 0) randomLine = Random.Shared.Next(pages.Length);
+            Pages = [pages[Math.Min(randomLine, pages.Length - 1)]];
+        }
+        else Pages = pages;
         PageIndex = Math.Min(PageIndex, Pages.Length - 1);
     }
     private void Enter(string? id)
     {
         if (string.IsNullOrWhiteSpace(id) || id == "[EXIT]") { Current = null; Pages = []; PageIndex = 0; Transcript.Add("— Conversation ended —"); return; }
         Current = Project.ListOfCharacterStates.FirstOrDefault(s => s.State == id) ?? throw new InvalidOperationException($"Scene ‘{id}’ does not exist.");
-        PageIndex = 0; RefreshText(); Transcript.Add(Current.Speaker + ": " + DialogueEngine.PlainText(Pages[0]));
+        PageIndex = 0; randomLine = -1; RebuildText(); Transcript.Add(Current.Speaker + ": " + DialogueEngine.PlainText(Pages[0]));
         if (Current.Type == "Shop") Events.Add("Shop preview: " + Current.ShopData.ShopId + " (external game integration)");
     }
     public void NextPage()
@@ -193,11 +253,11 @@ public sealed class Simulation
             Variables[key] = (int)amount;
         }
     }
-    private void SaveSnapshot() => history.Push(new(Current?.State, PageIndex, Pages.ToArray(), new(Variables), Events.ToList(), Transcript.ToList()));
+    private void SaveSnapshot() => history.Push(new(Current?.State, PageIndex, randomLine, Pages.ToArray(), new(Variables), Events.ToList(), Transcript.ToList()));
     public void Back()
     {
         if (!history.TryPop(out var s)) return;
-        Current = Project.ListOfCharacterStates.FirstOrDefault(n => n.State == s.Id); PageIndex = s.Page; Pages = s.Pages; Variables = s.Variables; Events = s.Events; Transcript = s.Transcript;
+        Current = Project.ListOfCharacterStates.FirstOrDefault(n => n.State == s.Id); PageIndex = s.Page; randomLine = s.RandomLine; Pages = s.Pages; Variables = s.Variables; Events = s.Events; Transcript = s.Transcript;
     }
-    private sealed record Snapshot(string? Id, int Page, string[] Pages, Dictionary<string, int> Variables, List<string> Events, List<string> Transcript);
+    private sealed record Snapshot(string? Id, int Page, int RandomLine, string[] Pages, Dictionary<string, int> Variables, List<string> Events, List<string> Transcript);
 }

@@ -18,6 +18,8 @@ public static class ProjectStore
         if (doc.RootElement.ValueKind != JsonValueKind.Object || !doc.RootElement.EnumerateObject().Any(p => p.Name.Equals("ListOfCharacterStates", StringComparison.OrdinalIgnoreCase)))
             throw new InvalidDataException("This file is not a Dialogue Machine project. It must contain ListOfCharacterStates.");
         var project = JsonSerializer.Deserialize<DialogueProject>(json, Options) ?? throw new InvalidDataException("The project is empty.");
+        if (project.FormatVersion != DialogueProject.CurrentFormatVersion)
+            throw new InvalidDataException($"Project format {project.FormatVersion} is not supported. This app supports format {DialogueProject.CurrentFormatVersion}. Use a compatible version of Dialogue Machine to open this file.");
         if (project.ListOfCharacterStates is null || project.ListOfCharacterStates.Count > 10000)
             throw new InvalidDataException("The scene list is missing or exceeds 10,000 scenes.");
         project.InitialVariables ??= []; project.TextVariables ??= [];

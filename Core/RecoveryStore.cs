@@ -27,7 +27,7 @@ public sealed class RecoveryStore(string directory)
                 if (r.FilePath is null || !File.Exists(r.FilePath) || File.GetLastWriteTimeUtc(r.FilePath) < r.SavedAt.UtcDateTime)
                     records.Add((path, r with { Project = validated }));
             }
-            catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException or ArgumentException) { /* Keep damaged recovery files for manual investigation. */ }
+            catch (Exception ex) when (ex is IOException or InvalidDataException or JsonException or UnauthorizedAccessException or ArgumentException) { /* Keep damaged recovery files for manual investigation. */ }
         }
         return records.OrderByDescending(r => r.Item2.SavedAt).ToList();
     }
