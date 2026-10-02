@@ -8,7 +8,7 @@ This is a proposed order of work based on the repository, not an existing releas
 
 The initial recommendation was a focused reliability patch. **Stage 1 is merged in [PR #2](https://github.com/xLostPro/DialogueMachine/pull/2) for version 1.1.1**, with passing Windows CI. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed. The original findings below describe the assessment baseline.
 
-**Stage 2 priorities 1 and 2 are implemented**, with 200 passing regression checks. Variable management includes searchable insertion, typed logic suggestions, reference counts and locations, reference-aware rename, unused-variable deletion, cancel-safe drafts and one-step undo. Project-wide find/replace includes literal matching across dialogue, responses, titles and notes, case/whole-word options, field/scene scope, highlighted previews, navigation to the exact editor match, selected/all replacement and one-step undo/redo. The next feature is searchable destinations and better navigation. These source changes do not imply a published release.
+**Stage 2 priorities 1–3 are implemented**, with 242 passing regression checks. Variable management and project-wide find/replace are merged in PRs #3 and #4. Destination navigation now includes search by title/ID, explicit fallback/unset/ending choices, one-step connection undo, incoming/outgoing jumps, and combined text/speaker/tag/diagnostic outline filters. The next feature is reusable authoring operations. These source changes do not imply a published release.
 
 The next work is Stage 2: improve the daily writing workflow, then add repeatable story testing and prove one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
 
@@ -81,7 +81,7 @@ Recommended first feature release after the patch:
 | --- | --- | --- |
 | 1 — implemented | Variable management and reference assistance | Searchable manager and inline insertion, typed logic suggestions, reference counts/locations, rename across actions/requirements/inline text/starting values, unused deletion, cancel-safe changes and one-step undo |
 | 2 — implemented | Project-wide find and replace | Search dialogue, responses, titles and notes; highlighted match/replacement previews; case/whole-word options; field and scene scope; jump to matching text; replace selected/all with one-step undo/redo |
-| 3 | Destination search and better navigation | Type to find a destination; jump directly to incoming/outgoing scenes; filter outline by speaker/tag/diagnostic; retain a keyboard path |
+| 3 — implemented | Destination search and better navigation | Search destinations by title/ID; retain missing/fallback/unset/ending values; undo connections; jump to incoming/outgoing scenes; intersect outline text/speaker/tag/diagnostic filters; keyboard selection and compact layouts |
 | 4 | Reusable authoring operations | Create a connected scene from a choice; copy/paste multiple scenes with remapped internal links; reusable scene/choice templates |
 | 5 | Better graph organization | Scene groups/chapters, multiple selection and group movement, clearer selected connections, optional minimap; incremental schema additions where possible |
 | 6 | Export improvements | Full-story image export independent of viewport; readable script export options for conditions, actions and notes |
@@ -89,6 +89,16 @@ Recommended first feature release after the patch:
 Include external modification detection before ordinary Save overwrites a project changed by another app or editor instance. Offer compare/reload/save-a-copy choices while retaining local edits. Atomic writes prevent partial files; they do not resolve concurrent edits.
 
 Continue performance work here: Stage 1 has replaced repeated ending scans with reverse-edge traversal and indexed IDs for layout. Index destinations during graph drawing, skip offscreen nodes, cache text layouts, and avoid whole-document work on each keystroke. Profile 100/1,000/10,000-scene stories with variable choice counts and record editor latency, render time, and memory. Replace snapshot history only if measurements justify it.
+
+Navigation now caches searchable scene summaries and connection indices, avoiding validation and serialization while typing filters. A one-run synthetic Core probe measured:
+
+| Scenes | Build navigation index | Search destinations | Filter outline | Index allocations |
+| --- | --- | --- | --- | --- |
+| 100 | 0.44 ms | 0.01 ms | 0.01 ms | 102,904 bytes |
+| 1,000 | 1.09 ms | 0.04 ms | 0.03 ms | 1,004,776 bytes |
+| 10,000 | 17.18 ms | 1.74 ms | 0.43 ms | 9,928,096 bytes |
+
+These measure Core operations and allocated bytes, excluding graph drawing, UI rendering and retained process memory. Results are retained in `artifacts/destination-navigation/navigation-benchmarks-baseline.txt`; the harness also checks full counts with bounded destination previews at all three sizes. Full editor profiling remains follow-up work.
 
 Completion gate: a writer can reorganize and revise a substantial story without repeatedly typing IDs, inspecting JSON, or losing references; all bulk changes undo reliably.
 
@@ -133,4 +143,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Implement searchable destinations and outline filters next, using performance measurements to guide each change. Variable/reference management and project-wide find/replace are implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. External modification detection should precede broader shared-file workflows.
+Implement reusable authoring operations next: create a connected scene from a choice, then scene/choice templates and multi-scene copying with remapped internal links. Variable/reference management, project-wide find/replace and destination navigation are implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. External modification detection should precede broader shared-file workflows.

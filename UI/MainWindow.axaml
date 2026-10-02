@@ -20,14 +20,24 @@
     <local:WelcomeView Grid.Row="2" x:Name="Welcome"/>
     <Grid Grid.Row="2" x:Name="WorkspacePanel" IsVisible="False" ColumnDefinitions="250,5,*,5,370">
       <Border Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="0,0,1,0">
-        <Grid RowDefinitions="Auto,Auto,*,Auto">
+        <Grid RowDefinitions="Auto,Auto,Auto,*,Auto">
+          <ScrollViewer x:Name="OutlineHeaderScroll" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" MaxHeight="260">
           <StackPanel Margin="18,22,18,12" Spacing="12">
             <Grid ColumnDefinitions="*,Auto"><TextBlock Text="STORY OUTLINE" Classes="eyebrow" VerticalAlignment="Center"/><TextBlock Grid.Column="1" x:Name="SceneCount" Classes="muted" FontSize="12"/></Grid>
             <TextBox x:Name="SearchBox" PlaceholderText="Search scenes and dialogue…" AutomationProperties.Name="Search scenes and dialogue" ToolTip.Tip="Search · Ctrl/Cmd+F"/>
+            <Expander x:Name="OutlineFilters" Header="Filter scenes" HorizontalAlignment="Stretch">
+              <StackPanel Spacing="6">
+                <TextBlock Text="Speaker" FontSize="11" Classes="muted"/><ComboBox x:Name="SpeakerFilter" AutomationProperties.Name="Filter scenes by speaker"/>
+                <TextBlock Text="Tag" FontSize="11" Classes="muted"/><ComboBox x:Name="TagFilter" AutomationProperties.Name="Filter scenes by tag"/>
+                <TextBlock Text="Diagnostics" FontSize="11" Classes="muted"/><ComboBox x:Name="IssueFilter" SelectedIndex="0" AutomationProperties.Name="Filter scenes by diagnostics"><ComboBoxItem>All scenes</ComboBoxItem><ComboBoxItem>With diagnostics</ComboBoxItem><ComboBoxItem>Errors</ComboBoxItem><ComboBoxItem>Warnings</ComboBoxItem><ComboBoxItem>No diagnostics</ComboBoxItem></ComboBox>
+              </StackPanel>
+            </Expander>
           </StackPanel>
-          <Button Grid.Row="1" x:Name="AddButton" Content="＋  Add scene" Classes="primary" Margin="18,0,18,14" HorizontalContentAlignment="Center"/>
-          <ListBox Grid.Row="2" x:Name="SceneList" AutomationProperties.Name="Story scenes"/>
-          <Border Grid.Row="3" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="18,16">
+          </ScrollViewer>
+          <Button Grid.Row="1" x:Name="ClearFiltersButton" Content="Clear search &amp; filters" Classes="subtle" HorizontalContentAlignment="Left" Margin="18,0,18,8"/>
+          <Button Grid.Row="2" x:Name="AddButton" Content="＋  Add scene" Classes="primary" Margin="18,0,18,14" HorizontalContentAlignment="Center"/>
+          <Grid Grid.Row="3"><ListBox x:Name="SceneList" AutomationProperties.Name="Story scenes"/><TextBlock x:Name="OutlineEmpty" Text="No matching scenes. Clear the search or filters to see your story." IsVisible="False" TextWrapping="Wrap" Margin="18,12" FontSize="12" Classes="muted" IsHitTestVisible="False"/></Grid>
+          <Border Grid.Row="4" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="18,16">
             <StackPanel Spacing="9"><TextBlock Text="STORY TOOLS" Classes="eyebrow"/><Button x:Name="VariablesButton" Content="◈   Variables &amp; characters" Classes="subtle" HorizontalContentAlignment="Left"/><Button x:Name="FindReplaceButton" Content="⌕   Find &amp; replace" Classes="subtle" HorizontalContentAlignment="Left" ToolTip.Tip="Find &amp; replace · Ctrl/Cmd+H"/><Button x:Name="ProblemsButton" Content="✓   Story diagnostics" Classes="subtle" HorizontalContentAlignment="Left"/></StackPanel>
           </Border>
         </Grid>
