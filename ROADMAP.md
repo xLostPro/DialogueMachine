@@ -8,7 +8,7 @@ This is a proposed order of work based on the repository, not an existing releas
 
 The initial recommendation was a focused reliability patch. **Stage 1 is merged in [PR #2](https://github.com/xLostPro/DialogueMachine/pull/2) for version 1.1.1**, with passing Windows CI. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed. The original findings below describe the assessment baseline.
 
-**Stage 2 priority 1 is implemented**, with 158 passing regression checks: searchable variable management and insertion, typed logic suggestions, reference counts and locations, reference-aware rename, unused-variable deletion, cancel-safe drafts and one-step undo. The next feature is project-wide find and replace. These source changes do not imply a published release.
+**Stage 2 priorities 1 and 2 are implemented**, with 200 passing regression checks. Variable management includes searchable insertion, typed logic suggestions, reference counts and locations, reference-aware rename, unused-variable deletion, cancel-safe drafts and one-step undo. Project-wide find/replace includes literal matching across dialogue, responses, titles and notes, case/whole-word options, field/scene scope, highlighted previews, navigation to the exact editor match, selected/all replacement and one-step undo/redo. The next feature is searchable destinations and better navigation. These source changes do not imply a published release.
 
 The next work is Stage 2: improve the daily writing workflow, then add repeatable story testing and prove one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
 
@@ -80,7 +80,7 @@ Recommended first feature release after the patch:
 | Priority | Feature | What done looks like |
 | --- | --- | --- |
 | 1 — implemented | Variable management and reference assistance | Searchable manager and inline insertion, typed logic suggestions, reference counts/locations, rename across actions/requirements/inline text/starting values, unused deletion, cancel-safe changes and one-step undo |
-| 2 | Project-wide find and replace | Search dialogue, responses, titles and notes; preview matches; scope replacement; undo the complete operation |
+| 2 — implemented | Project-wide find and replace | Search dialogue, responses, titles and notes; highlighted match/replacement previews; case/whole-word options; field and scene scope; jump to matching text; replace selected/all with one-step undo/redo |
 | 3 | Destination search and better navigation | Type to find a destination; jump directly to incoming/outgoing scenes; filter outline by speaker/tag/diagnostic; retain a keyboard path |
 | 4 | Reusable authoring operations | Create a connected scene from a choice; copy/paste multiple scenes with remapped internal links; reusable scene/choice templates |
 | 5 | Better graph organization | Scene groups/chapters, multiple selection and group movement, clearer selected connections, optional minimap; incremental schema additions where possible |
@@ -133,4 +133,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Implement project-wide find/replace next, with match previews, replacement scope and one-step undo. Follow with searchable destinations and outline filters, using performance measurements to guide each change. Variable/reference management is implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. External modification detection should precede broader shared-file workflows.
+Implement searchable destinations and outline filters next, using performance measurements to guide each change. Variable/reference management and project-wide find/replace are implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. External modification detection should precede broader shared-file workflows.

@@ -11,6 +11,7 @@ Core/                         Platform-independent class library; no UI dependen
   DialogueEngine.cs           Conditions, validation, safe renaming, layout, simulation
   DialogueText.cs             Structural conditional and formatting checks for all text fields
   VariableStore.cs            Discovery, typed references, safe variable rename/delete
+  ProjectSearch.cs            Literal authoring search, scoped previews and replacement
   GraphGeometry.cs            Node dimensions shared by layout and drawing
   Templates.cs                Blank and lighthouse example stories
 UI/
@@ -22,6 +23,7 @@ UI/
   WelcomeView.axaml / .cs     Welcome cards, recent projects and recovery presentation
   ProjectFilePicker.cs        Native storage boundary, injectable for workflow checks
   MainWindow.Variables.cs     Searchable variable drafts, reference lists and insertion picker
+  MainWindow.Search.cs        Find/replace dialog, match previews and editor navigation
   GraphCanvas.cs              Graph drawing and pointer/keyboard interaction
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
@@ -55,6 +57,10 @@ Recovery discovery validates each record separately and skips both JSON syntax f
 Variable management clones the full project into a draft. Apply replaces it through `Mutate`, preserving scene selection and recording one undo entry; Cancel and Escape discard the draft. `VariableStore` counts runtime references in typed actions/requirements, dialogue and response substitutions, and inline conditions. Renames preserve the numeric type and starting value, reject collisions before mutation, and rewrite only actual references. Unprefixed conditions resolve direct known keys, then inventory, then affinity; renames qualify those aliases to preserve the binding. Text substitutions take precedence over numeric placeholders with the same legacy ID. Notes, ordinary prose, Event/Script IDs and unknown extension fields remain untouched. Deletion is limited to unused definitions. Discovery includes inline-only numeric variables, but excludes numeric-looking prose.
 
 Logic fields suggest IDs of the selected numeric type while allowing new IDs. The Content picker inserts a known substitution at the caret. Variable dialogs pass the interface scale to the shared dialog builder, which scales both content and window dimensions; other callers retain its default scale.
+
+Project search is a Core service over dialogue, response labels, displayed titles and writer's notes. It uses literal ordinal matching, optional case/whole-word rules, field selection and an optional scene index. Scene indices distinguish repairable duplicate IDs. Preview results retain original text and offsets, with at most 200 materialized matches but a complete count. Replace all scans the full scope once, applies nonoverlapping matches without re-searching inserted text, and only writes changed fields. Single replacement rejects a stale preview before writing. A fallback title is replaced by adding title metadata, preserving the scene ID. IDs, connections, logic, other metadata, starting values and extension data are untouched.
+
+The find/replace window commits pending typing before searching. Replacements apply immediately through `Mutate`, each with one history entry; Close/Escape discards only unapplied previews. The modal owner prevents concurrent editor changes. Go to match closes the window, clears a hiding outline filter, opens Content or Notes, and focuses/selects the matching text. Dialogs honor interface scale; the bounded match list keeps large result sets out of the visual tree.
 
 The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
 

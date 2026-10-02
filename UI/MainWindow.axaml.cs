@@ -68,7 +68,7 @@ public sealed partial class MainWindow : Window
         void AsyncClick(string name, Func<Task> action) => C<Button>(name).Click += async (_, _) => await action();
         Click("UndoButton", Undo); Click("RedoButton", Redo); AsyncClick("SaveButton", () => Save()); AsyncClick("PlayButton", () => Play());
         AsyncClick("HomeButton", () => ReturnHomeAsync());
-        AsyncClick("AddButton", AddScene); AsyncClick("VariablesButton", ShowVariables); Click("ProblemsButton", ToggleProblems);
+        AsyncClick("AddButton", AddScene); AsyncClick("VariablesButton", ShowVariables); AsyncClick("FindReplaceButton", ShowFindReplace); Click("ProblemsButton", ToggleProblems);
         Click("ContentTab", () => SwitchTab("Content")); Click("LogicTab", () => SwitchTab("Logic")); Click("NotesTab", () => SwitchTab("Notes"));
         Click("GraphButton", () => SetView(false)); Click("ScriptButton", () => SetView(true));
         Click("LayoutButton", () => { Mutate(() => DialogueEngine.AutoLayout(project)); Graph.Fit(); Status("Scenes arranged by their connections."); });
@@ -101,7 +101,8 @@ public sealed partial class MainWindow : Window
                 case Key.S: _ = Save(shift); break;
                 case Key.O: _ = Open(); break;
                 case Key.N: _ = NewProject(); break;
-                case Key.F: C<TextBox>("SearchBox").Focus(); C<TextBox>("SearchBox").SelectAll(); break;
+                case Key.F: if (shift) _ = ShowFindReplace(); else { C<TextBox>("SearchBox").Focus(); C<TextBox>("SearchBox").SelectAll(); } break;
+                case Key.H: _ = ShowFindReplace(); break;
                 case Key.Z: if (shift) Redo(); else Undo(); break;
                 case Key.Y: Redo(); break;
                 case Key.D: DuplicateScene(); break;
@@ -129,7 +130,7 @@ public sealed partial class MainWindow : Window
         recent.IsEnabled = preferences.RecentProjects.Count > 0;
         MenuItem ProjectItem(string label, Action action, string? shortcut = null) { var item = Item(label, action, shortcut); item.IsEnabled = hasProject; return item; }
         file.ItemsSource = new object[] { Item("_Home", () => _ = ReturnHomeAsync()), Item("_New project…", () => _ = NewProject(), "Ctrl+N"), Item("_Open project…", () => _ = Open(), "Ctrl+O"), recent, new Separator(), ProjectItem("_Save", () => _ = Save(), "Ctrl+S"), ProjectItem("Save _as…", () => _ = Save(true), "Ctrl+Shift+S"), new Separator(), ProjectItem("Export website / game JSON…", () => _ = ExportWeb()), ProjectItem("Export script…", () => _ = ExportScript()), ProjectItem("Export graph image…", () => _ = ExportGraph()), new Separator(), Item("Recovery saves…", () => _ = ShowRecoveries()), ProjectItem("Project details…", () => _ = ProjectDetails()), new Separator(), Item("E_xit", Close) };
-        var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
+        var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
         var view = new MenuItem { Header = "_View", ItemsSource = new object[] { ProjectItem("Story graph", () => SetView(false)), ProjectItem("Script", () => SetView(true)), ProjectItem("Fit story", Graph.Fit, "Ctrl+0"), ProjectItem("Diagnostics", ToggleProblems), new Separator(), Item("Appearance & accessibility…", () => _ = ShowSettings()) } };
         var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems) } };
         edit.IsEnabled = hasProject; story.IsEnabled = hasProject;
