@@ -13,6 +13,7 @@ Core/                         Platform-independent class library; no UI dependen
   VariableStore.cs            Discovery, typed references, safe variable rename/delete
   ProjectSearch.cs            Literal authoring search, scoped previews and replacement
   SceneNavigation.cs          Indexed destinations, connections and outline filtering
+  AuthoringOperations.cs      Detached scene copies, remapped paste and reusable templates
   GraphGeometry.cs            Node dimensions shared by layout and drawing
   Templates.cs                Blank and lighthouse example stories
 UI/
@@ -26,6 +27,7 @@ UI/
   MainWindow.Variables.cs     Searchable variable drafts, reference lists and insertion picker
   MainWindow.Search.cs        Find/replace dialog, match previews and editor navigation
   MainWindow.Navigation.cs    Searchable destination picker, filters and connection jumps
+  MainWindow.Authoring.cs     Connected scenes, scene clipboard and template dialogs
   GraphCanvas.cs              Graph drawing and pointer/keyboard interaction
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
@@ -67,6 +69,10 @@ The find/replace window commits pending typing before searching. Replacements ap
 Scene navigation snapshots titles, IDs, speakers, comma-separated tags, search text and diagnostic flags when diagnostics refresh after a commit or document replacement. Incoming/outgoing indices use the same null/blank choice fallback as the runtime. Filtering and destination search use this snapshot without validation, serialization or document mutation on each keystroke. Destination summaries and jumps resolve IDs through a dictionary; opening the picker builds its options once and materializes at most 200 results with a complete count. Missing current targets stay visible, while unset/fallback and `[EXIT]` remain explicit choices. Choosing a destination applies through `Mutate` with one undo entry; typing, Cancel and Escape do not change connections.
 
 Outline text, speaker, tag and diagnostic filters intersect. Filter options refresh after edits and undo/redo; opening another project clears them. A scene jump clears filters only when they hide its destination. Notes lists indexed outgoing links and deduplicated incoming sources, including inherited choice targets; endings, unset and missing links have labels instead of jump buttons. The outline header scrolls in compact windows while retaining a scene list and a visible clear-filter command.
+
+Authoring operations live in Core. `SceneBundle` stores an immutable JSON snapshot of a selected scene set. Paste validates capacity and positions before mutation, assigns unique scene IDs and fresh choice IDs, remaps internal choice/continue/self/cycle links, and preserves relative positions. External, missing, ending and blank targets remain explicit; existing scenes, entry points and unknown fields stay intact. The editor's scene clipboard lasts for the window's app session, including project changes; it is separate from the OS text clipboard. Duplication uses the same service. Creating a connected scene records the new scene and chosen response destination together through `Mutate`.
+
+Scene and choice templates are additive desktop root collections in format version 1, saved with the project and included in recovery/history. Website exports omit these collections. A scene template captures content, metadata, shop data, delivery and logic; self-links and endings survive, while external destinations become unset. Choice templates capture responses, visibility, conditions and actions, and insert with fresh identity and a continue fallback. Template insertion and deletion each form one history entry; previewing, searching and closing do not mutate the document. Variable reference counts, deletion guards and renames include template content. Alias resolution considers each template in its prospective insertion context, while inactive template variables never enter runtime discovery. Templates and copied scenes retain variable IDs but do not transfer root starting values or text substitutions to another project.
 
 The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
 

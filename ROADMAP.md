@@ -8,7 +8,7 @@ This is a proposed order of work based on the repository, not an existing releas
 
 The initial recommendation was a focused reliability patch. **Stage 1 is merged in [PR #2](https://github.com/xLostPro/DialogueMachine/pull/2) for version 1.1.1**, with passing Windows CI. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed. The original findings below describe the assessment baseline.
 
-**Stage 2 priorities 1–3 are implemented**, with 242 passing regression checks. Variable management and project-wide find/replace are merged in PRs #3 and #4. Destination navigation now includes search by title/ID, explicit fallback/unset/ending choices, one-step connection undo, incoming/outgoing jumps, and combined text/speaker/tag/diagnostic outline filters. The next feature is reusable authoring operations. These source changes do not imply a published release.
+**Stage 2 priorities 1–4 are implemented**, with 318 passing regression checks. Variable management, project-wide find/replace and destination navigation are merged in PRs #3, #4 and #5, with passing Windows CI. Reusable authoring operations add connected-scene creation, multi-scene copying/pasting with internal links remapped, project-owned scene/choice templates, template-aware variable references and one-step undo. The next feature is better graph organization. These source changes do not imply a published release.
 
 The next work is Stage 2: improve the daily writing workflow, then add repeatable story testing and prove one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
 
@@ -82,7 +82,7 @@ Recommended first feature release after the patch:
 | 1 — implemented | Variable management and reference assistance | Searchable manager and inline insertion, typed logic suggestions, reference counts/locations, rename across actions/requirements/inline text/starting values, unused deletion, cancel-safe changes and one-step undo |
 | 2 — implemented | Project-wide find and replace | Search dialogue, responses, titles and notes; highlighted match/replacement previews; case/whole-word options; field and scene scope; jump to matching text; replace selected/all with one-step undo/redo |
 | 3 — implemented | Destination search and better navigation | Search destinations by title/ID; retain missing/fallback/unset/ending values; undo connections; jump to incoming/outgoing scenes; intersect outline text/speaker/tag/diagnostic filters; keyboard selection and compact layouts |
-| 4 | Reusable authoring operations | Create a connected scene from a choice; copy/paste multiple scenes with remapped internal links; reusable scene/choice templates |
+| 4 — implemented | Reusable authoring operations | Create a connected scene from a choice; multi-scene copying/pasting with fresh IDs and remapped internal links; saved scene/choice templates with preview, insertion, deletion and variable-reference safety; single-step undo/redo |
 | 5 | Better graph organization | Scene groups/chapters, multiple selection and group movement, clearer selected connections, optional minimap; incremental schema additions where possible |
 | 6 | Export improvements | Full-story image export independent of viewport; readable script export options for conditions, actions and notes |
 
@@ -143,4 +143,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Implement reusable authoring operations next: create a connected scene from a choice, then scene/choice templates and multi-scene copying with remapped internal links. Variable/reference management, project-wide find/replace and destination navigation are implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. External modification detection should precede broader shared-file workflows.
+Implement better graph organization next: multiple selection and group movement, clearer selected connections, then scene groups/chapters and an optional minimap. Variable/reference management, project-wide find/replace, destination navigation and reusable authoring operations are implemented and Stage 1 is merged; release publishing and native Mac/Linux verification remain separate work. Scene copying currently selects sets in a dedicated dialog; the next batch should bring multiple selection into the graph itself. External modification detection should precede broader shared-file workflows.

@@ -14,6 +14,8 @@ public sealed class DialogueProject
     public List<DialogueState> ListOfCharacterStates { get; set; } = [];
     public Dictionary<string, int> InitialVariables { get; set; } = [];
     public Dictionary<string, string> TextVariables { get; set; } = new() { ["player_name"] = "Traveller", ["npc_name"] = "Mara" };
+    public List<SceneTemplate> SceneTemplates { get; set; } = [];
+    public List<ChoiceTemplate> ChoiceTemplates { get; set; } = [];
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     [JsonIgnore] public string Entry => EntryStateId ?? ListOfCharacterStates.FirstOrDefault()?.State ?? "";
 }
@@ -70,5 +72,17 @@ public sealed class Requirement
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 public enum VisibilityMode { Hide, Disable, Always }
+public sealed class SceneTemplate
+{
+    public string Name { get; set; } = "";
+    public DialogueState Scene { get; set; } = new();
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
+}
+public sealed class ChoiceTemplate
+{
+    public string Name { get; set; } = "";
+    public Choice Choice { get; set; } = new();
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
+}
 public sealed record Diagnostic(string StateId, string Severity, string Message);
 public sealed record RecoveryRecord(string? FilePath, DateTimeOffset SavedAt, DialogueProject Project);
