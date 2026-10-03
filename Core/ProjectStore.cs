@@ -22,8 +22,12 @@ public static class ProjectStore
             throw new InvalidDataException($"Project format {project.FormatVersion} is not supported. This app supports format {DialogueProject.CurrentFormatVersion}. Use a compatible version of Dialogue Machine to open this file.");
         if (project.ListOfCharacterStates is null || project.ListOfCharacterStates.Count > 10000)
             throw new InvalidDataException("The scene list is missing or exceeds 10,000 scenes.");
-        project.InitialVariables ??= []; project.TextVariables ??= [];
-        foreach (var s in project.ListOfCharacterStates)
+        project.InitialVariables ??= []; project.TextVariables ??= []; project.SceneTemplates ??= []; project.ChoiceTemplates ??= [];
+        foreach (var template in project.SceneTemplates)
+            if (template is null || string.IsNullOrWhiteSpace(template.Name) || template.Scene is null) throw new InvalidDataException("Each scene template needs a name and scene.");
+        foreach (var template in project.ChoiceTemplates)
+            if (template is null || string.IsNullOrWhiteSpace(template.Name) || template.Choice is null) throw new InvalidDataException("Each choice template needs a name and choice.");
+        foreach (var s in project.ListOfCharacterStates.Concat(project.SceneTemplates.Select(t => t.Scene)).Concat(project.ChoiceTemplates.Select(t => new DialogueState { Choices = [t.Choice] })))
         {
             if (s is null || string.IsNullOrWhiteSpace(s.State)) throw new InvalidDataException("Each scene needs a non-empty ID.");
             s.Text ??= ""; s.Metadata ??= []; s.Choices ??= []; s.DefaultAfterActions ??= []; s.ShopData ??= new();

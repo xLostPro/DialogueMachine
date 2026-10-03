@@ -133,7 +133,8 @@ public sealed partial class MainWindow : Window
         recent.IsEnabled = preferences.RecentProjects.Count > 0;
         MenuItem ProjectItem(string label, Action action, string? shortcut = null) { var item = Item(label, action, shortcut); item.IsEnabled = hasProject; return item; }
         file.ItemsSource = new object[] { Item("_Home", () => _ = ReturnHomeAsync()), Item("_New project…", () => _ = NewProject(), "Ctrl+N"), Item("_Open project…", () => _ = Open(), "Ctrl+O"), recent, new Separator(), ProjectItem("_Save", () => _ = Save(), "Ctrl+S"), ProjectItem("Save _as…", () => _ = Save(true), "Ctrl+Shift+S"), new Separator(), ProjectItem("Export website / game JSON…", () => _ = ExportWeb()), ProjectItem("Export script…", () => _ = ExportScript()), ProjectItem("Export graph image…", () => _ = ExportGraph()), new Separator(), Item("Recovery saves…", () => _ = ShowRecoveries()), ProjectItem("Project details…", () => _ = ProjectDetails()), new Separator(), Item("E_xit", Close) };
-        var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
+        var paste = Item("Paste scenes", () => _ = PasteScenes()); paste.IsEnabled = copiedScenes is not null;
+        var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), Item("Copy scenes…", () => _ = CopyScenes()), paste, Item("Scene & choice templates…", () => _ = ShowTemplates()), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
         var view = new MenuItem { Header = "_View", ItemsSource = new object[] { ProjectItem("Story graph", () => SetView(false)), ProjectItem("Script", () => SetView(true)), ProjectItem("Fit story", Graph.Fit, "Ctrl+0"), ProjectItem("Diagnostics", ToggleProblems), new Separator(), Item("Appearance & accessibility…", () => _ = ShowSettings()) } };
         var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems) } };
         edit.IsEnabled = hasProject; story.IsEnabled = hasProject;
@@ -248,7 +249,12 @@ public sealed partial class MainWindow : Window
     private void DuplicateScene()
     {
         if (selected is null) return;
-        Mutate(() => { var copy = ProjectStore.Clone(new DialogueProject { ListOfCharacterStates = [selected] }).ListOfCharacterStates[0]; var old = copy.State; copy.State = "scene_" + Guid.NewGuid().ToString("N")[..8]; copy.Metadata["title"] = selected.Title + " (copy)"; copy.VisualX += 45; copy.VisualY += 65; foreach (var c in copy.Choices) { c.InternalId = Guid.NewGuid(); if (c.NextStateId == old) c.NextStateId = copy.State; } if (copy.DefaultNextId == old) copy.DefaultNextId = copy.State; project.ListOfCharacterStates.Add(copy); selected = copy; });
+        _ = AuthoringAction(() => Mutate(() =>
+        {
+            var source = selected;
+            var copy = AuthoringOperations.PasteScenes(project, AuthoringOperations.CopyScenes([source]), source.VisualX + 45, source.VisualY + 65)[0];
+            copy.Metadata["title"] = source.Title + " (copy)"; selected = copy;
+        }));
     }
     private async Task RenameScene()
     {

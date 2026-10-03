@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace DialogueMachine.Core;
 
-public sealed record VariableReference(string StateId, string Field);
+public sealed record VariableReference(string StateId, string Field, bool IsTemplate = false);
 
 public static class VariableStore
 {
@@ -13,6 +13,12 @@ public static class VariableStore
     private static IEnumerable<DialogueAction> Actions(DialogueState s) => s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions));
     private static string ResolveConditionKey(string id, IReadOnlySet<string> keys)
         => keys.Contains(id) ? id : keys.Contains("inv:" + id) ? "inv:" + id : "aff:" + id;
+    private static IEnumerable<(DialogueState Scene, string Label)> TemplateScenes(DialogueProject p)
+        => p.SceneTemplates.Select(t => (t.Scene, "Scene template: " + t.Name)).Concat(p.ChoiceTemplates.Select(t => (new DialogueState { Choices = [t.Choice] }, "Choice template: " + t.Name)));
+    private static DialogueProject TemplateContext(DialogueProject p, DialogueState scene) => new()
+    {
+        ListOfCharacterStates = p.ListOfCharacterStates.Concat([scene]).ToList(), InitialVariables = p.InitialVariables, TextVariables = p.TextVariables
+    };
 
     public static IEnumerable<string> DiscoverNumeric(DialogueProject p)
     {
@@ -67,33 +73,49 @@ public static class VariableStore
                     if (a.Type is "Affinity" or "Inventory" && DialogueEngine.Key(a.Type, a.TargetId) == key) references.Add(new(s.State, $"Choice {i + 1} action"));
             }
         }
+        foreach (var (scene, label) in TemplateScenes(p))
+        {
+            // A template is inactive until inserted. Resolve its aliases in the context
+            // of that insertion without introducing its keys into the live runtime.
+            var context = TemplateContext(p, scene);
+            // Template scene IDs may equal a live scene ID; isolate its references.
+            var isolated = new DialogueProject { ListOfCharacterStates = [scene], InitialVariables = DiscoverNumeric(context).ToDictionary(k => k, _ => 0), TextVariables = p.TextVariables };
+            foreach (var reference in References(isolated, key, textVariable)) references.Add(new(label, reference.Field, true));
+        }
         return references;
     }
 
     public static void Rename(DialogueProject p, string oldKey, string newKey, bool textVariable = false)
     {
-        var known = DiscoverNumeric(p).ToHashSet(StringComparer.Ordinal);
+        var liveKnown = DiscoverNumeric(p).ToHashSet(StringComparer.Ordinal);
+        var templateScopes = TemplateScenes(p).Select(t => (t.Scene, Known: DiscoverNumeric(TemplateContext(p, t.Scene)).ToHashSet(StringComparer.Ordinal))).ToList();
+        var scopes = p.ListOfCharacterStates.Select(s => (Scene: s, Known: liveKnown)).Concat(templateScopes).ToList();
+        var known = templateScopes.SelectMany(s => s.Known).Concat(liveKnown).ToHashSet(StringComparer.Ordinal);
         if (!(textVariable ? p.TextVariables.ContainsKey(oldKey) : known.Contains(oldKey))) throw new ArgumentException("The variable does not exist.");
         if (!(textVariable ? ValidTextId(newKey) : ValidNumericId(newKey))) throw new ArgumentException("Use a valid variable ID. Numeric IDs start with aff: or inv:; text IDs contain letters, digits, dots, underscores or hyphens.");
         if (!textVariable && (oldKey.StartsWith("aff:", StringComparison.Ordinal) || oldKey.StartsWith("inv:", StringComparison.Ordinal)) && oldKey[..4] != newKey[..4]) throw new ArgumentException("Renaming keeps the variable's affinity or inventory type.");
         if (oldKey == newKey) return;
         if (known.Contains(newKey) || p.TextVariables.ContainsKey(newKey)) throw new ArgumentException("That variable ID already exists.");
-        var renamedKeys = new HashSet<string>(known, StringComparer.Ordinal); renamedKeys.Remove(oldKey); renamedKeys.Add(newKey);
-        string Rewrite(string value)
+        var renamedScopes = scopes.Select(s => s.Known).Distinct().ToDictionary(keys => keys, keys =>
         {
+            var renamed = new HashSet<string>(keys, StringComparer.Ordinal); renamed.Remove(oldKey); renamed.Add(newKey); return renamed;
+        });
+        string Rewrite(string value, HashSet<string> scopeKeys)
+        {
+            var renamedKeys = renamedScopes[scopeKeys];
             value = Substitutions.Replace(value, m => m.Groups[1].Value == oldKey && (textVariable || !p.TextVariables.ContainsKey(oldKey)) ? "{" + newKey + "}" : m.Value);
             return textVariable ? value : Conditions.Replace(value, m =>
             {
-                var id = m.Groups[2].Value; var binding = ResolveConditionKey(id, known);
+                var id = m.Groups[2].Value; var binding = ResolveConditionKey(id, scopeKeys);
                 if (binding == oldKey) return m.Groups[1].Value + newKey;
                 // Introducing an inventory ID must not redirect another variable's bare alias.
                 return ResolveConditionKey(id, renamedKeys) != binding ? m.Groups[1].Value + binding : m.Value;
             });
         }
-        foreach (var s in p.ListOfCharacterStates)
+        foreach (var (s, scopeKeys) in scopes)
         {
-            s.Text = Rewrite(s.Text);
-            foreach (var c in s.Choices) c.ButtonText = Rewrite(c.ButtonText);
+            s.Text = Rewrite(s.Text, scopeKeys);
+            foreach (var c in s.Choices) c.ButtonText = Rewrite(c.ButtonText, scopeKeys);
             if (textVariable) continue;
             var target = newKey[4..];
             foreach (var a in Actions(s))

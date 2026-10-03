@@ -42,8 +42,8 @@ public sealed partial class MainWindow
             var list = Ui.Stack(Ui.Text(key, 22), Ui.Text($"{references.Count} {(references.Count == 1 ? "reference" : "references")}. Changes apply together when you choose Apply changes.", 12, true));
             foreach (var reference in references)
             {
-                var scene = draft.ListOfCharacterStates.First(s => s.State == reference.StateId);
-                list.Children.Add(Ui.Text(scene.Title + " [" + reference.StateId + "] · " + reference.Field, 13));
+                var scene = reference.IsTemplate ? null : draft.ListOfCharacterStates.First(s => s.State == reference.StateId);
+                list.Children.Add(Ui.Text((scene is null ? reference.StateId : scene.Title + " [" + reference.StateId + "]") + " · " + reference.Field, 13));
             }
             Window? details = null; list.Children.Add(Ui.Button("Close", () => details!.Close())); list.Margin = new Thickness(24);
             details = Ui.Dialog(window!, "Variable references", new ScrollViewer { Content = list }, 580, 450, preferences.Scale);

@@ -71,9 +71,12 @@ public sealed partial class MainWindow
             var up = Ui.Button("↑", () => Mutate(() => { if (index > 0) (s.Choices[index - 1], s.Choices[index]) = (s.Choices[index], s.Choices[index - 1]); }), "subtle"); up.IsEnabled = i > 0; AutomationProperties.SetName(up, $"Move choice {i + 1} up"); Grid.SetColumn(up, 1); top.Children.Add(up);
             var down = Ui.Button("↓", () => Mutate(() => { if (index < s.Choices.Count - 1) (s.Choices[index + 1], s.Choices[index]) = (s.Choices[index], s.Choices[index + 1]); }), "subtle"); down.IsEnabled = i < s.Choices.Count - 1; AutomationProperties.SetName(down, $"Move choice {i + 1} down"); Grid.SetColumn(down, 2); top.Children.Add(down);
             var remove = Ui.Button("×", () => Mutate(() => s.Choices.Remove(choice)), "subtle"); AutomationProperties.SetName(remove, $"Remove choice {i + 1}"); Grid.SetColumn(remove, 3); top.Children.Add(remove);
-            Editor.Children.Add(Ui.Card(Ui.Stack(top, Ui.Field("Player response", label), Ui.Field("Go to", Destination(s, choice.NextStateId, v => choice.NextStateId = v, index))), 12));
+            var create = Ui.AsyncButton("New scene…", () => CreateSceneFromChoice(s, choice), "subtle"); AutomationProperties.SetName(create, $"Create scene from choice {i + 1}");
+            var saveTemplate = Ui.AsyncButton("Save template…", () => SaveChoiceTemplate(choice), "subtle"); AutomationProperties.SetName(saveTemplate, $"Save choice {i + 1} template");
+            Editor.Children.Add(Ui.Card(Ui.Stack(top, Ui.Field("Player response", label), Ui.Field("Go to", Destination(s, choice.NextStateId, v => choice.NextStateId = v, index)), Ui.Row(create, saveTemplate)), 12));
         }
         Editor.Children.Add(Ui.Button("＋  Add a player choice", () => Mutate(() => s.Choices.Add(new Choice())), "primary"));
+        Editor.Children.Add(Ui.AsyncButton("Add choice from template…", () => ShowTemplates(true), "subtle"));
         Editor.Children.Add(Ui.Text("Tip: connect scenes by dragging an output dot onto another scene in the graph.", 11, true));
     }
     private void BuildLogicEditor(DialogueState s)
@@ -136,6 +139,8 @@ public sealed partial class MainWindow
         Editor.Children.Add(Ui.Field("Tags (comma separated)", EditText(s.Metadata.GetValueOrDefault("tags", ""), v => s.Metadata["tags"] = v)));
         Editor.Children.Add(Ui.Text("Notes and tags are saved in scene metadata. They won't appear in dialogue.", 12, true));
         Editor.Children.Add(Ui.Row(Ui.Button("Duplicate scene", DuplicateScene), Ui.AsyncButton("Delete scene…", DeleteScene)));
+        Editor.Children.Add(Ui.AsyncButton("Save scene template…", () => SaveSceneTemplate(s), "subtle"));
+        Editor.Children.Add(Ui.AsyncButton("Scene & choice templates…", () => ShowTemplates(), "subtle"));
         Editor.Children.Add(Ui.AsyncButton("▶  Play from this scene", () => Play(true), "play"));
         AddSceneConnections(Editor, s);
     }
