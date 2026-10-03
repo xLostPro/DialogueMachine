@@ -10,23 +10,52 @@ namespace DialogueMachine.UI;
 public sealed class GraphCanvas : Control
 {
     public DialogueProject Project { get; set; } = Templates.Blank();
-    public DialogueState? Selected { get; set; }
-    public event Action<DialogueState>? SceneSelected;
+    public DialogueState? Selected { get; private set; }
+    private readonly HashSet<DialogueState> selection = [];
+    public IReadOnlyList<DialogueState> SelectedScenes => Project.ListOfCharacterStates.Where(selection.Contains).ToList();
+    private DialogueState? keyboardScene;
+    public event Action? SelectionChanged;
+    public event Action? InteractionStarted;
     public event Action? Changed;
     public event Action<double>? ZoomChanged;
     public double Zoom { get; private set; } = .85;
     private Vector offset = new(30, 30);
     private Point last;
-    private bool panning, moved;
-    private DialogueState? dragging, linkSource;
+    private bool panning, dragging;
+    private Dictionary<DialogueState, Point>? moveOrigins;
+    private readonly HashSet<Key> moveKeys = [];
+    private Point moveStart;
+    private Point? marqueeStart, marqueeEnd;
+    private HashSet<DialogueState> marqueeSelection = [];
+    private DialogueState? linkSource;
     private Choice? linkChoice;
     private Point linkEnd;
-    public GraphCanvas() { Focusable = true; ClipToBounds = true; }
+    public GraphCanvas()
+    {
+        Focusable = true; ClipToBounds = true;
+        LostFocus += (_, _) => { FinishInteraction(); InvalidateVisual(); };
+        GotFocus += (_, _) => { keyboardScene ??= Selected ?? Project.ListOfCharacterStates.FirstOrDefault(); InvalidateVisual(); };
+    }
     private const double NodeWidth = GraphGeometry.NodeWidth;
     private static double NodeHeight(DialogueState s) => GraphGeometry.NodeHeight(s);
     private static Rect BoundsOf(DialogueState s) => new(s.VisualX, s.VisualY, NodeWidth, NodeHeight(s));
     private Point World(Point p) => new((p.X - offset.X) / Zoom, (p.Y - offset.Y) / Zoom);
     public Point WorldToViewport(Point point) => new(point.X * Zoom + offset.X, point.Y * Zoom + offset.Y);
+    public void SetSelection(IEnumerable<DialogueState> scenes, DialogueState? active)
+    {
+        var available = Project.ListOfCharacterStates.ToHashSet();
+        selection.Clear(); selection.UnionWith(scenes.Where(available.Contains));
+        Selected = active is not null && selection.Contains(active) ? active : SelectedScenes.FirstOrDefault();
+        if (keyboardScene is null || !Project.ListOfCharacterStates.Contains(keyboardScene)) keyboardScene = Selected;
+        InvalidateVisual();
+    }
+    private void Select(IEnumerable<DialogueState> scenes, DialogueState? active)
+    {
+        // Materialize before replacing the set; callers may enumerate the current selection.
+        SetSelection(scenes.ToList(), active); SelectionChanged?.Invoke();
+    }
+    public string? ConnectionHighlight(DialogueState source, DialogueState target)
+        => selection.Contains(source) ? "GraphSelection" : selection.Contains(target) ? "GraphIncoming" : null;
     public override void Render(DrawingContext dc)
     {
         base.Render(dc);
@@ -36,11 +65,15 @@ public sealed class GraphCanvas : Control
             for (var y = offset.Y % grid; y < Bounds.Height; y += grid) dc.DrawEllipse(Ui.Brush("GraphGrid"), null, new Point(x, y), .9, .9);
         using (dc.PushTransform(Matrix.CreateScale(Zoom, Zoom) * Matrix.CreateTranslation(offset)))
         {
-            foreach (var s in Project.ListOfCharacterStates)
-            {
-                for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false);
-                if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true);
-            }
+            var destinations = new Dictionary<string, DialogueState>(StringComparer.Ordinal);
+            foreach (var scene in Project.ListOfCharacterStates) destinations.TryAdd(scene.State, scene);
+            // Draw highlighted connections last so they stay visible at crossings.
+            foreach (var highlighted in new[] { false, true })
+                foreach (var s in Project.ListOfCharacterStates)
+                {
+                    for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false, destinations, highlighted);
+                    if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true, destinations, highlighted);
+                }
             foreach (var s in Project.ListOfCharacterStates) DrawNode(dc, s);
             if (linkSource is not null)
             {
@@ -48,27 +81,34 @@ public sealed class GraphCanvas : Control
                 var start = new Point(linkSource.VisualX + NodeWidth, linkSource.VisualY + (index < 0 ? NodeHeight(linkSource) - 17 : 135 + index * 34));
                 Curve(dc, start, linkEnd, Ui.Brush("MintInk"), false);
             }
+            if (marqueeStart is { } a && marqueeEnd is { } b)
+                dc.DrawRectangle(null, new Pen(Ui.Brush("GraphSelection"), 2 / Zoom, new DashStyle([4, 3], 0)), new Rect(a, b));
         }
         if (Project.ListOfCharacterStates.Count == 0) DrawText(dc, "Your story starts with a scene.\nChoose Add scene to begin.", new(60, 100), 20, "Muted", 420, 100);
     }
-    private void DrawLink(DrawingContext dc, DialogueState source, string? targetId, Point start, bool fallback)
+    private void DrawLink(DrawingContext dc, DialogueState source, string? targetId, Point start, bool fallback, Dictionary<string, DialogueState> destinations, bool highlighted)
     {
-        var target = Project.ListOfCharacterStates.FirstOrDefault(s => s.State == targetId);
-        if (target is null) return;
-        Curve(dc, start, new(target.VisualX, target.VisualY + 35), Ui.Brush(source == Selected ? "Accent" : "Line"), fallback);
+        if (targetId is null || !destinations.TryGetValue(targetId, out var target)) return;
+        var highlight = ConnectionHighlight(source, target);
+        if ((highlight is not null) != highlighted) return;
+        Curve(dc, start, new(target.VisualX, target.VisualY + 35), Ui.Brush(highlight ?? "GraphLink"), fallback, highlighted);
     }
-    private static void Curve(DrawingContext dc, Point a, Point b, IBrush brush, bool dashed)
+    private static void Curve(DrawingContext dc, Point a, Point b, IBrush brush, bool dashed, bool highlighted = false)
     {
         var geometry = new StreamGeometry();
         using (var g = geometry.Open()) { g.BeginFigure(a, false); var length = Math.Max(65, Math.Abs(b.X - a.X) * .45); g.CubicBezierTo(new(a.X + length, a.Y), new(b.X - length, b.Y), b); g.EndFigure(false); }
-        dc.DrawGeometry(null, new Pen(brush, 2, dashed ? new DashStyle([4, 4], 0) : null), geometry);
-        dc.DrawLine(new Pen(brush, 2), new(b.X - 7, b.Y - 4), b); dc.DrawLine(new Pen(brush, 2), new(b.X - 7, b.Y + 4), b);
+        if (highlighted) dc.DrawGeometry(null, new Pen(Ui.Brush("Base"), 7), geometry);
+        var pen = new Pen(brush, highlighted ? 3.5 : 1.5, dashed ? new DashStyle([4, 4], 0) : null);
+        dc.DrawGeometry(null, pen, geometry);
+        var arrow = new Pen(brush, highlighted ? 3.5 : 1.5);
+        dc.DrawLine(arrow, new(b.X - 9, b.Y - 5), b); dc.DrawLine(arrow, new(b.X - 9, b.Y + 5), b);
     }
     private void DrawNode(DrawingContext dc, DialogueState s)
     {
-        var rect = BoundsOf(s); var active = s == Selected; var isEntry = s.State == Project.Entry;
-        dc.DrawRectangle(Ui.Brush("Panel"), new Pen(Ui.Brush(active ? "Accent" : "Line"), active ? 2 : 1), rect, 11, 11);
-        dc.DrawRectangle(Ui.Brush(active ? "Selection" : "Raised"), null, new Rect(rect.X + 1, rect.Y + 1, rect.Width - 2, 64), 10, 10);
+        var rect = BoundsOf(s); var active = s == Selected; var included = selection.Contains(s); var isEntry = s.State == Project.Entry;
+        dc.DrawRectangle(Ui.Brush("Panel"), new Pen(Ui.Brush(included ? "GraphSelection" : "Line"), active ? 3 : included ? 2 : 1), rect, 11, 11);
+        dc.DrawRectangle(Ui.Brush(included ? "Selection" : "Raised"), null, new Rect(rect.X + 1, rect.Y + 1, rect.Width - 2, 64), 10, 10);
+        if (IsFocused && s == keyboardScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphIncoming"), 1.5 / Zoom, new DashStyle([3, 3], 0)), rect.Inflate(5), 13, 13);
         DrawText(dc, (isEntry ? "◆  START  /  " : "●  ") + s.Speaker.ToUpperInvariant(), new(rect.X + 16, rect.Y + 12), 10, isEntry ? "MintInk" : "Muted", 236, 16);
         DrawText(dc, s.Title, new(rect.X + 16, rect.Y + 31), 15, "Ink", 236, 24, true);
         var preview = DialogueEngine.PlainText(s.Text).Replace('\n', ' ');
@@ -94,43 +134,87 @@ public sealed class GraphCanvas : Control
     }
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        base.OnPointerPressed(e); Focus(); var point = e.GetPosition(this); var world = World(point); var props = e.GetCurrentPoint(this).Properties;
+        base.OnPointerPressed(e); FinishInteraction(); InteractionStarted?.Invoke(); Focus();
+        var point = e.GetPosition(this); var world = World(point); var props = e.GetCurrentPoint(this).Properties;
+        var extend = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta | KeyModifiers.Shift)) != 0;
         var node = Project.ListOfCharacterStates.LastOrDefault(s => BoundsOf(s).Inflate(10).Contains(world));
         if (props.IsLeftButtonPressed && node is not null)
         {
-            Selected = node; SceneSelected?.Invoke(node);
-            if (Math.Abs(world.X - (node.VisualX + NodeWidth)) < 12)
+            keyboardScene = node;
+            if (extend)
             {
-                var index = (int)Math.Round((world.Y - node.VisualY - 135) / 34);
-                linkSource = node; linkChoice = index >= 0 && index < node.Choices.Count && Math.Abs(world.Y - node.VisualY - 135 - index * 34) < 13 ? node.Choices[index] : null;
-                linkEnd = world;
+                var next = new HashSet<DialogueState>(selection);
+                if (!next.Remove(node)) next.Add(node);
+                Select(next, next.Contains(node) ? node : Selected);
             }
-            else dragging = node;
+            else
+            {
+                Select(selection.Contains(node) ? SelectedScenes : [node], node);
+                var index = (int)Math.Round((world.Y - node.VisualY - 135) / 34);
+                var choicePort = index >= 0 && index < node.Choices.Count && Math.Abs(world.Y - node.VisualY - 135 - index * 34) < 13;
+                var continuePort = Math.Abs(world.Y - node.VisualY - NodeHeight(node) + 17) < 13;
+                if (Math.Abs(world.X - (node.VisualX + NodeWidth)) < 12 && (choicePort || continuePort))
+                {
+                    linkSource = node; linkChoice = choicePort ? node.Choices[index] : null; linkEnd = world;
+                }
+                else { dragging = true; StartMove(); moveStart = point; }
+            }
+        }
+        else if (props.IsLeftButtonPressed && extend)
+        {
+            marqueeStart = marqueeEnd = world; marqueeSelection = new(selection);
         }
         else if (props.IsLeftButtonPressed || props.IsMiddleButtonPressed) panning = true;
-        last = point; moved = false; e.Pointer.Capture(this); InvalidateVisual(); e.Handled = true;
+        else return;
+        last = point; e.Pointer.Capture(this); InvalidateVisual(); e.Handled = true;
     }
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e); var p = e.GetPosition(this); var delta = p - last;
-        if (dragging is not null) { dragging.VisualX += delta.X / Zoom; dragging.VisualY += delta.Y / Zoom; moved |= delta.X != 0 || delta.Y != 0; }
+        if (dragging && moveOrigins is not null)
+        {
+            var total = (p - moveStart) / Zoom;
+            foreach (var (scene, origin) in moveOrigins) { scene.VisualX = origin.X + total.X; scene.VisualY = origin.Y + total.Y; }
+        }
         if (panning) offset += delta;
         if (linkSource is not null) linkEnd = World(p);
+        if (marqueeStart is not null) marqueeEnd = World(p);
         last = p;
-        if (dragging is not null || panning || linkSource is not null) InvalidateVisual();
+        if (dragging || panning || linkSource is not null || marqueeStart is not null) InvalidateVisual();
     }
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
         base.OnPointerReleased(e);
+        var connectionChanged = false;
         if (linkSource is not null)
         {
             var target = Project.ListOfCharacterStates.LastOrDefault(s => BoundsOf(s).Contains(World(e.GetPosition(this))));
-            if (target is not null) { if (linkChoice is null) linkSource.DefaultNextId = target.State; else linkChoice.NextStateId = target.State; moved = true; }
+            if (target is not null)
+            {
+                connectionChanged = (linkChoice is null ? linkSource.DefaultNextId : linkChoice.NextStateId) != target.State;
+                if (linkChoice is null) linkSource.DefaultNextId = target.State; else linkChoice.NextStateId = target.State;
+            }
         }
-        dragging = null; linkSource = null; linkChoice = null; panning = false; e.Pointer.Capture(null);
-        if (moved) Changed?.Invoke(); InvalidateVisual();
+        if (marqueeStart is { } a)
+        {
+            var rectangle = new Rect(a, World(e.GetPosition(this)));
+            var next = Project.ListOfCharacterStates.Where(s => marqueeSelection.Contains(s) || rectangle.Intersects(BoundsOf(s))).ToList();
+            marqueeStart = marqueeEnd = null;
+            Select(next, Selected);
+        }
+        FinishInteraction(); e.Pointer.Capture(null);
+        if (connectionChanged) Changed?.Invoke(); InvalidateVisual();
     }
-    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e) { dragging = null; linkSource = null; linkChoice = null; panning = false; base.OnPointerCaptureLost(e); }
+    private void StartMove() => moveOrigins ??= SelectedScenes.ToDictionary(s => s, s => new Point(s.VisualX, s.VisualY));
+    public void FinishInteraction(bool cancel = false)
+    {
+        var changed = moveOrigins?.Any(p => p.Key.VisualX != p.Value.X || p.Key.VisualY != p.Value.Y) == true;
+        if (cancel && moveOrigins is not null)
+            foreach (var (scene, origin) in moveOrigins) { scene.VisualX = origin.X; scene.VisualY = origin.Y; }
+        moveOrigins = null; moveKeys.Clear(); dragging = false; linkSource = null; linkChoice = null; panning = false; marqueeStart = marqueeEnd = null;
+        if (changed && !cancel) Changed?.Invoke(); InvalidateVisual();
+    }
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e) { FinishInteraction(); base.OnPointerCaptureLost(e); }
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e) { SetZoom(Zoom * (e.Delta.Y > 0 ? 1.12 : .89), e.GetPosition(this)); e.Handled = true; }
     public void SetZoom(double value, Point? anchor = null)
     {
@@ -148,13 +232,48 @@ public sealed class GraphCanvas : Control
     public void Centre(DialogueState s) { offset = new(Bounds.Width / 2 - (s.VisualX + NodeWidth / 2) * Zoom, Bounds.Height / 2 - (s.VisualY + NodeHeight(s) / 2) * Zoom); InvalidateVisual(); }
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        if (Selected is not null && e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
+        var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
+        if (command && e.Key == Key.A)
         {
+            FinishInteraction(); InteractionStarted?.Invoke(); Select(Project.ListOfCharacterStates, Selected); e.Handled = true;
+        }
+        else if (command && e.Key == Key.Tab && Project.ListOfCharacterStates.Count > 0)
+        {
+            FinishInteraction(); var scenes = Project.ListOfCharacterStates;
+            var index = scenes.IndexOf(keyboardScene ?? Selected!); var step = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? -1 : 1;
+            keyboardScene = scenes[(index + step + scenes.Count) % scenes.Count]; Centre(keyboardScene); e.Handled = true;
+        }
+        else if (e.Key is Key.Space or Key.Enter && keyboardScene is not null)
+        {
+            FinishInteraction(); InteractionStarted?.Invoke();
+            var next = new HashSet<DialogueState>(selection);
+            if (e.Key == Key.Enter) { next.Clear(); next.Add(keyboardScene); }
+            else if (!next.Remove(keyboardScene)) next.Add(keyboardScene);
+            Select(next, next.Contains(keyboardScene) ? keyboardScene : Selected); e.Handled = true;
+        }
+        else if (e.Key == Key.Escape)
+        {
+            if (moveOrigins is not null || linkSource is not null || marqueeStart is not null) FinishInteraction(cancel: true);
+            else { InteractionStarted?.Invoke(); Select([], null); }
+            e.Handled = true;
+        }
+        else if (!command && selection.Count > 0 && e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
+        {
+            if (moveOrigins is null) { InteractionStarted?.Invoke(); StartMove(); }
+            moveKeys.Add(e.Key);
             var step = e.KeyModifiers.HasFlag(KeyModifiers.Shift) ? 40 : 10;
-            if (e.Key == Key.Left) Selected.VisualX -= step; if (e.Key == Key.Right) Selected.VisualX += step;
-            if (e.Key == Key.Up) Selected.VisualY -= step; if (e.Key == Key.Down) Selected.VisualY += step;
-            Changed?.Invoke(); InvalidateVisual(); e.Handled = true;
+            foreach (var scene in selection)
+            {
+                if (e.Key == Key.Left) scene.VisualX -= step; if (e.Key == Key.Right) scene.VisualX += step;
+                if (e.Key == Key.Up) scene.VisualY -= step; if (e.Key == Key.Down) scene.VisualY += step;
+            }
+            InvalidateVisual(); e.Handled = true;
         }
         base.OnKeyDown(e);
+    }
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        if (moveKeys.Remove(e.Key)) { if (moveKeys.Count == 0) FinishInteraction(); e.Handled = true; }
+        base.OnKeyUp(e);
     }
 }

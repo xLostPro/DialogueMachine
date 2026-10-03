@@ -2,6 +2,10 @@ Dialogue Machine is an offline desktop workspace for branching dialogue.
 
 ## Unreleased
 
+- Select multiple graph scenes with Ctrl/Cmd-click, Shift-click or Shift-drag. Use the outline's native multiple selection, or graph Ctrl/Cmd+Tab and Space; Ctrl/Cmd+A selects all and Escape clears selection.
+- Drag or nudge a selected set while preserving relative positions. Each drag or held arrow-key gesture is one Undo/Redo step; Escape restores an unfinished move. Pending text edits remain separate history steps.
+- See thicker outgoing/internal and incoming selected connections with distinct colors in all themes, including yellow selection in High contrast. Continue links remain dashed.
+- Copy the graph/outline set directly with Edit → Copy selected scenes or Ctrl/Cmd+C, preselect it in the existing copy dialog, and select every pasted scene. Paste retains internal link remapping, unknown fields and one-step undo; text inputs keep native clipboard shortcuts.
 - Search numeric starting values and text substitutions in Variables & characters, inspect reference counts and scene locations, and rename IDs across actions, requirements and inline text. Unused variables can be deleted; referenced variables remain protected until their uses are resolved.
 - Variable edits stay in a draft until Apply changes. Cancel or Escape preserves the story, and one Undo restores all applied changes and reference rewrites.
 - Logic fields suggest IDs for their selected affinity/inventory type. The Content toolbar's Variable… picker searches known IDs and inserts a substitution at the cursor.

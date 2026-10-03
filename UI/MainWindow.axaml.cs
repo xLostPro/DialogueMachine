@@ -13,6 +13,7 @@ public sealed partial class MainWindow : Window
 {
     private DialogueProject project = new();
     private DialogueState? selected;
+    private readonly HashSet<DialogueState> selectedScenes = [];
     private readonly ProjectHistory history = new();
     private string savedSnapshot = "";
     private string? filePath;
@@ -78,14 +79,22 @@ public sealed partial class MainWindow : Window
         foreach (var name in new[] { "SpeakerFilter", "TagFilter", "IssueFilter" }) C<ComboBox>(name).SelectionChanged += (_, _) => { if (!updatingOutlineFilters) RefreshOutline(); };
         Click("ClearFiltersButton", ClearOutlineFilters);
         C<Grid>("WorkspacePanel").SizeChanged += (_, e) => C<ScrollViewer>("OutlineHeaderScroll").MaxHeight = Math.Max(120, e.NewSize.Height - 330);
-        C<ListBox>("SceneList").SelectionChanged += (_, _) =>
+        C<ListBox>("SceneList").SelectionChanged += (_, e) =>
         {
-            if (!refreshing && C<ListBox>("SceneList").SelectedItem is ListBoxItem item && item.Tag is DialogueState s) SelectScene(s, true);
+            if (refreshing) return;
+            var scenes = C<ListBox>("SceneList").SelectedItems!.Cast<ListBoxItem>().Select(i => (DialogueState)i.Tag!).ToList();
+            var active = e.AddedItems.OfType<ListBoxItem>().LastOrDefault()?.Tag as DialogueState;
+            SelectScenes(scenes, active ?? selected, true);
         };
-        Graph.SceneSelected += s => SelectScene(s, false);
+        Graph.SelectionChanged += () => SelectScenes(Graph.SelectedScenes, Graph.Selected, false);
+        Graph.InteractionStarted += Commit;
         Graph.Changed += () => { Commit(); Refresh(); };
         Graph.ZoomChanged += z => C<TextBlock>("ZoomLabel").Text = $"{z:P0}";
-        Graph.SizeChanged += (_, _) => C<Border>("GraphLegend").IsVisible = Graph.IsVisible && Graph.Bounds.Width >= 650;
+        Graph.SizeChanged += (_, _) =>
+        {
+            C<Border>("GraphLegend").IsVisible = Graph.IsVisible && Graph.Bounds.Width >= 650;
+            C<Border>("GraphHint").MaxWidth = Math.Clamp(Graph.Bounds.Width - 40, 100, 430);
+        };
         C<ListBox>("DiagnosticsList").SelectionChanged += (_, _) =>
         {
             if (C<ListBox>("DiagnosticsList").SelectedItem is ListBoxItem item && item.Tag is Diagnostic d && project.ListOfCharacterStates.FirstOrDefault(s => s.State == d.StateId) is { } s) SelectScene(s, true);
@@ -109,6 +118,8 @@ public sealed partial class MainWindow : Window
                 case Key.Z: if (shift) Redo(); else Undo(); break;
                 case Key.Y: Redo(); break;
                 case Key.D: DuplicateScene(); break;
+                case Key.C when Graph.IsFocused || C<ListBox>("SceneList").IsKeyboardFocusWithin: CopySelectedScenes(); break;
+                case Key.V when Graph.IsFocused || C<ListBox>("SceneList").IsKeyboardFocusWithin: _ = PasteScenes(); break;
                 case Key.D0: Graph.Fit(); break;
                 case Key.OemPlus: Graph.SetZoom(Graph.Zoom * 1.2); break;
                 case Key.OemMinus: Graph.SetZoom(Graph.Zoom / 1.2); break;
@@ -134,7 +145,8 @@ public sealed partial class MainWindow : Window
         MenuItem ProjectItem(string label, Action action, string? shortcut = null) { var item = Item(label, action, shortcut); item.IsEnabled = hasProject; return item; }
         file.ItemsSource = new object[] { Item("_Home", () => _ = ReturnHomeAsync()), Item("_New project…", () => _ = NewProject(), "Ctrl+N"), Item("_Open project…", () => _ = Open(), "Ctrl+O"), recent, new Separator(), ProjectItem("_Save", () => _ = Save(), "Ctrl+S"), ProjectItem("Save _as…", () => _ = Save(true), "Ctrl+Shift+S"), new Separator(), ProjectItem("Export website / game JSON…", () => _ = ExportWeb()), ProjectItem("Export script…", () => _ = ExportScript()), ProjectItem("Export graph image…", () => _ = ExportGraph()), new Separator(), Item("Recovery saves…", () => _ = ShowRecoveries()), ProjectItem("Project details…", () => _ = ProjectDetails()), new Separator(), Item("E_xit", Close) };
         var paste = Item("Paste scenes", () => _ = PasteScenes()); paste.IsEnabled = copiedScenes is not null;
-        var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), Item("Copy scenes…", () => _ = CopyScenes()), paste, Item("Scene & choice templates…", () => _ = ShowTemplates()), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
+        var copySelected = Item("Copy selected scenes", CopySelectedScenes); copySelected.IsEnabled = selectedScenes.Count > 0;
+        var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), copySelected, Item("Copy scenes…", () => _ = CopyScenes()), paste, Item("Scene & choice templates…", () => _ = ShowTemplates()), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
         var view = new MenuItem { Header = "_View", ItemsSource = new object[] { ProjectItem("Story graph", () => SetView(false)), ProjectItem("Script", () => SetView(true)), ProjectItem("Fit story", Graph.Fit, "Ctrl+0"), ProjectItem("Diagnostics", ToggleProblems), new Separator(), Item("Appearance & accessibility…", () => _ = ShowSettings()) } };
         var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems) } };
         edit.IsEnabled = hasProject; story.IsEnabled = hasProject;
@@ -150,12 +162,18 @@ public sealed partial class MainWindow : Window
         if (script) RefreshScript();
     }
     private void SelectScene(DialogueState s, bool centre)
+        => SelectScenes([s], s, centre);
+    private void SelectScenes(IEnumerable<DialogueState> scenes, DialogueState? active, bool centre)
     {
+        var next = scenes.ToList();
         Commit();
-        var index = project.ListOfCharacterStates.IndexOf(s);
+        var available = project.ListOfCharacterStates.ToHashSet();
+        selectedScenes.Clear(); selectedScenes.UnionWith(next.Where(available.Contains));
+        selected = active is not null && selectedScenes.Contains(active) ? active : project.ListOfCharacterStates.FirstOrDefault(selectedScenes.Contains);
+        var index = selected is null ? -1 : project.ListOfCharacterStates.IndexOf(selected);
         if (index >= 0 && index < navigation.Scenes.Count && !SceneNavigation.Matches(navigation.Scenes[index], CurrentOutlineFilter())) ClearOutlineFilters();
-        selected = s; Graph.Selected = s; RefreshOutline(); RefreshEditor(); Graph.InvalidateVisual();
-        if (centre) Graph.Centre(s);
+        Graph.SetSelection(selectedScenes, selected); SyncOutlineSelection(); RefreshEditor(); UpdateGraphSelection(); BuildMenu();
+        if (centre && selected is not null) Graph.Centre(selected);
     }
     private void SwitchTab(string tab) { Commit(); editorTab = tab; RefreshEditor(); }
     private void Edited()
@@ -165,6 +183,7 @@ public sealed partial class MainWindow : Window
     private void Commit()
     {
         if (!hasProject) return;
+        Graph.FinishInteraction();
         editTimer.Stop(); if (history.Commit(project)) RefreshDiagnostics(); UpdateStatus();
     }
     private void Mutate(Action action)
@@ -186,11 +205,31 @@ public sealed partial class MainWindow : Window
     }
     private void ReplaceHistoryProject(DialogueProject p)
     {
-        var id = selected?.State; project = p; selected = project.ListOfCharacterStates.FirstOrDefault(s => s.State == id) ?? project.ListOfCharacterStates.FirstOrDefault(); Refresh();
+        // Include duplicate-ID occurrence so repairable imported scenes keep distinct selections.
+        var keys = new HashSet<(string Id, int Occurrence)>(); (string, int)? active = null;
+        var occurrences = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var scene in project.ListOfCharacterStates)
+        {
+            var key = (scene.State, occurrences.GetValueOrDefault(scene.State)); occurrences[scene.State] = key.Item2 + 1;
+            if (selectedScenes.Contains(scene)) keys.Add(key);
+            if (scene == selected) active = key;
+        }
+        project = p; selectedScenes.Clear(); selected = null; occurrences.Clear();
+        foreach (var scene in project.ListOfCharacterStates)
+        {
+            var key = (scene.State, occurrences.GetValueOrDefault(scene.State)); occurrences[scene.State] = key.Item2 + 1;
+            if (keys.Contains(key)) selectedScenes.Add(scene);
+            if (active == key) selected = scene;
+        }
+        selected ??= project.ListOfCharacterStates.FirstOrDefault(selectedScenes.Contains) ?? project.ListOfCharacterStates.FirstOrDefault(); Refresh();
     }
     private void Refresh()
     {
-        Graph.Project = project; Graph.Selected = selected; Graph.InvalidateVisual(); RefreshDiagnostics(); RefreshEditor(); RefreshScript(); UpdateStatus();
+        var available = project.ListOfCharacterStates.ToHashSet();
+        selectedScenes.RemoveWhere(s => !available.Contains(s));
+        if (selected is null) selectedScenes.Clear();
+        else if (!selectedScenes.Contains(selected)) { selectedScenes.Clear(); selectedScenes.Add(selected); }
+        Graph.Project = project; Graph.SetSelection(selectedScenes, selected); UpdateGraphSelection(); RefreshDiagnostics(); RefreshEditor(); RefreshScript(); UpdateStatus(); BuildMenu();
         C<Button>("GraphButton").Background = Ui.Brush(Graph.IsVisible ? "Selection" : "Base");
         C<Button>("ScriptButton").Background = Ui.Brush(Graph.IsVisible ? "Base" : "Selection");
     }
@@ -206,10 +245,24 @@ public sealed partial class MainWindow : Window
             var sub = Ui.Text(s.Speaker + "  ·  " + (s.Choices.Count > 0 ? $"{s.Choices.Count} choices" : s.DefaultNextId == "[EXIT]" ? "Ending" : "Continue"), 11, true);
             var item = new ListBoxItem { Content = Ui.Stack(head, sub), Tag = s }; items.Add(item);
         }
-        var list = C<ListBox>("SceneList"); list.ItemsSource = items; list.SelectedItem = items.FirstOrDefault(i => i.Tag == selected);
+        var list = C<ListBox>("SceneList"); list.ItemsSource = items;
+        foreach (var item in items.Where(i => selectedScenes.Contains((DialogueState)i.Tag!))) list.SelectedItems!.Add(item);
         C<TextBlock>("SceneCount").Text = items.Count == project.ListOfCharacterStates.Count ? items.Count.ToString() : $"{items.Count}/{project.ListOfCharacterStates.Count}";
         C<TextBlock>("OutlineEmpty").IsVisible = hasProject && items.Count == 0;
         C<Button>("ClearFiltersButton").IsVisible = filter != new OutlineFilter(); refreshing = false;
+    }
+    private void SyncOutlineSelection()
+    {
+        // Keep native list focus/range anchors when only the selection changes.
+        var list = C<ListBox>("SceneList");
+        var visible = list.Items.OfType<ListBoxItem>().Where(i => selectedScenes.Contains((DialogueState)i.Tag!)).ToList();
+        var current = list.SelectedItems!;
+        if (current.Cast<ListBoxItem>().ToHashSet().SetEquals(visible)) return;
+        refreshing = true; current.Clear(); foreach (var item in visible) current.Add(item); refreshing = false;
+    }
+    private void UpdateGraphSelection()
+    {
+        C<TextBlock>("GraphSelectionSummary").Text = selectedScenes.Count == 0 ? "No scenes selected" : $"{selectedScenes.Count} {(selectedScenes.Count == 1 ? "scene" : "scenes")} selected";
     }
     private void UpdateStatus()
     {

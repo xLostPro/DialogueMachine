@@ -43,7 +43,8 @@ public sealed partial class MainWindow
         var options = project.ListOfCharacterStates.Select(s => new CopyOption(s)).ToList();
         var list = new ListBox { Name = "CopySceneList", ItemsSource = options, Focusable = true, SelectionMode = SelectionMode.Multiple | SelectionMode.Toggle };
         list.ItemTemplate = new FuncDataTemplate<CopyOption>((option, _) => Ui.Text(option?.ToString() ?? "", 13));
-        AutomationProperties.SetName(list, "Scenes to copy"); list.SelectedItem = options.FirstOrDefault(o => o.Scene == selected);
+        AutomationProperties.SetName(list, "Scenes to copy");
+        foreach (var option in options.Where(o => selectedScenes.Contains(o.Scene))) list.SelectedItems!.Add(option);
         var keyboardIndex = Math.Max(0, list.SelectedIndex);
         list.AddHandler(KeyDownEvent, (_, e) =>
         {
@@ -70,13 +71,24 @@ public sealed partial class MainWindow
         await AuthoringAction(() => { copiedScenes = AuthoringOperations.CopyScenes(scenes); BuildMenu(); Status($"Copied {copiedScenes.Count} scenes. Use Edit → Paste scenes."); });
     }
 
+    private void CopySelectedScenes()
+    {
+        if (!hasProject || selectedScenes.Count == 0) return;
+        Commit();
+        _ = AuthoringAction(() => { copiedScenes = AuthoringOperations.CopyScenes(project.ListOfCharacterStates.Where(selectedScenes.Contains)); BuildMenu(); Status($"Copied {copiedScenes.Count} scenes. Use Edit → Paste scenes."); });
+    }
+
     private async Task PasteScenes()
     {
         if (!hasProject || copiedScenes is null) return;
         await AuthoringAction(() =>
         {
-            Mutate(() => selected = AuthoringOperations.PasteScenes(project, copiedScenes, (selected?.VisualX ?? 80) + 45, (selected?.VisualY ?? 80) + 65)[0]);
-            SelectScene(selected!, true); Status($"Pasted {copiedScenes.Count} scenes with new IDs. Internal links follow the copies; other destinations are retained.");
+            Mutate(() =>
+            {
+                var pasted = AuthoringOperations.PasteScenes(project, copiedScenes, (selected?.VisualX ?? 80) + 45, (selected?.VisualY ?? 80) + 65);
+                selectedScenes.Clear(); selectedScenes.UnionWith(pasted); selected = pasted[0];
+            });
+            Graph.Centre(selected!); BuildMenu(); Status($"Pasted {copiedScenes.Count} scenes with new IDs. Internal links follow the copies; other destinations are retained.");
         });
     }
 
