@@ -12,6 +12,7 @@ Core/                         Platform-independent class library; no UI dependen
   DialogueText.cs             Structural conditional and formatting checks for all text fields
   VariableStore.cs            Discovery, typed references, safe variable rename/delete
   ProjectSearch.cs            Literal authoring search, scoped previews and replacement
+  SceneNavigation.cs          Indexed destinations, connections and outline filtering
   GraphGeometry.cs            Node dimensions shared by layout and drawing
   Templates.cs                Blank and lighthouse example stories
 UI/
@@ -24,6 +25,7 @@ UI/
   ProjectFilePicker.cs        Native storage boundary, injectable for workflow checks
   MainWindow.Variables.cs     Searchable variable drafts, reference lists and insertion picker
   MainWindow.Search.cs        Find/replace dialog, match previews and editor navigation
+  MainWindow.Navigation.cs    Searchable destination picker, filters and connection jumps
   GraphCanvas.cs              Graph drawing and pointer/keyboard interaction
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
@@ -61,6 +63,10 @@ Logic fields suggest IDs of the selected numeric type while allowing new IDs. Th
 Project search is a Core service over dialogue, response labels, displayed titles and writer's notes. It uses literal ordinal matching, optional case/whole-word rules, field selection and an optional scene index. Scene indices distinguish repairable duplicate IDs. Preview results retain original text and offsets, with at most 200 materialized matches but a complete count. Replace all scans the full scope once, applies nonoverlapping matches without re-searching inserted text, and only writes changed fields. Single replacement rejects a stale preview before writing. A fallback title is replaced by adding title metadata, preserving the scene ID. IDs, connections, logic, other metadata, starting values and extension data are untouched.
 
 The find/replace window commits pending typing before searching. Replacements apply immediately through `Mutate`, each with one history entry; Close/Escape discards only unapplied previews. The modal owner prevents concurrent editor changes. Go to match closes the window, clears a hiding outline filter, opens Content or Notes, and focuses/selects the matching text. Dialogs honor interface scale; the bounded match list keeps large result sets out of the visual tree.
+
+Scene navigation snapshots titles, IDs, speakers, comma-separated tags, search text and diagnostic flags when diagnostics refresh after a commit or document replacement. Incoming/outgoing indices use the same null/blank choice fallback as the runtime. Filtering and destination search use this snapshot without validation, serialization or document mutation on each keystroke. Destination summaries and jumps resolve IDs through a dictionary; opening the picker builds its options once and materializes at most 200 results with a complete count. Missing current targets stay visible, while unset/fallback and `[EXIT]` remain explicit choices. Choosing a destination applies through `Mutate` with one undo entry; typing, Cancel and Escape do not change connections.
+
+Outline text, speaker, tag and diagnostic filters intersect. Filter options refresh after edits and undo/redo; opening another project clears them. A scene jump clears filters only when they hide its destination. Notes lists indexed outgoing links and deduplicated incoming sources, including inherited choice targets; endings, unset and missing links have labels instead of jump buttons. The outline header scrolls in compact windows while retaining a scene list and a visible clear-filter command.
 
 The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
 

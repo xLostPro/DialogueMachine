@@ -74,7 +74,10 @@ public sealed partial class MainWindow : Window
         Click("LayoutButton", () => { Mutate(() => DialogueEngine.AutoLayout(project)); Graph.Fit(); Status("Scenes arranged by their connections."); });
         Click("ZoomIn", () => Graph.SetZoom(Graph.Zoom * 1.2)); Click("ZoomOut", () => Graph.SetZoom(Graph.Zoom / 1.2)); Click("FitButton", Graph.Fit);
         Click("CloseDiagnostics", () => C<Border>("DiagnosticsBorder").IsVisible = false);
-        C<TextBox>("SearchBox").TextChanged += (_, _) => RefreshOutline();
+        C<TextBox>("SearchBox").TextChanged += (_, _) => { if (!updatingOutlineFilters) RefreshOutline(); };
+        foreach (var name in new[] { "SpeakerFilter", "TagFilter", "IssueFilter" }) C<ComboBox>(name).SelectionChanged += (_, _) => { if (!updatingOutlineFilters) RefreshOutline(); };
+        Click("ClearFiltersButton", ClearOutlineFilters);
+        C<Grid>("WorkspacePanel").SizeChanged += (_, e) => C<ScrollViewer>("OutlineHeaderScroll").MaxHeight = Math.Max(120, e.NewSize.Height - 330);
         C<ListBox>("SceneList").SelectionChanged += (_, _) =>
         {
             if (!refreshing && C<ListBox>("SceneList").SelectedItem is ListBoxItem item && item.Tag is DialogueState s) SelectScene(s, true);
@@ -147,7 +150,10 @@ public sealed partial class MainWindow : Window
     }
     private void SelectScene(DialogueState s, bool centre)
     {
-        Commit(); selected = s; Graph.Selected = s; RefreshOutline(); RefreshEditor(); Graph.InvalidateVisual();
+        Commit();
+        var index = project.ListOfCharacterStates.IndexOf(s);
+        if (index >= 0 && index < navigation.Scenes.Count && !SceneNavigation.Matches(navigation.Scenes[index], CurrentOutlineFilter())) ClearOutlineFilters();
+        selected = s; Graph.Selected = s; RefreshOutline(); RefreshEditor(); Graph.InvalidateVisual();
         if (centre) Graph.Centre(s);
     }
     private void SwitchTab(string tab) { Commit(); editorTab = tab; RefreshEditor(); }
@@ -183,23 +189,26 @@ public sealed partial class MainWindow : Window
     }
     private void Refresh()
     {
-        Graph.Project = project; Graph.Selected = selected; Graph.InvalidateVisual(); RefreshOutline(); RefreshEditor(); RefreshScript(); RefreshDiagnostics(); UpdateStatus();
+        Graph.Project = project; Graph.Selected = selected; Graph.InvalidateVisual(); RefreshDiagnostics(); RefreshEditor(); RefreshScript(); UpdateStatus();
         C<Button>("GraphButton").Background = Ui.Brush(Graph.IsVisible ? "Selection" : "Base");
         C<Button>("ScriptButton").Background = Ui.Brush(Graph.IsVisible ? "Base" : "Selection");
     }
     private void RefreshOutline()
     {
         refreshing = true;
-        var filter = C<TextBox>("SearchBox").Text ?? "";
+        var filter = CurrentOutlineFilter();
         var items = new List<ListBoxItem>();
-        foreach (var s in project.ListOfCharacterStates.Where(s => (s.Title + " " + s.State + " " + s.Text + " " + s.Speaker + " " + string.Join(" ", s.Choices.Select(c => c.ButtonText))).Contains(filter, StringComparison.OrdinalIgnoreCase)))
+        foreach (var result in navigation.Filter(filter))
         {
+            var s = project.ListOfCharacterStates[result.Index];
             var head = Ui.Text((s.State == project.Entry ? "◆  " : "●  ") + s.Title, 13); head.FontWeight = Avalonia.Media.FontWeight.SemiBold;
             var sub = Ui.Text(s.Speaker + "  ·  " + (s.Choices.Count > 0 ? $"{s.Choices.Count} choices" : s.DefaultNextId == "[EXIT]" ? "Ending" : "Continue"), 11, true);
             var item = new ListBoxItem { Content = Ui.Stack(head, sub), Tag = s }; items.Add(item);
         }
         var list = C<ListBox>("SceneList"); list.ItemsSource = items; list.SelectedItem = items.FirstOrDefault(i => i.Tag == selected);
-        C<TextBlock>("SceneCount").Text = project.ListOfCharacterStates.Count.ToString(); refreshing = false;
+        C<TextBlock>("SceneCount").Text = items.Count == project.ListOfCharacterStates.Count ? items.Count.ToString() : $"{items.Count}/{project.ListOfCharacterStates.Count}";
+        C<TextBlock>("OutlineEmpty").IsVisible = hasProject && items.Count == 0;
+        C<Button>("ClearFiltersButton").IsVisible = filter != new OutlineFilter(); refreshing = false;
     }
     private void UpdateStatus()
     {
@@ -225,6 +234,7 @@ public sealed partial class MainWindow : Window
     private void RefreshDiagnostics()
     {
         var issues = DialogueEngine.Validate(project);
+        navigation = new SceneNavigation(project, issues); RefreshOutlineFilters();
         C<TextBlock>("DiagnosticsTitle").Text = issues.Count == 0 ? "✓  Story is ready to play" : $"{issues.Count(i => i.Severity == "Error")} errors · {issues.Count(i => i.Severity == "Warning")} warnings";
         C<Button>("ProblemsButton").Content = issues.Count == 0 ? "✓   Story diagnostics" : $"◇   Diagnostics ({issues.Count})";
         C<ListBox>("DiagnosticsList").ItemsSource = issues.Select(d => new ListBoxItem { Tag = d, Content = Ui.Stack(Ui.Text(d.Severity + " · " + d.StateId, 12), Ui.Text(d.Message, 12, true)) }).ToList();

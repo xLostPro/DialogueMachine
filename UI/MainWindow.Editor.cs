@@ -31,16 +31,6 @@ public sealed partial class MainWindow
         input.TextChanged += (_, _) => { var current = input.Text ?? ""; if (current != previous) { previous = current; apply(current); Edited(); } };
         input.LostFocus += (_, _) => Commit(); return input;
     }
-    private ComboBox Destination(string? value, Action<string?> apply, bool allowFallback = false)
-    {
-        var options = new List<DestinationOption> { new(allowFallback ? "Use scene's continue destination" : "No continue destination", null), new("○  End conversation", "[EXIT]") };
-        options.AddRange(project.ListOfCharacterStates.Select(s => new DestinationOption(s.Title + "  [" + s.State + "]", s.State)));
-        if (value is not null && options.All(o => o.Id != value)) options.Add(new("⚠ Missing: " + value, value));
-        var combo = new ComboBox { ItemsSource = options, SelectedItem = options.FirstOrDefault(o => o.Id == value), MaxDropDownHeight = 400 };
-        var previous = value;
-        combo.SelectionChanged += (_, _) => { if (combo.SelectedItem is DestinationOption opt && opt.Id != previous) { previous = opt.Id; apply(opt.Id); Edited(); Graph.InvalidateVisual(); } }; return combo;
-    }
-    private sealed record DestinationOption(string Label, string? Id) { public override string ToString() => Label; }
     private void BuildContentEditor(DialogueState s)
     {
         Editor.Children.Add(Ui.Field("Scene title", EditText(s.Title, v => s.Metadata["title"] = v)));
@@ -69,7 +59,7 @@ public sealed partial class MainWindow
         Editor.Children.Add(Ui.Field("Dialogue", Ui.Stack(tools, narrative, Ui.Text("One page per line. Playtest to preview formatting and conditions.", 11, true))));
         var delivery = Ui.Select(["All pages, in order", "One random line"], s.SayItAll ? "All pages, in order" : "One random line", v => { s.SayItAll = v == "All pages, in order"; Edited(); });
         Editor.Children.Add(Ui.Field("Delivery", delivery));
-        Editor.Children.Add(Ui.Field("Continue destination", Destination(s.DefaultNextId, v => s.DefaultNextId = v)));
+        Editor.Children.Add(Ui.Field("Continue destination", Destination(s, s.DefaultNextId, v => s.DefaultNextId = v)));
         Editor.Children.Add(Ui.Text("Choices inherit this destination when their own target is unset.", 11, true));
         var heading = Ui.Text("PLAYER CHOICES", 11, true); heading.LetterSpacing = 1.2; heading.Margin = new Thickness(0,12,0,0); Editor.Children.Add(heading);
         for (var i = 0; i < s.Choices.Count; i++)
@@ -81,7 +71,7 @@ public sealed partial class MainWindow
             var up = Ui.Button("↑", () => Mutate(() => { if (index > 0) (s.Choices[index - 1], s.Choices[index]) = (s.Choices[index], s.Choices[index - 1]); }), "subtle"); up.IsEnabled = i > 0; AutomationProperties.SetName(up, $"Move choice {i + 1} up"); Grid.SetColumn(up, 1); top.Children.Add(up);
             var down = Ui.Button("↓", () => Mutate(() => { if (index < s.Choices.Count - 1) (s.Choices[index + 1], s.Choices[index]) = (s.Choices[index], s.Choices[index + 1]); }), "subtle"); down.IsEnabled = i < s.Choices.Count - 1; AutomationProperties.SetName(down, $"Move choice {i + 1} down"); Grid.SetColumn(down, 2); top.Children.Add(down);
             var remove = Ui.Button("×", () => Mutate(() => s.Choices.Remove(choice)), "subtle"); AutomationProperties.SetName(remove, $"Remove choice {i + 1}"); Grid.SetColumn(remove, 3); top.Children.Add(remove);
-            Editor.Children.Add(Ui.Card(Ui.Stack(top, Ui.Field("Player response", label), Ui.Field("Go to", Destination(choice.NextStateId, v => choice.NextStateId = v, true))), 12));
+            Editor.Children.Add(Ui.Card(Ui.Stack(top, Ui.Field("Player response", label), Ui.Field("Go to", Destination(s, choice.NextStateId, v => choice.NextStateId = v, index))), 12));
         }
         Editor.Children.Add(Ui.Button("＋  Add a player choice", () => Mutate(() => s.Choices.Add(new Choice())), "primary"));
         Editor.Children.Add(Ui.Text("Tip: connect scenes by dragging an output dot onto another scene in the graph.", 11, true));
@@ -147,10 +137,7 @@ public sealed partial class MainWindow
         Editor.Children.Add(Ui.Text("Notes and tags are saved in scene metadata. They won't appear in dialogue.", 12, true));
         Editor.Children.Add(Ui.Row(Ui.Button("Duplicate scene", DuplicateScene), Ui.AsyncButton("Delete scene…", DeleteScene)));
         Editor.Children.Add(Ui.AsyncButton("▶  Play from this scene", () => Play(true), "play"));
-        var incoming = project.ListOfCharacterStates.Where(other => other.DefaultNextId == s.State || other.Choices.Any(c => c.NextStateId == s.State)).ToList();
-        Editor.Children.Add(Ui.Text("Incoming connections", 15));
-        if (incoming.Count == 0) Editor.Children.Add(Ui.Text("No other scenes point here yet.", 12, true));
-        foreach (var other in incoming) Editor.Children.Add(Ui.Button("←  " + other.Title, () => SelectScene(other, true), "subtle"));
+        AddSceneConnections(Editor, s);
     }
     private void RefreshScript()
     {
