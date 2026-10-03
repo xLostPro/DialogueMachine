@@ -24,6 +24,9 @@ public sealed partial class App : Application
         for (var i = 0; i < keys.Length; i++) Resources[keys[i]] = new SolidColorBrush(Color.Parse(palette[i]));
         Resources["MintInk"] = new SolidColorBrush(Color.Parse(theme == "Light" ? "#107866" : palette[7]));
         Resources["GraphGrid"] = theme == "High contrast" ? Brushes.Transparent : Resources["Line"];
+        Resources["GraphSelection"] = new SolidColorBrush(Color.Parse(theme == "High contrast" ? "#FFFF00" : theme == "Light" ? "#6242C7" : "#B59AFF"));
+        Resources["GraphIncoming"] = Resources["MintInk"];
+        Resources["GraphLink"] = new SolidColorBrush(Color.Parse(theme == "High contrast" ? "#FFFFFF" : theme == "Light" ? "#929AAF" : "#667089"));
         var fluent = Styles.OfType<FluentTheme>().First();
         fluent.Palettes[ThemeVariant.Dark] = new ColorPaletteResources { Accent = Color.Parse(palette[6]) };
         fluent.Palettes[ThemeVariant.Light] = new ColorPaletteResources { Accent = Color.Parse(palette[6]) };
