@@ -14,6 +14,11 @@ using System.Text.Json;
 
 try
 {
+if (args.Contains("--performance"))
+{
+    PerformanceChecks.Run(args);
+    return;
+}
 var passed = 0;
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); passed++; Console.WriteLine("PASS " + message); }
 void Throws(Action action, string message) { try { action(); } catch { Check(true, message); return; } throw new Exception(message); }
@@ -354,6 +359,7 @@ void Capture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using 
 GraphOrganizationChecks.UI(Check, output, Capture);
 ExportChecks.UI(Check, output, Capture);
 ConflictChecks.UI(Check, output, Capture);
+EditorPerformanceRegressions.Run(Check, output, Capture);
 T Find<T>(string name) where T : Control => main.FindControl<T>(name)!;
 void Click(string name) { Find<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
 Check(!main.HasProject && Find<WelcomeView>("Welcome").IsVisible, "startup shows welcome without automatically loading a sample"); Capture(main,"welcome-dark");
@@ -598,7 +604,7 @@ void OutlineOption(string name, string label)
 void NavigationScene(string id)
 {
     Press(navigationWorkspace.FindControl<Button>("ClearFiltersButton")!); var scenes = navigationWorkspace.FindControl<ListBox>("SceneList")!;
-    scenes.SelectedItem = scenes.Items.Cast<ListBoxItem>().Single(item => (item.Tag as DialogueState)?.State == id); Dispatcher.UIThread.RunJobs();
+    scenes.SelectedItem = scenes.Items.Cast<NavigationScene>().Single(item => item.Id == id); Dispatcher.UIThread.RunJobs();
 }
 Window OpenDestination(string name) { Press(NamedButton(navigationWorkspace, name)); return Modal(navigationWorkspace); }
 var destinationPicker = OpenDestination("Choose choice 1 destination");
@@ -616,20 +622,20 @@ NavigationUndo(); Check(ProjectStore.Serialize(navigationWorkspace.Project) == n
 destinationPicker = OpenDestination("Choose continue destination"); NamedControl<TextBox>(destinationPicker, "DestinationSearch").Text = "no continue"; Dispatcher.UIThread.RunJobs(); PressAnswer(destinationPicker, "Choose destination");
 Check(navigationWorkspace.Project.ListOfCharacterStates[0].DefaultNextId is null && navigationWorkspace.Project.ListOfCharacterStates[0].Choices[0].NextStateId is null, "choosing no continue keeps an inherited choice unset");
 navigationWorkspace.FindControl<ComboBox>("IssueFilter")!.SelectedIndex = 2; Dispatcher.UIThread.RunJobs();
-Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<ListBoxItem>().Any(item => (item.Tag as DialogueState)?.State == "arrival"), "diagnostic filters refresh immediately after changing a connection");
+Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<NavigationScene>().Any(item => item.Id == "arrival"), "diagnostic filters refresh immediately after changing a connection");
 NavigationUndo(); Press(navigationWorkspace.FindControl<Button>("ClearFiltersButton")!);
 destinationPicker = OpenDestination("Choose choice 1 destination"); NamedControl<TextBox>(destinationPicker, "DestinationSearch").Text = "nothing matches this"; Dispatcher.UIThread.RunJobs();
 Check(!NamedControl<Button>(destinationPicker, "ChooseDestination").IsEnabled && NamedControl<TextBlock>(destinationPicker, "DestinationSummary").Text!.StartsWith("No matching"), "empty destination results explain the state and disable Choose");
 destinationPicker.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, ""); Dispatcher.UIThread.RunJobs(); Check(!destinationPicker.IsVisible && !navigationWorkspace.HasUnsavedChanges, "Escape cancels destination search without creating history");
 navigationWorkspace.FindControl<Expander>("OutlineFilters")!.IsExpanded = true; OutlineOption("SpeakerFilter", "Ada"); OutlineOption("TagFilter", "Mystery");
 navigationWorkspace.FindControl<TextBox>("SearchBox")!.Text = "keeper"; Dispatcher.UIThread.RunJobs();
-Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<ListBoxItem>().Single().Tag is DialogueState { State: "keeper" } && navigationWorkspace.FindControl<TextBlock>("SceneCount")!.Text == "1/5", "outline combines speaker, tag and text filters and reports visible/total scenes");
+Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<NavigationScene>().Single() is NavigationScene { Id: "keeper" } && navigationWorkspace.FindControl<TextBlock>("SceneCount")!.Text == "1/5", "outline combines speaker, tag and text filters and reports visible/total scenes");
 Capture(navigationWorkspace, "navigation-filters-dark"); navigationWorkspace.FindControl<TextBox>("SearchBox")!.Text = "absent scene"; Dispatcher.UIThread.RunJobs();
 Check(navigationWorkspace.FindControl<TextBlock>("OutlineEmpty")!.IsVisible && navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Count == 0, "an empty filtered outline offers clear-search guidance");
 Press(navigationWorkspace.FindControl<Button>("ClearFiltersButton")!); navigationWorkspace.FindControl<ComboBox>("IssueFilter")!.SelectedIndex = 2; Dispatcher.UIThread.RunJobs();
-Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<ListBoxItem>().Single().Tag is DialogueState { State: "promise" }, "the Errors outline filter lists the actual broken-target scene");
+Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<NavigationScene>().Single() is NavigationScene { Id: "promise" }, "the Errors outline filter lists the actual broken-target scene");
 navigationWorkspace.FindControl<ComboBox>("IssueFilter")!.SelectedIndex = 3; Dispatcher.UIThread.RunJobs();
-Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<ListBoxItem>().Any(item => (item.Tag as DialogueState)?.State == "gift"), "the Warnings outline filter includes unknown substitution diagnostics");
+Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Cast<NavigationScene>().Any(item => item.Id == "gift"), "the Warnings outline filter includes unknown substitution diagnostics");
 Press(navigationWorkspace.FindControl<Button>("ClearFiltersButton")!);
 Check(navigationWorkspace.FindControl<ListBox>("SceneList")!.Items.Count == 5 && ProjectStore.Serialize(navigationWorkspace.Project) == navigationUiBefore && !navigationWorkspace.HasUnsavedChanges, "clearing filters restores the full outline without editing or dirtying the story");
 OutlineOption("SpeakerFilter", "Mara"); OutlineOption("TagFilter", "coast"); Press(NamedButton(navigationWorkspace, "Jump to choice 1 destination"));

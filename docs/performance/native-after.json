@@ -1,0 +1,288 @@
+{
+  "Environment": {
+    "DateUtc": "2026-10-04T19:31:56.4396077+00:00",
+    "OS": "Microsoft Windows 10.0.26200",
+    "Runtime": ".NET 10.0.12",
+    "Architecture": "X64",
+    "LogicalProcessors": 16,
+    "AvailableMemoryBytes": 33455448064,
+    "Avalonia": "12.1.3.0",
+    "Backend": "native Windows / Skia RenderTargetBitmap",
+    "Window": "1540x940",
+    "Theme": "Dark",
+    "InterfaceScale": 1,
+    "samples": 3,
+    "historyCount": 20,
+    "Command": "--performance --output C:\\Users\\Ben\\Documents\\Projects\\Dialogue Machine\\artifacts\\performance-native-after --samples 3 --history 20 --sizes 1000 --native"
+  },
+  "Fixtures": [
+    {
+      "Scenes": 1000,
+      "Bytes": 1909892,
+      "Sha256": "6FF2418409EC3C886789091122A5C5A70A55476FA718EA0DAA09F7BB334DCBED"
+    }
+  ],
+  "Measurements": [
+    {
+      "Scenes": 1000,
+      "Operation": "load-and-frame",
+      "MedianMs": 302.8404,
+      "P95Ms": 326.2853,
+      "MedianAllocatedBytes": 67124544,
+      "SamplesMs": [
+        302.8404,
+        262.1192,
+        326.2853
+      ],
+      "AllocatedBytes": [
+        70801856,
+        67124544,
+        65032672
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-local-render",
+      "MedianMs": 5.3603,
+      "P95Ms": 5.3892,
+      "MedianAllocatedBytes": 255256,
+      "SamplesMs": [
+        5.3892,
+        5.3603,
+        5.3384
+      ],
+      "AllocatedBytes": [
+        255312,
+        255256,
+        255256
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "typing-one-character",
+      "MedianMs": 21.7907,
+      "P95Ms": 26.8968,
+      "MedianAllocatedBytes": 982056,
+      "SamplesMs": [
+        26.8968,
+        21.6249,
+        21.7907
+      ],
+      "AllocatedBytes": [
+        1086064,
+        892112,
+        982056
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "typing-commit",
+      "MedianMs": 96.3082,
+      "P95Ms": 104.4833,
+      "MedianAllocatedBytes": 28729600,
+      "SamplesMs": [
+        104.4833,
+        89.3309,
+        96.3082
+      ],
+      "AllocatedBytes": [
+        28902928,
+        28729600,
+        28728216
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "selection",
+      "MedianMs": 51.0121,
+      "P95Ms": 58.4073,
+      "MedianAllocatedBytes": 9948040,
+      "SamplesMs": [
+        51.0121,
+        58.4073,
+        49.5533
+      ],
+      "AllocatedBytes": [
+        9948040,
+        10748232,
+        9910576
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "group-move-20",
+      "MedianMs": 189.1058,
+      "P95Ms": 200.4352,
+      "MedianAllocatedBytes": 38259280,
+      "SamplesMs": [
+        174.1728,
+        200.4352,
+        189.1058
+      ],
+      "AllocatedBytes": [
+        38259280,
+        38251736,
+        38291592
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "outline-filter",
+      "MedianMs": 20.2315,
+      "P95Ms": 68.3079,
+      "MedianAllocatedBytes": 1250464,
+      "SamplesMs": [
+        19.0215,
+        68.3079,
+        20.2315
+      ],
+      "AllocatedBytes": [
+        1239064,
+        5603392,
+        1250464
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "find-dialog-query",
+      "MedianMs": 22.6892,
+      "P95Ms": 23.1038,
+      "MedianAllocatedBytes": 4601208,
+      "SamplesMs": [
+        23.1038,
+        22.3447,
+        22.6892
+      ],
+      "AllocatedBytes": [
+        4607288,
+        4601208,
+        4597872
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "undo-redo-pair",
+      "MedianMs": 353.0606,
+      "P95Ms": 361.734,
+      "MedianAllocatedBytes": 89176656,
+      "SamplesMs": [
+        353.0606,
+        361.734,
+        322.2662
+      ],
+      "AllocatedBytes": [
+        89039808,
+        89225088,
+        89176656
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "pan-and-frame",
+      "MedianMs": 21.8283,
+      "P95Ms": 50.2232,
+      "MedianAllocatedBytes": 6617192,
+      "SamplesMs": [
+        21.8283,
+        50.2232,
+        15.9971
+      ],
+      "AllocatedBytes": [
+        6624544,
+        6585464,
+        6617192
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "zoom-and-frame",
+      "MedianMs": 16.143,
+      "P95Ms": 37.7437,
+      "MedianAllocatedBytes": 6633936,
+      "SamplesMs": [
+        16.143,
+        15.3711,
+        37.7437
+      ],
+      "AllocatedBytes": [
+        6633936,
+        6563032,
+        6639480
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-fit-render",
+      "MedianMs": 40.2543,
+      "P95Ms": 40.6027,
+      "MedianAllocatedBytes": 2938120,
+      "SamplesMs": [
+        40.1427,
+        40.6027,
+        40.2543
+      ],
+      "AllocatedBytes": [
+        2938128,
+        2938120,
+        2938072
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "save-and-frame",
+      "MedianMs": 100.4276,
+      "P95Ms": 102.3709,
+      "MedianAllocatedBytes": 41619144,
+      "SamplesMs": [
+        93.2187,
+        102.3709,
+        100.4276
+      ],
+      "AllocatedBytes": [
+        41619144,
+        41632280,
+        41605672
+      ]
+    }
+  ],
+  "Memory": [
+    {
+      "Scenes": 1000,
+      "Phase": "loaded-local-viewport",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 49238760,
+      "PrivateBytes": 350027776,
+      "WorkingSetBytes": 315097088
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "before-history",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 66395336,
+      "PrivateBytes": 441643008,
+      "WorkingSetBytes": 388476928
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "after-history",
+      "HistoryEntries": 20,
+      "RetainedManagedBytes": 72984048,
+      "PrivateBytes": 426758144,
+      "WorkingSetBytes": 379203584
+    }
+  ],
+  "Run": {
+    "SourceRevision": "74c2a17d5dbf3aa5baf6b055d8b26006ed062fe6",
+    "ProductSourceSha256": "F278CC85C7D7E84C191C7C329B83B0A827D223985BB423237FF45A7E6DB15167",
+    "BaselineRef": "",
+    "Cpu": "AMD Ryzen 7 7800X3D 8-Core Processor",
+    "Sdk": "10.0.204",
+    "Native": true,
+    "CacheProbe": false,
+    "Samples": 3,
+    "HistoryEntries": 20,
+    "Sizes": [
+      "1000"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml;
@@ -20,6 +21,9 @@ public sealed partial class MainWindow : Window
     private ProjectFileVersion? diskVersion;
     private bool saveInProgress;
     private bool refreshing, allowClose, closePending, hasProject;
+    private bool pendingEdits;
+    private int wordCount, choiceCount;
+    private readonly Dictionary<DialogueState, int> sceneWords = [];
     private string editorTab = "Content";
     private readonly DispatcherTimer editTimer = new() { Interval = TimeSpan.FromMilliseconds(700) };
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromSeconds(10) };
@@ -85,13 +89,14 @@ public sealed partial class MainWindow : Window
         C<ListBox>("SceneList").SelectionChanged += (_, e) =>
         {
             if (refreshing) return;
-            var scenes = C<ListBox>("SceneList").SelectedItems!.Cast<ListBoxItem>().Select(i => (DialogueState)i.Tag!).ToList();
-            var active = e.AddedItems.OfType<ListBoxItem>().LastOrDefault()?.Tag as DialogueState;
+            var scenes = C<ListBox>("SceneList").SelectedItems!.Cast<NavigationScene>().Select(i => project.ListOfCharacterStates[i.Index]).ToList();
+            var added = e.AddedItems.OfType<NavigationScene>().LastOrDefault();
+            var active = added is null ? null : project.ListOfCharacterStates[added.Index];
             SelectScenes(scenes, active ?? selected, true);
         };
         Graph.SelectionChanged += () => SelectScenes(Graph.SelectedScenes, Graph.Selected, false);
         Graph.InteractionStarted += Commit;
-        Graph.Changed += () => { Commit(); Refresh(); };
+        Graph.Changed += () => { pendingEdits = true; Commit(false); Refresh(); };
         Graph.ZoomChanged += z => C<TextBlock>("ZoomLabel").Text = $"{z:P0}";
         Graph.SizeChanged += (_, _) =>
         {
@@ -163,7 +168,8 @@ public sealed partial class MainWindow : Window
         foreach (var name in new[] { "GraphHint", "ZoomBar", "GraphLegend" }) C<Border>(name).IsVisible = !script;
         UpdateGraphOverlays();
         C<Button>("GraphButton").Background = Ui.Brush(script ? "Base" : "Selection"); C<Button>("ScriptButton").Background = Ui.Brush(script ? "Selection" : "Base");
-        if (script) RefreshScript();
+        if (!script) scriptDirty = true;
+        RefreshScript();
     }
     private void SelectScene(DialogueState s, bool centre)
         => SelectScenes([s], s, centre);
@@ -182,29 +188,44 @@ public sealed partial class MainWindow : Window
     private void SwitchTab(string tab) { Commit(); editorTab = tab; RefreshEditor(); }
     private void Edited()
     {
-        editTimer.Stop(); editTimer.Start(); UpdateStatus(); Graph.InvalidateVisual();
+        pendingEdits = true;
+        if (selected is not null)
+        {
+            var words = CountWords(selected.Text); wordCount += words - sceneWords.GetValueOrDefault(selected); sceneWords[selected] = words;
+        }
+        editTimer.Stop(); editTimer.Start(); UpdateStatus(); Graph.ClearTextLayouts(); Graph.InvalidateVisual(); scriptDirty = true;
     }
-    private void Commit()
+    private void Commit() => Commit(true);
+    private void Commit(bool diagnostics, bool force = false)
     {
         if (!hasProject) return;
         Graph.FinishInteraction();
-        editTimer.Stop(); if (history.Commit(project)) RefreshDiagnostics(); UpdateStatus();
+        editTimer.Stop();
+        if (!pendingEdits && !force) return;
+        var changed = history.Commit(project);
+        pendingEdits = false;
+        if (changed)
+        {
+            RebuildStatistics(); scriptDirty = true;
+            if (diagnostics) RefreshDiagnostics();
+        }
+        UpdateStatus();
     }
     private void Mutate(Action action)
     {
         if (!hasProject) return;
-        Commit(); action(); Commit(); Refresh();
+        Commit(true, force: true); action(); pendingEdits = true; Commit(false); Refresh();
     }
     private void Undo()
     {
         if (!hasProject) return;
-        Commit(); var p = history.Undo(); if (p is null) return;
+        Commit(true, force: true); var p = history.Undo(); if (p is null) return;
         ReplaceHistoryProject(p); Status("Undid the last edit.");
     }
     private void Redo()
     {
         if (!hasProject) return;
-        Commit(); var p = history.Redo(); if (p is null) return;
+        Commit(true, force: true); var p = history.Redo(); if (p is null) return;
         ReplaceHistoryProject(p); Status("Redid the last edit.");
     }
     private void ReplaceHistoryProject(DialogueProject p)
@@ -218,7 +239,7 @@ public sealed partial class MainWindow : Window
             if (selectedScenes.Contains(scene)) keys.Add(key);
             if (scene == selected) active = key;
         }
-        project = p; selectedScenes.Clear(); selected = null; occurrences.Clear();
+        project = p; pendingEdits = false; selectedScenes.Clear(); selected = null; occurrences.Clear();
         foreach (var scene in project.ListOfCharacterStates)
         {
             var key = (scene.State, occurrences.GetValueOrDefault(scene.State)); occurrences[scene.State] = key.Item2 + 1;
@@ -234,6 +255,7 @@ public sealed partial class MainWindow : Window
         selectedScenes.RemoveWhere(s => !available.Contains(s));
         if (selected is null) selectedScenes.Clear();
         else if (!selectedScenes.Contains(selected)) { selectedScenes.Clear(); selectedScenes.Add(selected); }
+        RebuildStatistics(); scriptDirty = true;
         Graph.Project = project; Graph.SetSelection(selectedScenes, selected); UpdateGraphSelection(); RefreshDiagnostics(); RefreshEditor(); RefreshScript(); UpdateStatus(); BuildMenu();
         C<Button>("GraphButton").Background = Ui.Brush(Graph.IsVisible ? "Selection" : "Base");
         C<Button>("ScriptButton").Background = Ui.Brush(Graph.IsVisible ? "Base" : "Selection");
@@ -243,16 +265,18 @@ public sealed partial class MainWindow : Window
     {
         refreshing = true;
         var filter = CurrentOutlineFilter();
-        var items = new List<ListBoxItem>();
-        foreach (var result in navigation.Filter(filter))
+        var items = navigation.Filter(filter);
+        var list = C<ListBox>("SceneList");
+        list.ItemTemplate ??= new FuncDataTemplate<NavigationScene>((result, _) =>
         {
+            if (result is null) return null; // Recycling clears a container's content first.
             var s = project.ListOfCharacterStates[result.Index];
             var head = Ui.Text((s.State == project.Entry ? "◆  " : "●  ") + s.Title, 13); head.FontWeight = Avalonia.Media.FontWeight.SemiBold;
             var sub = Ui.Text(s.Speaker + "  ·  " + (s.Choices.Count > 0 ? $"{s.Choices.Count} choices" : s.DefaultNextId == "[EXIT]" ? "Ending" : "Continue"), 11, true);
-            var item = new ListBoxItem { Content = Ui.Stack(head, sub), Tag = s }; items.Add(item);
-        }
-        var list = C<ListBox>("SceneList"); list.ItemsSource = items;
-        foreach (var item in items.Where(i => selectedScenes.Contains((DialogueState)i.Tag!))) list.SelectedItems!.Add(item);
+            return Ui.Stack(head, sub);
+        });
+        list.ItemsSource = items;
+        foreach (var item in items.Where(i => selectedScenes.Contains(project.ListOfCharacterStates[i.Index]))) list.SelectedItems!.Add(item);
         C<TextBlock>("SceneCount").Text = items.Count == project.ListOfCharacterStates.Count ? items.Count.ToString() : $"{items.Count}/{project.ListOfCharacterStates.Count}";
         C<TextBlock>("OutlineEmpty").IsVisible = hasProject && items.Count == 0;
         C<Button>("ClearFiltersButton").IsVisible = filter != new OutlineFilter(); refreshing = false;
@@ -261,9 +285,9 @@ public sealed partial class MainWindow : Window
     {
         // Keep native list focus/range anchors when only the selection changes.
         var list = C<ListBox>("SceneList");
-        var visible = list.Items.OfType<ListBoxItem>().Where(i => selectedScenes.Contains((DialogueState)i.Tag!)).ToList();
+        var visible = list.Items.OfType<NavigationScene>().Where(i => selectedScenes.Contains(project.ListOfCharacterStates[i.Index])).ToList();
         var current = list.SelectedItems!;
-        if (current.Cast<ListBoxItem>().ToHashSet().SetEquals(visible)) return;
+        if (current.Cast<NavigationScene>().ToHashSet().SetEquals(visible)) return;
         refreshing = true; current.Clear(); foreach (var item in visible) current.Add(item); refreshing = false;
     }
     private void UpdateGraphSelection()
@@ -281,14 +305,27 @@ public sealed partial class MainWindow : Window
             C<TextBlock>("StatsText").Text = "Offline workspace";
             Status("New project · Ctrl/Cmd+N    Open project · Ctrl/Cmd+O"); return;
         }
-        C<TextBlock>("ProjectTitle").Text = project.ProjectName + (Dirty ? " •" : "");
+        // Pending text is immediately marked unsaved; exact equality is checked at commit,
+        // recovery and explicit HasUnsavedChanges queries, without serializing on each key.
+        var dirty = pendingEdits || history.CurrentSnapshot != savedSnapshot;
+        C<TextBlock>("ProjectTitle").Text = project.ProjectName + (dirty ? " •" : "");
         C<TextBlock>("ProjectSubtitle").Text = filePath is null ? isExample ? "Example story · save a copy to make it yours" : "Unsaved project · save to choose a file location" : Path.GetFileName(filePath) + "  ·  " + project.CharacterId;
-        Title = project.ProjectName + (Dirty ? " *" : "") + " — Dialogue Machine";
+        Title = project.ProjectName + (dirty ? " *" : "") + " — Dialogue Machine";
         C<Button>("UndoButton").IsEnabled = history.CanUndo; C<Button>("RedoButton").IsEnabled = history.CanRedo;
         C<Button>("PlayButton").IsEnabled = project.ListOfCharacterStates.Count > 0;
-        var words = project.ListOfCharacterStates.Sum(s => s.Text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length);
-        C<TextBlock>("StatsText").Text = $"{project.ListOfCharacterStates.Count} scenes   ·   {project.ListOfCharacterStates.Sum(s => s.Choices.Count)} choices   ·   {words} words";
-        Status(Dirty ? "Unsaved changes" + (preferences.RecoveryEnabled ? " · recovery saves every 10 seconds" : " · automatic recovery is off") : isExample ? "Example story · edits can be saved as your own project" : "All changes saved · " + filePath);
+        C<TextBlock>("StatsText").Text = $"{project.ListOfCharacterStates.Count} scenes   ·   {choiceCount} choices   ·   {wordCount} words";
+        Status(dirty ? "Unsaved changes" + (preferences.RecoveryEnabled ? " · recovery saves every 10 seconds" : " · automatic recovery is off") : isExample ? "Example story · edits can be saved as your own project" : "All changes saved · " + filePath);
+    }
+    private static int CountWords(string text)
+    {
+        var count = 0; var inWord = false;
+        foreach (var c in text) { if (char.IsWhiteSpace(c)) inWord = false; else if (!inWord) { count++; inWord = true; } }
+        return count;
+    }
+    private void RebuildStatistics()
+    {
+        wordCount = choiceCount = 0; sceneWords.Clear();
+        foreach (var scene in project.ListOfCharacterStates) { var words = CountWords(scene.Text); sceneWords[scene] = words; wordCount += words; choiceCount += scene.Choices.Count; }
     }
     private void Status(string text) => C<TextBlock>("StatusText").Text = text;
     private void RefreshDiagnostics()

@@ -8,13 +8,13 @@ This is a proposed order of work based on the repository, not an existing releas
 
 The initial recommendation was a focused reliability patch. **Stage 1 is merged in [PR #2](https://github.com/xLostPro/DialogueMachine/pull/2) for version 1.1.1**, with passing Windows CI. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed. The original findings below describe the assessment baseline.
 
-**Stage 2 priorities 1–7 are implemented**, with 719 passing regression checks. Variable management, project-wide find/replace, destination navigation and reusable authoring operations are merged in PRs #3–#6, with passing Windows CI. Graph organization includes mouse/keyboard selection sets, group movement with one-step undo/redo, selected connection highlighting and scene-set copy/paste. Persistent scene groups/chapters support overlapping memberships, one-step edits, group selection and intersecting outline filters; the optional minimap adds mouse/keyboard viewport navigation. Exports include the complete graph with bounded resolution and configurable readable Markdown scripts. File safety now detects external changes before Save, offers compare/reload/save-a-copy/cancel, validates and rechecks external content, and preserves local work through conflict cancellation, failures and undoable Reload. Editor performance profiling remains Stage 2 follow-up work. These source changes do not imply a published release.
+**Stage 2 priorities 1–8 are implemented**, with 773 passing regression checks. Variable management, project-wide find/replace, destination navigation and reusable authoring operations are merged in PRs #3–#6, with passing Windows CI. Graph organization includes mouse/keyboard selection sets, group movement with one-step undo/redo, selected connection highlighting and scene-set copy/paste. Persistent scene groups/chapters support overlapping memberships, one-step edits, group selection and intersecting outline filters; the optional minimap adds mouse/keyboard viewport navigation. Exports include the complete graph with bounded resolution and configurable readable Markdown scripts. File safety now detects external changes before Save, offers compare/reload/save-a-copy/cancel, validates and rechecks external content, and preserves local work through conflict cancellation, failures and undoable Reload. Full-editor performance fixtures and before/after measurements now cover 100/1,000/10,000 scenes, allocations and retained memory. Evidence supports viewport culling, bounded text layouts, virtualized outline rows, deferred hidden script controls, fewer redundant document scans and compressed complete snapshots; see [PERFORMANCE.md](PERFORMANCE.md). These source changes do not imply a published release.
 
-The next work is Stage 2: improve the daily writing workflow, then add repeatable story testing and prove one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
+Stage 2 authoring and performance work is complete. The proposed next work is Stage 3 repeatable story testing, followed separately by one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
 
 The app already implements the basic write → connect → validate → playtest → export loop. Its main gaps are correctness at the edges, efficient editing as stories grow, and confidence that exported dialogue behaves as expected in its destination runtime.
 
-## Baseline feature inventory
+## Original assessment feature inventory
 
 | Area | Implemented | Remaining gap |
 | --- | --- | --- |
@@ -30,7 +30,7 @@ The `Core` library is separated from Avalonia. That is a useful base for a comma
 
 ## Evidence and verification
 
-The existing regression harness passed **91/91 checks**:
+At the original assessment, the regression harness passed **91/91 checks**:
 
 ```powershell
 dotnet run --project tests/DialogueMachine.Tests.csproj -c Release --no-restore -- artifacts/roadmap-review
@@ -86,10 +86,11 @@ Recommended first feature release after the patch:
 | 5 — implemented | Better graph organization | Mouse/keyboard multiple selection and relative group movement; selected connection highlighting; scene-set copy/paste; persistent overlapping groups/chapters with create/rename/delete, set assignment/removal, group selection/filtering and one-step undo; optional story/viewport/selection minimap with pointer and keyboard navigation; additive desktop schema preserving website exports |
 | 6 — implemented | Export improvements | Full-story PNG independent of viewport/view/selection/filters, accurate node/curve bounds, 1×/2× resolution and explicit bounded fitting, atomic output and preserved editor/history; Core Markdown generation with conditions/visibility, separate response/scene actions and optional notes, both inline branches, escaped authored text, deterministic order and explicit destinations; all theme/interface sizes and compact layouts |
 | 7 — implemented | External modification detection and conflict-safe saving | Exact-byte fingerprints and Windows file identity detect rewrites/replacements/deletion before ordinary Save; detached compare, validated/rechecked undoable Reload, new-file copies and cancel preserve local edits; guarded atomic saves, repeated-change handling, content-based recovery discovery, delayed lifecycle updates and all theme/interface-size/compact checks |
+| 8 — implemented | Full-editor performance and practical limits | Deterministic 100/1,000/10,000-scene fixtures; editor/render latency, allocations and retained-memory baselines; evidence-supported culling, bounded layouts, virtualized outline, reduced document work and compressed complete snapshots; repeatable commands, raw before/after results, behavioral regressions and qualified story-size guidance |
 
 External modification detection is implemented before ordinary Save overwrites a project changed by another app or editor instance. Compare/reload/save-a-copy/cancel choices retain local edits; failed/stale Reload preserves the story, and successful Reload keeps local edits in Undo. Atomic writes prevent partial files; exact-byte checks and editor-instance coordination guard saves. Filesystem transactions with arbitrary external writers are outside this optimistic detection model; see ARCHITECTURE.md.
 
-Continue performance work here: Stage 1 has replaced repeated ending scans with reverse-edge traversal and indexed IDs for layout. Graph drawing now indexes destination IDs. Next, skip offscreen nodes, cache text layouts, and avoid whole-document work on each keystroke. Profile 100/1,000/10,000-scene stories with variable choice counts and record editor latency, render time, and memory. Replace snapshot history only if measurements justify it.
+The remaining performance batch is implemented. [PERFORMANCE.md](PERFORMANCE.md) records deterministic fixtures, environment, methodology, commands, raw samples and before/after full-editor measurements. At 10,000 scenes, local graph rendering fell from 1,526 ms to 7 ms and typing from 5,660 ms to 14 ms; commit remains 342 ms and Undo/Redo about 986 ms in the headless run. Retained managed memory after the history workload fell from 2.21 GB to 517 MB. Native Windows cross-checks cover 1,000 scenes. Recommend roughly 1,000 scenes for everyday writing on comparable hardware, with explicit workload/platform limitations. Complete snapshot semantics remain; archived entries are compressed rather than replaced by reversible commands.
 
 Navigation now caches searchable scene summaries and connection indices, avoiding validation and serialization while typing filters. A one-run synthetic Core probe measured:
 
@@ -99,7 +100,7 @@ Navigation now caches searchable scene summaries and connection indices, avoidin
 | 1,000 | 1.09 ms | 0.04 ms | 0.03 ms | 1,004,776 bytes |
 | 10,000 | 17.18 ms | 1.74 ms | 0.43 ms | 9,928,096 bytes |
 
-These measure Core operations and allocated bytes, excluding graph drawing, UI rendering and retained process memory. Results are retained in `artifacts/destination-navigation/navigation-benchmarks-baseline.txt`; the harness also checks full counts with bounded destination previews at all three sizes. Full editor profiling remains follow-up work.
+These measure Core operations and allocated bytes, excluding graph drawing, UI rendering and retained process memory. Results are retained in `artifacts/destination-navigation/navigation-benchmarks-baseline.txt`; the harness also checks full counts with bounded destination previews at all three sizes. Those earlier Core-only probes are historical; the complete editor profiling results now appear in PERFORMANCE.md.
 
 Completion gate: a writer can reorganize and revise a substantial story without repeatedly typing IDs, inspecting JSON, or losing references; all bulk changes undo reliably.
 
@@ -144,4 +145,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Profile full editor performance as the remaining Stage 2 batch: measure 100/1,000/10,000-scene stories with variable choice counts, record editor latency, render time and memory, and implement only changes justified by measurements. Priorities 1–7 are implemented, including external modification detection/conflict-safe saving, full-story graph PNG and configurable Core Markdown exports, graph organization, groups/minimap, variable/reference management, project-wide find/replace, destination navigation and reusable authoring operations. Stage 1 is merged. Repeatable story testing, the runtime handoff, release publishing and native Mac/Linux verification remain separate work.
+Stage 2 is complete, including the measured performance batch and its practical story-size guidance. The next proposed batch is Stage 3 repeatable story testing; it has not been implemented here. Priorities 1–8 are implemented, including external modification detection/conflict-safe saving, full-story graph PNG and configurable Core Markdown exports, graph organization, groups/minimap, variable/reference management, project-wide find/replace, destination navigation and reusable authoring operations. Stage 1 is merged. Repeatable story testing, the runtime handoff, release publishing and native Mac/Linux verification remain separate work.

@@ -1,0 +1,790 @@
+{
+  "Environment": {
+    "DateUtc": "2026-10-04T19:31:44.8023664+00:00",
+    "OS": "Microsoft Windows 10.0.26200",
+    "Runtime": ".NET 10.0.12",
+    "Architecture": "X64",
+    "LogicalProcessors": 16,
+    "AvailableMemoryBytes": 33455448064,
+    "Avalonia": "12.1.3.0",
+    "Backend": "headless / real Skia RenderTargetBitmap",
+    "Window": "1540x940",
+    "Theme": "Dark",
+    "InterfaceScale": 1,
+    "samples": 3,
+    "historyCount": 20,
+    "Command": "--performance --output C:\\Users\\Ben\\Documents\\Projects\\Dialogue Machine\\artifacts\\performance-after --samples 3 --history 20 --sizes 100,1000,10000"
+  },
+  "Fixtures": [
+    {
+      "Scenes": 100,
+      "Bytes": 193173,
+      "Sha256": "129A4D75DA8420A020380F176D6A36AFBDE2BA128AD5C86764BB7D8928BB9087"
+    },
+    {
+      "Scenes": 1000,
+      "Bytes": 1909892,
+      "Sha256": "6FF2418409EC3C886789091122A5C5A70A55476FA718EA0DAA09F7BB334DCBED"
+    },
+    {
+      "Scenes": 10000,
+      "Bytes": 19086393,
+      "Sha256": "3478F600A37709E7CDA3D5663B4BA61C948B11E29AFDF5EF0F0907FFA4B9AE75"
+    }
+  ],
+  "Measurements": [
+    {
+      "Scenes": 100,
+      "Operation": "load-and-frame",
+      "MedianMs": 187.7635,
+      "P95Ms": 244.2835,
+      "MedianAllocatedBytes": 15222208,
+      "SamplesMs": [
+        184.0896,
+        187.7635,
+        244.2835
+      ],
+      "AllocatedBytes": [
+        17295840,
+        15222208,
+        14723104
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "graph-local-render",
+      "MedianMs": 4.6675,
+      "P95Ms": 4.7905,
+      "MedianAllocatedBytes": 163184,
+      "SamplesMs": [
+        4.6675,
+        4.7905,
+        4.6384
+      ],
+      "AllocatedBytes": [
+        163240,
+        163184,
+        163184
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "typing-one-character",
+      "MedianMs": 28.6297,
+      "P95Ms": 33.011,
+      "MedianAllocatedBytes": 631448,
+      "SamplesMs": [
+        33.011,
+        28.3058,
+        28.6297
+      ],
+      "AllocatedBytes": [
+        641864,
+        631440,
+        631448
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "typing-commit",
+      "MedianMs": 51.7304,
+      "P95Ms": 62.055,
+      "MedianAllocatedBytes": 5432208,
+      "SamplesMs": [
+        62.055,
+        49.8049,
+        51.7304
+      ],
+      "AllocatedBytes": [
+        5432208,
+        5426064,
+        5608024
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "selection",
+      "MedianMs": 58.7528,
+      "P95Ms": 63.129,
+      "MedianAllocatedBytes": 4472920,
+      "SamplesMs": [
+        58.7528,
+        63.129,
+        47.3383
+      ],
+      "AllocatedBytes": [
+        4472920,
+        5258848,
+        4440368
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "group-move-20",
+      "MedianMs": 163.3638,
+      "P95Ms": 187.4156,
+      "MedianAllocatedBytes": 15239416,
+      "SamplesMs": [
+        187.4156,
+        157.5257,
+        163.3638
+      ],
+      "AllocatedBytes": [
+        15264144,
+        15205864,
+        15239416
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "outline-filter",
+      "MedianMs": 24.3816,
+      "P95Ms": 92.2745,
+      "MedianAllocatedBytes": 1134824,
+      "SamplesMs": [
+        24.3816,
+        92.2745,
+        23.8249
+      ],
+      "AllocatedBytes": [
+        1134824,
+        5357648,
+        1121216
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "find-dialog-query",
+      "MedianMs": 25.4813,
+      "P95Ms": 28.0896,
+      "MedianAllocatedBytes": 3775104,
+      "SamplesMs": [
+        28.0896,
+        24.1826,
+        25.4813
+      ],
+      "AllocatedBytes": [
+        3819096,
+        3140264,
+        3775104
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "undo-redo-pair",
+      "MedianMs": 300.3369,
+      "P95Ms": 320.1517,
+      "MedianAllocatedBytes": 26927472,
+      "SamplesMs": [
+        300.3369,
+        278.3239,
+        320.1517
+      ],
+      "AllocatedBytes": [
+        26927472,
+        26905936,
+        26958776
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "pan-and-frame",
+      "MedianMs": 9.0389,
+      "P95Ms": 10.2878,
+      "MedianAllocatedBytes": 290440,
+      "SamplesMs": [
+        10.2878,
+        8.8608,
+        9.0389
+      ],
+      "AllocatedBytes": [
+        297824,
+        260656,
+        290440
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "zoom-and-frame",
+      "MedianMs": 10.0426,
+      "P95Ms": 20.8842,
+      "MedianAllocatedBytes": 301736,
+      "SamplesMs": [
+        9.2544,
+        20.8842,
+        10.0426
+      ],
+      "AllocatedBytes": [
+        297560,
+        1272232,
+        301736
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "graph-fit-render",
+      "MedianMs": 45.123,
+      "P95Ms": 45.4689,
+      "MedianAllocatedBytes": 1832840,
+      "SamplesMs": [
+        45.123,
+        45.0511,
+        45.4689
+      ],
+      "AllocatedBytes": [
+        1832896,
+        1832840,
+        1832840
+      ]
+    },
+    {
+      "Scenes": 100,
+      "Operation": "save-and-frame",
+      "MedianMs": 42.1011,
+      "P95Ms": 44.3332,
+      "MedianAllocatedBytes": 5258216,
+      "SamplesMs": [
+        44.3332,
+        42.0025,
+        42.1011
+      ],
+      "AllocatedBytes": [
+        5256200,
+        5265688,
+        5258216
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "load-and-frame",
+      "MedianMs": 207.1927,
+      "P95Ms": 209.7229,
+      "MedianAllocatedBytes": 64696080,
+      "SamplesMs": [
+        209.7229,
+        159.5445,
+        207.1927
+      ],
+      "AllocatedBytes": [
+        67927272,
+        64686936,
+        64696080
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-local-render",
+      "MedianMs": 3.8693,
+      "P95Ms": 3.8982,
+      "MedianAllocatedBytes": 253456,
+      "SamplesMs": [
+        3.8982,
+        3.8693,
+        3.8523
+      ],
+      "AllocatedBytes": [
+        253512,
+        253456,
+        253456
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "typing-one-character",
+      "MedianMs": 8.5661,
+      "P95Ms": 17.574,
+      "MedianAllocatedBytes": 777664,
+      "SamplesMs": [
+        8.5661,
+        7.0803,
+        17.574
+      ],
+      "AllocatedBytes": [
+        777664,
+        474168,
+        781824
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "typing-commit",
+      "MedianMs": 58.4823,
+      "P95Ms": 61.2284,
+      "MedianAllocatedBytes": 28572960,
+      "SamplesMs": [
+        61.2284,
+        49.7738,
+        58.4823
+      ],
+      "AllocatedBytes": [
+        28573544,
+        28572064,
+        28572960
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "selection",
+      "MedianMs": 30.2067,
+      "P95Ms": 30.8888,
+      "MedianAllocatedBytes": 9937704,
+      "SamplesMs": [
+        28.0082,
+        30.2067,
+        30.8888
+      ],
+      "AllocatedBytes": [
+        9937704,
+        10697016,
+        9897080
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "group-move-20",
+      "MedianMs": 104.2417,
+      "P95Ms": 112.9377,
+      "MedianAllocatedBytes": 38281960,
+      "SamplesMs": [
+        104.2417,
+        112.9377,
+        66.7098
+      ],
+      "AllocatedBytes": [
+        38318208,
+        38281848,
+        38281960
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "outline-filter",
+      "MedianMs": 20.495,
+      "P95Ms": 31.1525,
+      "MedianAllocatedBytes": 1238488,
+      "SamplesMs": [
+        7.7781,
+        20.495,
+        31.1525
+      ],
+      "AllocatedBytes": [
+        1168264,
+        5322856,
+        1238488
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "find-dialog-query",
+      "MedianMs": 12.7722,
+      "P95Ms": 34.0907,
+      "MedianAllocatedBytes": 4561496,
+      "SamplesMs": [
+        34.0907,
+        10.6702,
+        12.7722
+      ],
+      "AllocatedBytes": [
+        4604992,
+        4539160,
+        4561496
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "undo-redo-pair",
+      "MedianMs": 143.6426,
+      "P95Ms": 163.4622,
+      "MedianAllocatedBytes": 89068328,
+      "SamplesMs": [
+        131.4527,
+        163.4622,
+        143.6426
+      ],
+      "AllocatedBytes": [
+        89068328,
+        89084656,
+        89054400
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "pan-and-frame",
+      "MedianMs": 5.6355,
+      "P95Ms": 5.6588,
+      "MedianAllocatedBytes": 369368,
+      "SamplesMs": [
+        5.6355,
+        5.3368,
+        5.6588
+      ],
+      "AllocatedBytes": [
+        369424,
+        340200,
+        369368
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "zoom-and-frame",
+      "MedianMs": 5.9865,
+      "P95Ms": 21.5693,
+      "MedianAllocatedBytes": 376376,
+      "SamplesMs": [
+        5.6785,
+        21.5693,
+        5.9865
+      ],
+      "AllocatedBytes": [
+        374048,
+        6567408,
+        376376
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-fit-render",
+      "MedianMs": 30.8292,
+      "P95Ms": 33.6175,
+      "MedianAllocatedBytes": 2866104,
+      "SamplesMs": [
+        29.4698,
+        30.8292,
+        33.6175
+      ],
+      "AllocatedBytes": [
+        2866104,
+        2878224,
+        2866048
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "save-and-frame",
+      "MedianMs": 115.2715,
+      "P95Ms": 119.3576,
+      "MedianAllocatedBytes": 41597320,
+      "SamplesMs": [
+        119.3576,
+        80.307,
+        115.2715
+      ],
+      "AllocatedBytes": [
+        41611784,
+        41597320,
+        41588528
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "load-and-frame",
+      "MedianMs": 699.3352,
+      "P95Ms": 710.4489,
+      "MedianAllocatedBytes": 529181528,
+      "SamplesMs": [
+        699.3352,
+        652.0752,
+        710.4489
+      ],
+      "AllocatedBytes": [
+        540291632,
+        529166360,
+        529181528
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "graph-local-render",
+      "MedianMs": 7.0361,
+      "P95Ms": 7.0764,
+      "MedianAllocatedBytes": 1093248,
+      "SamplesMs": [
+        7.0764,
+        6.9903,
+        7.0361
+      ],
+      "AllocatedBytes": [
+        1093304,
+        1093248,
+        1093248
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "typing-one-character",
+      "MedianMs": 13.5347,
+      "P95Ms": 22.7452,
+      "MedianAllocatedBytes": 2447480,
+      "SamplesMs": [
+        13.5347,
+        22.7452,
+        9.6798
+      ],
+      "AllocatedBytes": [
+        2447480,
+        2636080,
+        1485760
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "typing-commit",
+      "MedianMs": 342.1261,
+      "P95Ms": 388.7312,
+      "MedianAllocatedBytes": 264002224,
+      "SamplesMs": [
+        298.8324,
+        388.7312,
+        342.1261
+      ],
+      "AllocatedBytes": [
+        263978312,
+        264002224,
+        264011184
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "selection",
+      "MedianMs": 149.1299,
+      "P95Ms": 216.0292,
+      "MedianAllocatedBytes": 64017584,
+      "SamplesMs": [
+        216.0292,
+        149.1299,
+        107.2026
+      ],
+      "AllocatedBytes": [
+        64017584,
+        64782536,
+        63973784
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "group-move-20",
+      "MedianMs": 418.8471,
+      "P95Ms": 456.1573,
+      "MedianAllocatedBytes": 274037968,
+      "SamplesMs": [
+        346.2933,
+        456.1573,
+        418.8471
+      ],
+      "AllocatedBytes": [
+        274037968,
+        274002864,
+        274059008
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "outline-filter",
+      "MedianMs": 15.4122,
+      "P95Ms": 23.8128,
+      "MedianAllocatedBytes": 2055208,
+      "SamplesMs": [
+        15.4122,
+        23.8128,
+        15.2593
+      ],
+      "AllocatedBytes": [
+        2055208,
+        6230032,
+        2050384
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "find-dialog-query",
+      "MedianMs": 19.1261,
+      "P95Ms": 24.8878,
+      "MedianAllocatedBytes": 10829552,
+      "SamplesMs": [
+        24.8878,
+        18.9058,
+        19.1261
+      ],
+      "AllocatedBytes": [
+        10860256,
+        10829552,
+        10825440
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "undo-redo-pair",
+      "MedianMs": 986.0289,
+      "P95Ms": 993.1547,
+      "MedianAllocatedBytes": 721818496,
+      "SamplesMs": [
+        958.2657,
+        986.0289,
+        993.1547
+      ],
+      "AllocatedBytes": [
+        721818496,
+        721780568,
+        721889136
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "pan-and-frame",
+      "MedianMs": 9.0019,
+      "P95Ms": 9.1333,
+      "MedianAllocatedBytes": 1209160,
+      "SamplesMs": [
+        9.0019,
+        8.8341,
+        9.1333
+      ],
+      "AllocatedBytes": [
+        1209216,
+        1179992,
+        1209160
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "zoom-and-frame",
+      "MedianMs": 130.3676,
+      "P95Ms": 178.2633,
+      "MedianAllocatedBytes": 60270576,
+      "SamplesMs": [
+        178.2633,
+        126.2086,
+        130.3676
+      ],
+      "AllocatedBytes": [
+        60276976,
+        60207336,
+        60270576
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "graph-fit-render",
+      "MedianMs": 32.7731,
+      "P95Ms": 33.9292,
+      "MedianAllocatedBytes": 3705840,
+      "SamplesMs": [
+        33.9292,
+        32.313,
+        32.7731
+      ],
+      "AllocatedBytes": [
+        3705896,
+        3705840,
+        3705840
+      ]
+    },
+    {
+      "Scenes": 10000,
+      "Operation": "save-and-frame",
+      "MedianMs": 684.3193,
+      "P95Ms": 702.2382,
+      "MedianAllocatedBytes": 405044832,
+      "SamplesMs": [
+        680.7758,
+        684.3193,
+        702.2382
+      ],
+      "AllocatedBytes": [
+        405044360,
+        405044832,
+        405050712
+      ]
+    }
+  ],
+  "Memory": [
+    {
+      "Scenes": 100,
+      "Phase": "loaded-local-viewport",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 22795384,
+      "PrivateBytes": 116838400,
+      "WorkingSetBytes": 172195840
+    },
+    {
+      "Scenes": 100,
+      "Phase": "before-history",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 31212112,
+      "PrivateBytes": 105603072,
+      "WorkingSetBytes": 166694912
+    },
+    {
+      "Scenes": 100,
+      "Phase": "after-history",
+      "HistoryEntries": 20,
+      "RetainedManagedBytes": 31954264,
+      "PrivateBytes": 118280192,
+      "WorkingSetBytes": 185950208
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "loaded-local-viewport",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 60528408,
+      "PrivateBytes": 196911104,
+      "WorkingSetBytes": 259784704
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "before-history",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 69371456,
+      "PrivateBytes": 255709184,
+      "WorkingSetBytes": 320618496
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "after-history",
+      "HistoryEntries": 20,
+      "RetainedManagedBytes": 76340016,
+      "PrivateBytes": 207667200,
+      "WorkingSetBytes": 275283968
+    },
+    {
+      "Scenes": 10000,
+      "Phase": "loaded-local-viewport",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 372321792,
+      "PrivateBytes": 993513472,
+      "WorkingSetBytes": 972386304
+    },
+    {
+      "Scenes": 10000,
+      "Phase": "before-history",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 435337128,
+      "PrivateBytes": 1447264256,
+      "WorkingSetBytes": 1423978496
+    },
+    {
+      "Scenes": 10000,
+      "Phase": "after-history",
+      "HistoryEntries": 20,
+      "RetainedManagedBytes": 517187016,
+      "PrivateBytes": 836677632,
+      "WorkingSetBytes": 822546432
+    }
+  ],
+  "Run": {
+    "SourceRevision": "74c2a17d5dbf3aa5baf6b055d8b26006ed062fe6",
+    "ProductSourceSha256": "F278CC85C7D7E84C191C7C329B83B0A827D223985BB423237FF45A7E6DB15167",
+    "BaselineRef": "",
+    "Cpu": "AMD Ryzen 7 7800X3D 8-Core Processor",
+    "Sdk": "10.0.204",
+    "Native": false,
+    "CacheProbe": false,
+    "Samples": 3,
+    "HistoryEntries": 20,
+    "Sizes": [
+      "100",
+      "1000",
+      "10000"
+    ]
+  }
+}
