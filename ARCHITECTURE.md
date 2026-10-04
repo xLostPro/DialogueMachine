@@ -6,6 +6,7 @@
 Core/                         Platform-independent class library; no UI dependencies
   Models.cs                   Website-compatible schema plus desktop project fields
   ProjectStore.cs             JSON import/export, atomic writes, bounded history
+  ProjectFiles.cs             Disk fingerprints, identity, guarded saves and detached reloads
   RecoveryStore.cs            Validated recovery storage and saved-file comparison
   WorkspaceStore.cs           Preferences migration, titled recents and startup decisions
   DialogueEngine.cs           Conditions, validation, safe renaming, layout, simulation
@@ -23,6 +24,7 @@ UI/
   MainWindow.axaml.cs          Document orchestration, selection and editing commands
   MainWindow.Editor.cs        Content, logic, notes and script views
   MainWindow.Files.cs         OS storage dialogs, file/recovery lifecycle, preferences
+  MainWindow.Conflicts.cs     Compare/reload/save-a-copy conflict dialogs and orchestration
   MainWindow.Welcome.cs       New-project, welcome and startup orchestration
   WelcomeView.axaml / .cs     Welcome cards, recent projects and recovery presentation
   ProjectFilePicker.cs        Native storage boundary, injectable for workflow checks
@@ -65,6 +67,14 @@ Graph selection is transient UI state: a scene set plus one active scene for the
 Graph movement snapshots the selected positions at gesture start and applies the same world-space delta to every member. Pending typing commits before a gesture. Pointer release, capture loss, keyboard release after repeats, or focus loss finishes the gesture once; Escape restores its starting positions without a history entry. Other document commands finish an active gesture before committing. Connection dragging operates on one output, even with a selected set. Rendering indexes destination IDs once and draws selected outgoing/internal and incoming connections after ordinary links, with thicker strokes and separate theme colors; continue links retain their dashed style.
 
 Never replace the current document until an import has parsed successfully and the user has resolved unsaved edits. Save updates the saved snapshot only after the atomic write succeeds. Recovery has its own file and never writes over the project. Restoring keeps the source recovery ID so a later successful Save or explicit Discard removes that active recovery.
+
+`ProjectFiles` keeps the original disk version separate from the normalized history/dirty snapshot. Opening captures SHA-256 over exact bytes and parses that same captured content, then rechecks after any unsaved-changes prompt. Windows additionally captures the volume/file ID from the read handle, detecting same-byte atomic replacements. Content rewrites, including whitespace/BOM changes with unchanged timestamps and length, and missing files are conflicts. Timestamp-only touches are harmless. Other platforms use content fingerprints; native Mac/Linux identity and workflow verification remain follow-up work.
+
+Ordinary Save (including Save as to the current path) checks the loaded/last-written version before staging and immediately after flushing the temporary file, before atomic replacement. A named per-path mutex coordinates saves by editor instances. New destinations use non-overwriting moves so files created during a picker/write cannot be overwritten. The returned baseline belongs to the staged file actually written, rather than a potentially newer post-save path read. These are optimistic checks: unrelated writers do not participate in the mutex, and a writer can still race the final check/OS rename; this is not a filesystem transaction or a portable atomic compare-and-replace primitive.
+
+Conflict choices preserve the local project while comparing detached read-only JSON, reloading, saving to a new copy, or cancelling. Every Compare/Reload decision rechecks the version shown; comparison return re-reads it, and Reload parses/sanitizes, runs graph diagnostics, and rechecks before replacement. Repairable graph errors retain the ordinary import policy. Malformed, unsupported, oversized, unreadable or deleted files never replace the document. Successful Reload records the external document in existing history, so Undo restores local edits and Redo returns to the clean external baseline. A Reload inside save-before-leaving retains the document and its history. Cancel, Escape, window close, stale decisions and failed writes leave file identity, saved baseline, recents and active recovery intact. Successful Save/copy and Reload update these only after completion. Conflict dialogs scale with the interface, keep actions outside scrollable content, and label both comparison panes.
+
+New recovery records carry the saved disk baseline; restoring it allows ordinary Save only when that disk version still matches. Older records with no trustworthy baseline require explicit conflict resolution. Recovery discovery compares normalized saved/recovery content instead of timestamps, so newer external rewrites or malformed files cannot hide different unsaved work. Matching content suppresses an obsolete recovery; damaged recovery records remain independently skipped and retained.
 
 Recovery discovery validates each record separately and skips both JSON syntax failures and semantic `InvalidDataException` failures. Keep damaged files for investigation and continue offering valid records.
 

@@ -35,7 +35,7 @@ public sealed partial class MainWindow
     {
         if (!await ConfirmReplace()) return false;
         editTimer.Stop(); hasProject = false; isExample = false;
-        project = new(); selected = null; filePath = null; history.Reset(project); savedSnapshot = ProjectStore.Serialize(project);
+        project = new(); selected = null; filePath = null; diskVersion = null; history.Reset(project); savedSnapshot = ProjectStore.Serialize(project);
         C<Grid>("WorkspacePanel").IsVisible = false; Welcome.IsVisible = true; Welcome.ShowNotice(null);
         Refresh(); BuildMenu(); RefreshWelcome();
         Welcome.FindControl<Button>("NewProjectButton")!.Focus(); return true;

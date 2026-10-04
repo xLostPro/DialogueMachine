@@ -61,7 +61,7 @@ public static class ProjectStore
         if (new FileInfo(path).Length > 20 * 1024 * 1024) throw new InvalidDataException("Projects must be smaller than 20 MB.");
         return Parse(File.ReadAllText(path));
     }
-    public static void AtomicWrite(string path, string content)
+    public static void AtomicWrite(string path, string content, Action<string>? beforeReplace = null, bool overwrite = true)
     {
         var full = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
@@ -70,7 +70,8 @@ public static class ProjectStore
         {
             using (var stream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
             using (var writer = new StreamWriter(stream)) { writer.Write(content); writer.Flush(); stream.Flush(true); }
-            File.Move(temp, full, true);
+            beforeReplace?.Invoke(temp);
+            File.Move(temp, full, overwrite);
         }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
