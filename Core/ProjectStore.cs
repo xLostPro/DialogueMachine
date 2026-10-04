@@ -1,4 +1,6 @@
 using System.IO;
+using System.IO.Compression;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -86,9 +88,10 @@ public static class ProjectStore
 
 public sealed class ProjectHistory
 {
-    private readonly List<string> undo = [];
-    private readonly List<string> redo = [];
+    private readonly List<byte[]> undo = [];
+    private readonly List<byte[]> redo = [];
     private string current = "";
+    public string CurrentSnapshot => current;
     public bool CanUndo => undo.Count > 0;
     public bool CanRedo => redo.Count > 0;
     public void Reset(DialogueProject p) { current = ProjectStore.Serialize(p); undo.Clear(); redo.Clear(); }
@@ -96,17 +99,35 @@ public sealed class ProjectHistory
     {
         var next = ProjectStore.Serialize(p);
         if (next == current) return false;
-        undo.Add(current); if (undo.Count > 100) undo.RemoveAt(0);
+        undo.Add(Compress(current)); if (undo.Count > 100) undo.RemoveAt(0);
         current = next; redo.Clear(); return true;
     }
     public DialogueProject? Undo()
     {
         if (!CanUndo) return null;
-        redo.Add(current); current = undo[^1]; undo.RemoveAt(undo.Count - 1); return ProjectStore.Parse(current);
+        var snapshot = Expand(undo[^1]); var project = ProjectStore.Parse(snapshot);
+        redo.Add(Compress(current)); current = snapshot; undo.RemoveAt(undo.Count - 1); return project;
     }
     public DialogueProject? Redo()
     {
         if (!CanRedo) return null;
-        undo.Add(current); current = redo[^1]; redo.RemoveAt(redo.Count - 1); return ProjectStore.Parse(current);
+        var snapshot = Expand(redo[^1]); var project = ProjectStore.Parse(snapshot);
+        undo.Add(Compress(current)); current = snapshot; redo.RemoveAt(redo.Count - 1); return project;
+    }
+    // Keep complete, lossless JSON semantics. Only archived entries are compressed;
+    // the current string is reused for dirty comparisons and guarded saves.
+    private static byte[] Compress(string snapshot)
+    {
+        using var output = new MemoryStream();
+        using (var compressed = new BrotliStream(output, CompressionLevel.Fastest, leaveOpen: true))
+        using (var writer = new StreamWriter(compressed, new UTF8Encoding(false), 4096)) writer.Write(snapshot);
+        return output.ToArray();
+    }
+    private static string Expand(byte[] snapshot)
+    {
+        using var input = new MemoryStream(snapshot, writable: false);
+        using var compressed = new BrotliStream(input, CompressionMode.Decompress);
+        using var reader = new StreamReader(compressed, Encoding.UTF8);
+        return reader.ReadToEnd();
     }
 }

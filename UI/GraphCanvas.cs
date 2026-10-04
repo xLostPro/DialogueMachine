@@ -9,7 +9,12 @@ namespace DialogueMachine.UI;
 
 public sealed class GraphCanvas : Control
 {
-    public DialogueProject Project { get; set; } = Templates.Blank();
+    private DialogueProject project = Templates.Blank();
+    public DialogueProject Project
+    {
+        get => project;
+        set { if (!ReferenceEquals(project, value)) ClearTextLayouts(); project = value; }
+    }
     public DialogueState? Selected { get; private set; }
     private readonly HashSet<DialogueState> selection = [];
     public IReadOnlyList<DialogueState> SelectedScenes => Project.ListOfCharacterStates.Where(selection.Contains).ToList();
@@ -32,6 +37,14 @@ public sealed class GraphCanvas : Control
     private Choice? linkChoice;
     private Point linkEnd;
     internal GraphImagePlan? ExportPlan { get; init; }
+    private readonly GraphTextCache textCache = new();
+    private IBrush? paletteInk;
+    internal int CachedTextLayouts => textCache.Count;
+    internal int CachedTextCharacters => textCache.Characters;
+    internal int RenderedNodes { get; private set; }
+    internal int RenderedLinks { get; private set; }
+    public void ClearTextLayouts() => textCache.Clear();
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) { ClearTextLayouts(); base.OnDetachedFromVisualTree(e); }
     public GraphCanvas()
     {
         Focusable = true; ClipToBounds = true;
@@ -75,11 +88,13 @@ public sealed class GraphCanvas : Control
     public override void Render(DrawingContext dc)
     {
         base.Render(dc);
+        if (!ReferenceEquals(paletteInk, Ui.Brush("Ink"))) { ClearTextLayouts(); paletteInk = Ui.Brush("Ink"); }
+        RenderedNodes = RenderedLinks = 0;
         dc.FillRectangle(Ui.Brush("Base"), new Rect(Bounds.Size));
         if (ExportPlan is { } plan)
         {
             using (dc.PushTransform(Matrix.CreateTranslation(-plan.WorldBounds.X, -plan.WorldBounds.Y) * Matrix.CreateScale(plan.Scale, plan.Scale)))
-                DrawStory(dc);
+                DrawStory(dc, null);
             return;
         }
         var grid = 28 * Zoom;
@@ -87,7 +102,8 @@ public sealed class GraphCanvas : Control
             for (var y = offset.Y % grid; y < Bounds.Height; y += grid) dc.DrawEllipse(Ui.Brush("GraphGrid"), null, new Point(x, y), .9, .9);
         using (dc.PushTransform(Matrix.CreateScale(Zoom, Zoom) * Matrix.CreateTranslation(offset)))
         {
-            DrawStory(dc);
+            // Inflate for strokes, ports, arrowheads and keyboard-focus decoration at every zoom.
+            DrawStory(dc, ViewportWorld.Inflate(8 + 2 / Zoom));
             if (linkSource is not null)
             {
                 var index = linkChoice is null ? -1 : linkSource.Choices.IndexOf(linkChoice);
@@ -99,7 +115,7 @@ public sealed class GraphCanvas : Control
         }
         if (Project.ListOfCharacterStates.Count == 0) DrawText(dc, "Your story starts with a scene.\nChoose Add scene to begin.", new(60, 100), 20, "Muted", 420, 100);
     }
-    private void DrawStory(DrawingContext dc)
+    private void DrawStory(DrawingContext dc, Rect? viewport)
     {
         var destinations = new Dictionary<string, DialogueState>(StringComparer.Ordinal);
         foreach (var scene in Project.ListOfCharacterStates) if (scene.State != "[EXIT]") destinations.TryAdd(scene.State, scene);
@@ -107,17 +123,29 @@ public sealed class GraphCanvas : Control
         foreach (var highlighted in new[] { false, true })
             foreach (var s in Project.ListOfCharacterStates)
             {
-                for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false, destinations, highlighted);
-                if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true, destinations, highlighted);
+                for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false, destinations, highlighted, viewport);
+                if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true, destinations, highlighted, viewport);
             }
-        foreach (var s in Project.ListOfCharacterStates) DrawNode(dc, s);
+        foreach (var s in Project.ListOfCharacterStates)
+            if (viewport is null || viewport.Value.Intersects(BoundsOf(s))) { DrawNode(dc, s); RenderedNodes++; }
     }
-    private void DrawLink(DrawingContext dc, DialogueState source, string? targetId, Point start, bool fallback, Dictionary<string, DialogueState> destinations, bool highlighted)
+    private void DrawLink(DrawingContext dc, DialogueState source, string? targetId, Point start, bool fallback, Dictionary<string, DialogueState> destinations, bool highlighted, Rect? viewport)
     {
         if (targetId is null || !destinations.TryGetValue(targetId, out var target)) return;
         var highlight = ConnectionHighlight(source, target);
         if ((highlight is not null) != highlighted) return;
-        Curve(dc, start, new(target.VisualX, target.VisualY + 35), Ui.Brush(highlight ?? "GraphLink"), fallback, highlighted);
+        var end = new Point(target.VisualX, target.VisualY + 35);
+        if (viewport is not null && !ConnectionHull(start, end).Intersects(viewport.Value)) return;
+        Curve(dc, start, end, Ui.Brush(highlight ?? "GraphLink"), fallback, highlighted); RenderedLinks++;
+    }
+    // A cubic is contained in the hull of its control points. Conservative bounds retain
+    // curves crossing the viewport with both endpoints offscreen, including backward loops.
+    internal static Rect ConnectionHull(Point a, Point b)
+    {
+        var length = Math.Max(65, Math.Abs(b.X - a.X) * .45);
+        var left = Math.Min(Math.Min(a.X, b.X - length), b.X - 9);
+        var right = Math.Max(a.X + length, b.X);
+        return new Rect(left, Math.Min(a.Y, b.Y - 5), right - left, Math.Max(a.Y, b.Y + 5) - Math.Min(a.Y, b.Y - 5)).Inflate(4);
     }
     internal static StreamGeometry ConnectionCurve(Point a, Point b)
     {
@@ -158,10 +186,9 @@ public sealed class GraphCanvas : Control
         DrawText(dc, s.DefaultNextId == "[EXIT]" ? "○  End conversation" : string.IsNullOrWhiteSpace(s.DefaultNextId) ? "Continue destination not set" : "→  " + s.DefaultNextId, new(rect.X + 16, bottom + 8), 10, "Muted", 230, 18);
         dc.DrawEllipse(Ui.Brush("Muted"), new Pen(Ui.Brush("Panel"), 2), new(rect.Right, rect.Bottom - 17), 5, 5);
     }
-    private static void DrawText(DrawingContext dc, string text, Point position, double size, string brush, double width, double height, bool bold = false)
+    private void DrawText(DrawingContext dc, string text, Point position, double size, string brush, double width, double height, bool bold = false)
     {
-        using var layout = new TextLayout(text, new Typeface("Inter", weight: bold ? FontWeight.SemiBold : FontWeight.Normal), size, Ui.Brush(brush), textWrapping: TextWrapping.Wrap, textTrimming: TextTrimming.CharacterEllipsis, maxWidth: width, maxHeight: height);
-        layout.Draw(dc, position);
+        textCache.Draw(dc, text, position, size, Ui.Brush(brush), width, height, bold);
     }
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {

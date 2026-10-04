@@ -69,7 +69,8 @@ public static class GraphImageExport
         canvas.Measure(new Size(plan.Pixels.Width, plan.Pixels.Height));
         canvas.Arrange(new Rect(0, 0, plan.Pixels.Width, plan.Pixels.Height));
         using var bitmap = new RenderTargetBitmap(plan.Pixels, new Vector(96, 96));
-        bitmap.Render(canvas);
+        try { bitmap.Render(canvas); }
+        finally { canvas.ClearTextLayouts(); }
         var full = Path.GetFullPath(path);
         Directory.CreateDirectory(Path.GetDirectoryName(full)!);
         var temporary = full + "." + Guid.NewGuid().ToString("N") + ".tmp";

@@ -70,7 +70,7 @@ public sealed partial class MainWindow
     {
         editTimer.Stop(); hasProject = true; isExample = false; project = next; filePath = path; diskVersion = version; recoveryId = Guid.NewGuid().ToString("N");
         selected = project.ListOfCharacterStates.FirstOrDefault(s => s.State == project.Entry) ?? project.ListOfCharacterStates.FirstOrDefault();
-        history.Reset(project); savedSnapshot = unsaved ? "" : ProjectStore.Serialize(project);
+        history.Reset(project); pendingEdits = false; savedSnapshot = unsaved ? "" : history.CurrentSnapshot;
         Welcome.IsVisible = false; C<Grid>("WorkspacePanel").IsVisible = true;
         C<Border>("DiagnosticsBorder").IsVisible = false;
         Refresh(); ClearOutlineFilters(); BuildMenu(); UpdateLayout(); Graph.Fit();
@@ -90,12 +90,15 @@ public sealed partial class MainWindow
                 path = await projectFilePicker.SaveAsync(this, safeName + ".dialogue.json"); if (path is null) return false;
             }
             path = Path.GetFullPath(path);
+            // The public Project model remains mutable. Reconcile untracked programmatic
+            // edits at the file boundary, including edits while an async picker was open.
+            Commit(true, force: true);
             var sameFile = filePath is not null && ProjectFiles.SamePath(path, filePath);
             var expected = sameFile ? diskVersion : ProjectFiles.Read(path).Version;
             try
             {
                 var current = ProjectFiles.RequireUnchanged(path, expected);
-                CompleteSave(path, ProjectStore.Serialize(project), current.Version);
+                CompleteSave(path, history.CurrentSnapshot, current.Version);
                 return true;
             }
             catch (ProjectFileConflictException conflict) { return await ResolveSaveConflict(path, conflict.Current); }
@@ -108,11 +111,11 @@ public sealed partial class MainWindow
     {
         var version = copy ? ProjectFiles.SaveCopy(path, snapshot) : ProjectFiles.Save(path, snapshot, expected);
         filePath = path; diskVersion = version; isExample = false; savedSnapshot = snapshot;
-        ClearCurrentRecovery(); Remember(path); Refresh(); Status("Saved " + path);
+        ClearCurrentRecovery(); Remember(path); UpdateStatus(); Status("Saved " + path);
     }
     private async Task<bool> ConfirmReplace()
     {
-        Commit();
+        Commit(true, force: true);
         if (!Dirty) return true;
         var answer = await Ui.Ask(this, "Save your changes?", "‘" + project.ProjectName + "’ has unsaved changes.", "Save changes", "Discard changes", "Cancel");
         if (answer == "Save changes")
@@ -191,6 +194,7 @@ public sealed partial class MainWindow
     private void ApplyAppearance()
     {
         ((App)Application.Current!).SetPalette(preferences.Theme);
+        Graph.ClearTextLayouts();
         if (Content is LayoutTransformControl transform) transform.LayoutTransform = new ScaleTransform(preferences.Scale, preferences.Scale);
         else if (Content is Control root)
         {

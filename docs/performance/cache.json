@@ -1,0 +1,361 @@
+{
+  "Environment": {
+    "DateUtc": "2026-10-04T19:32:25.7764009+00:00",
+    "OS": "Microsoft Windows 10.0.26200",
+    "Runtime": ".NET 10.0.12",
+    "Architecture": "X64",
+    "LogicalProcessors": 16,
+    "AvailableMemoryBytes": 33455448064,
+    "Avalonia": "12.1.3.0",
+    "Backend": "headless / real Skia RenderTargetBitmap",
+    "Window": "1540x940",
+    "Theme": "Dark",
+    "InterfaceScale": 1,
+    "samples": 5,
+    "historyCount": 1,
+    "Command": "--performance --output C:\\Users\\Ben\\Documents\\Projects\\Dialogue Machine\\artifacts\\performance-cache --samples 5 --history 1 --sizes 1000 --cache-probe"
+  },
+  "Fixtures": [
+    {
+      "Scenes": 1000,
+      "Bytes": 1909892,
+      "Sha256": "6FF2418409EC3C886789091122A5C5A70A55476FA718EA0DAA09F7BB334DCBED"
+    }
+  ],
+  "Measurements": [
+    {
+      "Scenes": 1000,
+      "Operation": "load-and-frame",
+      "MedianMs": 357.2491,
+      "P95Ms": 387.243,
+      "MedianAllocatedBytes": 64903064,
+      "SamplesMs": [
+        364.5701,
+        326.0041,
+        387.243,
+        357.2491,
+        342.4122
+      ],
+      "AllocatedBytes": [
+        70416352,
+        64894904,
+        64899400,
+        64908608,
+        64903064
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-local-cold-layouts",
+      "MedianMs": 6.7084,
+      "P95Ms": 10.3528,
+      "MedianAllocatedBytes": 414248,
+      "SamplesMs": [
+        6.7084,
+        6.5606,
+        10.3528,
+        6.5634,
+        7.5053
+      ],
+      "AllocatedBytes": [
+        415776,
+        414248,
+        414248,
+        414248,
+        341080
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-local-render",
+      "MedianMs": 5.0701,
+      "P95Ms": 5.1592,
+      "MedianAllocatedBytes": 255176,
+      "SamplesMs": [
+        5.1592,
+        5.0701,
+        5.1007,
+        5.023,
+        5.0122
+      ],
+      "AllocatedBytes": [
+        255232,
+        255176,
+        255176,
+        255176,
+        255264
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "typing-one-character",
+      "MedianMs": 21.9574,
+      "P95Ms": 44.5073,
+      "MedianAllocatedBytes": 802416,
+      "SamplesMs": [
+        44.5073,
+        12.9255,
+        21.9574,
+        11.4797,
+        21.9871
+      ],
+      "AllocatedBytes": [
+        811920,
+        784600,
+        803400,
+        494488,
+        802416
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "typing-commit",
+      "MedianMs": 112.5168,
+      "P95Ms": 122.1243,
+      "MedianAllocatedBytes": 28602920,
+      "SamplesMs": [
+        112.5168,
+        113.9653,
+        122.1243,
+        92.6757,
+        91.6929
+      ],
+      "AllocatedBytes": [
+        28601800,
+        28597928,
+        28607304,
+        28602920,
+        28700976
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "selection",
+      "MedianMs": 58.9413,
+      "P95Ms": 69.6061,
+      "MedianAllocatedBytes": 9956560,
+      "SamplesMs": [
+        53.3051,
+        58.9413,
+        60.3941,
+        69.6061,
+        53.7481
+      ],
+      "AllocatedBytes": [
+        9956560,
+        10723048,
+        9918336,
+        10737736,
+        9930144
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "group-move-20",
+      "MedianMs": 172.0135,
+      "P95Ms": 192.0656,
+      "MedianAllocatedBytes": 38498960,
+      "SamplesMs": [
+        192.0656,
+        172.0135,
+        168.1908,
+        182.3498,
+        146.7381
+      ],
+      "AllocatedBytes": [
+        38521432,
+        38469384,
+        38521632,
+        38498960,
+        38457440
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "outline-filter",
+      "MedianMs": 17.1493,
+      "P95Ms": 70.69,
+      "MedianAllocatedBytes": 1211016,
+      "SamplesMs": [
+        13.042,
+        70.69,
+        17.1493,
+        58.1273,
+        13.5054
+      ],
+      "AllocatedBytes": [
+        1187712,
+        5423000,
+        1211016,
+        5419520,
+        1192448
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "find-dialog-query",
+      "MedianMs": 22.7675,
+      "P95Ms": 35.0873,
+      "MedianAllocatedBytes": 4600336,
+      "SamplesMs": [
+        22.7675,
+        15.0693,
+        18.1273,
+        35.0873,
+        31.0791
+      ],
+      "AllocatedBytes": [
+        4644992,
+        4571624,
+        4599328,
+        4610312,
+        4600336
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "undo-redo-pair",
+      "MedianMs": 320.3338,
+      "P95Ms": 334.1886,
+      "MedianAllocatedBytes": 89436648,
+      "SamplesMs": [
+        320.3338,
+        334.1886,
+        302.2624,
+        329.2823,
+        230.3225
+      ],
+      "AllocatedBytes": [
+        89462728,
+        89436648,
+        89396240,
+        89464920,
+        89156528
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "pan-and-frame",
+      "MedianMs": 6.1068,
+      "P95Ms": 32.3062,
+      "MedianAllocatedBytes": 369216,
+      "SamplesMs": [
+        5.7185,
+        6.1068,
+        32.3062,
+        6.3714,
+        5.5438
+      ],
+      "AllocatedBytes": [
+        369216,
+        340112,
+        377072,
+        340200,
+        369456
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "zoom-and-frame",
+      "MedianMs": 9.2352,
+      "P95Ms": 41.5321,
+      "MedianAllocatedBytes": 6535120,
+      "SamplesMs": [
+        5.7096,
+        24.8753,
+        41.5321,
+        9.2352,
+        7.0722
+      ],
+      "AllocatedBytes": [
+        374048,
+        6632368,
+        6645912,
+        6535120,
+        382824
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "graph-fit-render",
+      "MedianMs": 28.491,
+      "P95Ms": 28.8932,
+      "MedianAllocatedBytes": 2866048,
+      "SamplesMs": [
+        28.3408,
+        28.4106,
+        28.6771,
+        28.8932,
+        28.491
+      ],
+      "AllocatedBytes": [
+        2866104,
+        2866048,
+        2866048,
+        2866048,
+        2866136
+      ]
+    },
+    {
+      "Scenes": 1000,
+      "Operation": "save-and-frame",
+      "MedianMs": 81.9433,
+      "P95Ms": 99.9493,
+      "MedianAllocatedBytes": 41598240,
+      "SamplesMs": [
+        81.9433,
+        80.7631,
+        90.205,
+        79.3725,
+        99.9493
+      ],
+      "AllocatedBytes": [
+        41610352,
+        41583120,
+        41598240,
+        41582088,
+        41604064
+      ]
+    }
+  ],
+  "Memory": [
+    {
+      "Scenes": 1000,
+      "Phase": "loaded-local-viewport",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 46507904,
+      "PrivateBytes": 190525440,
+      "WorkingSetBytes": 242929664
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "before-history",
+      "HistoryEntries": 0,
+      "RetainedManagedBytes": 61682568,
+      "PrivateBytes": 260009984,
+      "WorkingSetBytes": 320094208
+    },
+    {
+      "Scenes": 1000,
+      "Phase": "after-history",
+      "HistoryEntries": 1,
+      "RetainedManagedBytes": 66051984,
+      "PrivateBytes": 257376256,
+      "WorkingSetBytes": 317521920
+    }
+  ],
+  "Run": {
+    "SourceRevision": "74c2a17d5dbf3aa5baf6b055d8b26006ed062fe6",
+    "ProductSourceSha256": "F278CC85C7D7E84C191C7C329B83B0A827D223985BB423237FF45A7E6DB15167",
+    "BaselineRef": "",
+    "Cpu": "AMD Ryzen 7 7800X3D 8-Core Processor",
+    "Sdk": "10.0.204",
+    "Native": false,
+    "CacheProbe": true,
+    "Samples": 5,
+    "HistoryEntries": 1,
+    "Sizes": [
+      "1000"
+    ]
+  }
+}

@@ -21,7 +21,7 @@ public sealed partial class MainWindow
     private TextBox EditText(string text, Action<string> apply, bool multiline = false)
     {
         var t = Ui.Input(text, v => { apply(v); Edited(); }, multiline);
-        t.LostFocus += (_, _) => { Commit(); RefreshOutline(); C<TextBlock>("EditorTitle").Text = selected?.Title; }; return t;
+        t.LostFocus += (_, _) => { Commit(); C<TextBlock>("EditorTitle").Text = selected?.Title; }; return t;
     }
     private AutoCompleteBox VariableInput(string type, string id, Action<string> apply)
     {
@@ -81,7 +81,7 @@ public sealed partial class MainWindow
     }
     private void BuildLogicEditor(DialogueState s)
     {
-        Editor.Children.Add(Ui.Field("Scene type", Ui.Select(["Dialogue", "Shop"], s.Type, v => { s.Type = v; Commit(); RefreshEditor(); })));
+        Editor.Children.Add(Ui.Field("Scene type", Ui.Select(["Dialogue", "Shop"], s.Type, v => { s.Type = v; Edited(); Commit(); RefreshEditor(); })));
         if (s.Type == "Shop")
         {
             Editor.Children.Add(Ui.Field("Shop ID", EditText(s.ShopData.ShopId, v => s.ShopData.ShopId = v)));
@@ -101,7 +101,7 @@ public sealed partial class MainWindow
             foreach (var requirement in choice.Requirements.ToArray())
             {
                 var r = requirement;
-                var type = Ui.Select(["Affinity", "Inventory"], r.Type, v => { r.Type = v; Commit(); RefreshEditor(); });
+                var type = Ui.Select(["Affinity", "Inventory"], r.Type, v => { r.Type = v; Edited(); Commit(); RefreshEditor(); });
                 var op = Ui.Select(["==", "!=", ">", "<", ">=", "<="], r.Operator, v => { r.Operator = v; Edited(); });
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,8,80") }; row.Children.Add(type); Grid.SetColumn(op, 2); row.Children.Add(op);
                 panel.Children.Add(Ui.Card(Ui.Stack(row, Ui.Field("Variable ID", VariableInput(r.Type, r.TargetId, v => r.TargetId = v)), Ui.Field("Compare with (integer)", EditText(r.Value, v => r.Value = v)), Ui.Button("Remove condition", () => Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
@@ -118,7 +118,7 @@ public sealed partial class MainWindow
         foreach (var action in actions.ToArray())
         {
             var a = action;
-            var type = Ui.Select(["Affinity", "Inventory", "Event", "Script"], a.Type, v => { a.Type = v; Commit(); RefreshEditor(); });
+            var type = Ui.Select(["Affinity", "Inventory", "Event", "Script"], a.Type, v => { a.Type = v; Edited(); Commit(); RefreshEditor(); });
             var group = Ui.Stack(Ui.Field("Action type", type), Ui.Field(a.Type is "Event" or "Script" ? "Event / method ID" : "Variable ID", a.Type is "Event" or "Script" ? EditText(a.TargetId, v => a.TargetId = v) : VariableInput(a.Type, a.TargetId, v => a.TargetId = v)));
             if (a.Type is "Event" or "Script") group.Children.Add(Ui.Field("Parameter", EditText(a.Parameter ?? "", v => a.Parameter = v)));
             else
@@ -144,9 +144,13 @@ public sealed partial class MainWindow
         Editor.Children.Add(Ui.AsyncButton("▶  Play from this scene", () => Play(true), "play"));
         AddSceneConnections(Editor, s);
     }
+    private bool scriptDirty = true;
     private void RefreshScript()
     {
-        var panel = C<StackPanel>("ScriptPanel"); panel.Children.Clear();
+        var panel = C<StackPanel>("ScriptPanel");
+        if (!C<ScrollViewer>("ScriptScroll").IsVisible) { if (scriptDirty) panel.Children.Clear(); return; }
+        if (!scriptDirty) return;
+        scriptDirty = false; panel.Children.Clear();
         panel.Children.Add(Ui.Text(project.ProjectName, 28)); panel.Children.Add(Ui.Text("A readable view of your story. Select any scene to edit it.", 13, true));
         foreach (var s in project.ListOfCharacterStates)
         {
