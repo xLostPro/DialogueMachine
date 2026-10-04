@@ -12,7 +12,7 @@ public sealed partial class MainWindow
     private bool updatingOutlineFilters;
     private sealed record FilterOption(string Label, string? Value) { public override string ToString() => Label; }
     private OutlineFilter CurrentOutlineFilter() => new(C<TextBox>("SearchBox").Text ?? "", (C<ComboBox>("SpeakerFilter").SelectedItem as FilterOption)?.Value, (C<ComboBox>("TagFilter").SelectedItem as FilterOption)?.Value,
-        C<ComboBox>("IssueFilter").SelectedIndex switch { 1 => SceneIssueFilter.WithIssues, 2 => SceneIssueFilter.Errors, 3 => SceneIssueFilter.Warnings, 4 => SceneIssueFilter.WithoutIssues, _ => SceneIssueFilter.All });
+        C<ComboBox>("IssueFilter").SelectedIndex switch { 1 => SceneIssueFilter.WithIssues, 2 => SceneIssueFilter.Errors, 3 => SceneIssueFilter.Warnings, 4 => SceneIssueFilter.WithoutIssues, _ => SceneIssueFilter.All }, (C<ComboBox>("GroupFilter").SelectedItem as FilterOption)?.Value);
     private void RefreshOutlineFilters()
     {
         updatingOutlineFilters = true;
@@ -23,12 +23,16 @@ public sealed partial class MainWindow
             combo.ItemsSource = options; combo.SelectedItem = options.FirstOrDefault(o => o.Value == selectedValue) ?? options[0];
         }
         Populate("SpeakerFilter", "Any speaker", navigation.Speakers); Populate("TagFilter", "Any tag", navigation.Tags);
+        var groupCombo = C<ComboBox>("GroupFilter"); var groupId = (groupCombo.SelectedItem as FilterOption)?.Value;
+        var groupOptions = new List<FilterOption> { new("Any group", null), new("Ungrouped scenes", "") };
+        groupOptions.AddRange(project.SceneGroups.Select(g => new FilterOption(g.Name, g.Id)));
+        groupCombo.ItemsSource = groupOptions; groupCombo.SelectedItem = groupOptions.FirstOrDefault(o => o.Value == groupId) ?? groupOptions[0];
         updatingOutlineFilters = false; RefreshOutline();
     }
     private void ClearOutlineFilters()
     {
         updatingOutlineFilters = true;
-        C<TextBox>("SearchBox").Text = ""; C<ComboBox>("SpeakerFilter").SelectedIndex = 0; C<ComboBox>("TagFilter").SelectedIndex = 0; C<ComboBox>("IssueFilter").SelectedIndex = 0;
+        C<TextBox>("SearchBox").Text = ""; C<ComboBox>("SpeakerFilter").SelectedIndex = 0; C<ComboBox>("TagFilter").SelectedIndex = 0; C<ComboBox>("IssueFilter").SelectedIndex = 0; C<ComboBox>("GroupFilter").SelectedIndex = 0;
         updatingOutlineFilters = false; RefreshOutline();
     }
     private Control Destination(DialogueState scene, string? value, Action<string?> apply, int? choiceIndex = null)

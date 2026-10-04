@@ -16,6 +16,7 @@ public sealed class DialogueProject
     public Dictionary<string, string> TextVariables { get; set; } = new() { ["player_name"] = "Traveller", ["npc_name"] = "Mara" };
     public List<SceneTemplate> SceneTemplates { get; set; } = [];
     public List<ChoiceTemplate> ChoiceTemplates { get; set; } = [];
+    public List<SceneGroup> SceneGroups { get; set; } = [];
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     [JsonIgnore] public string Entry => EntryStateId ?? ListOfCharacterStates.FirstOrDefault()?.State ?? "";
 }
@@ -72,6 +73,19 @@ public sealed class Requirement
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 public enum VisibilityMode { Hide, Disable, Always }
+public sealed class SceneGroup
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string Name { get; set; } = "";
+    public List<SceneReference> Scenes { get; set; } = [];
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
+}
+public sealed class SceneReference
+{
+    public string StateId { get; set; } = "";
+    public int Occurrence { get; set; }
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
+}
 public sealed class SceneTemplate
 {
     public string Name { get; set; } = "";

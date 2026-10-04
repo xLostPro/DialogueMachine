@@ -2,6 +2,8 @@ Dialogue Machine is an offline desktop workspace for branching dialogue.
 
 ## Unreleased
 
+- Save named scene groups/chapters with overlapping memberships. Create, rename, delete, assign/remove selected sets, select a group's scenes and combine a group filter with other outline filters. Each group edit has one Undo/Redo step; deleting a group keeps every scene and connection. Groups survive save/load, recovery, scene-ID repair and history. Copied, duplicated and template-inserted scenes start ungrouped in every project.
+- Toggle a story minimap with Ctrl/Cmd+Shift+M. It shows selected scenes, connections and the viewport, supports click/drag and keyboard navigation, and adapts to compact windows. Its visibility is a workspace preference. Alt+arrows pans the graph without moving scenes; Fit and existing keyboard scene navigation remain available.
 - Select multiple graph scenes with Ctrl/Cmd-click, Shift-click or Shift-drag. Use the outline's native multiple selection, or graph Ctrl/Cmd+Tab and Space; Ctrl/Cmd+A selects all and Escape clears selection.
 - Drag or nudge a selected set while preserving relative positions. Each drag or held arrow-key gesture is one Undo/Redo step; Escape restores an unfinished move. Pending text edits remain separate history steps.
 - See thicker outgoing/internal and incoming selected connections with distinct colors in all themes, including yellow selection in High contrast. Continue links remain dashed.

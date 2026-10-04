@@ -61,7 +61,7 @@ public sealed partial class MainWindow
         list.SelectionChanged += (_, _) => { if (list.SelectedIndex >= 0) keyboardIndex = list.SelectedIndex; Update(); }; Update();
         var all = Ui.Button("Select all", () => list.SelectAll(), "subtle");
         var content = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"), Margin = new Thickness(24) };
-        content.Children.Add(Ui.Stack(Ui.Text("Copy scenes", 23), Ui.Text("Click or press Space to toggle a scene. Shift selects a range. Copies stay available in this app until it closes, including after opening another project.", 13, true)));
+        content.Children.Add(Ui.Stack(Ui.Text("Copy scenes", 23), Ui.Text("Click or press Space to toggle a scene. Shift selects a range. Copies stay available in this app until it closes, including after opening another project. Pasted scenes start ungrouped.", 13, true)));
         var selection = Ui.Row(all, summary); selection.Margin = new Thickness(0,12,0,10); Grid.SetRow(selection, 1); content.Children.Add(selection);
         Grid.SetRow(list, 2); content.Children.Add(list);
         var footer = Ui.Row(Ui.Button("Cancel", () => window!.Close()), copy); footer.Margin = new Thickness(0,12,0,0); Grid.SetRow(footer, 3); content.Children.Add(footer);
@@ -88,7 +88,7 @@ public sealed partial class MainWindow
                 var pasted = AuthoringOperations.PasteScenes(project, copiedScenes, (selected?.VisualX ?? 80) + 45, (selected?.VisualY ?? 80) + 65);
                 selectedScenes.Clear(); selectedScenes.UnionWith(pasted); selected = pasted[0];
             });
-            Graph.Centre(selected!); BuildMenu(); Status($"Pasted {copiedScenes.Count} scenes with new IDs. Internal links follow the copies; other destinations are retained.");
+            Graph.Centre(selected!); BuildMenu(); Status($"Pasted {copiedScenes.Count} ungrouped scenes with new IDs. Internal links follow the copies; other destinations are retained.");
         });
     }
 

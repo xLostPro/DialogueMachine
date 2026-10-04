@@ -12,6 +12,7 @@ public sealed class WorkspacePreferences
     public double Scale { get; set; } = 1;
     public bool RecoveryEnabled { get; set; } = true;
     public bool ReopenLastProjectOnStartup { get; set; }
+    public bool ShowMinimap { get; set; }
     public string? LastProjectPath { get; set; }
     public List<RecentProject> RecentProjects { get; set; } = [];
     // Read the original preferences without requiring users to reset their settings.

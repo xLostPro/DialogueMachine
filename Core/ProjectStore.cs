@@ -40,6 +40,20 @@ public static class ProjectStore
             }
             if (s.DefaultAfterActions.Any(a => a is null)) throw new InvalidDataException("Actions cannot be null.");
         }
+        project.SceneGroups ??= [];
+        var groupIds = new HashSet<string>(StringComparer.Ordinal);
+        var sceneKeys = SceneGroups.Keys(project).Values.ToHashSet();
+        foreach (var group in project.SceneGroups)
+        {
+            if (group is null || string.IsNullOrWhiteSpace(group.Id) || !groupIds.Add(group.Id) || string.IsNullOrWhiteSpace(group.Name))
+                throw new InvalidDataException("Each scene group needs a unique ID and a non-empty name.");
+            group.Scenes ??= [];
+            if (group.Scenes.Any(r => r is null || string.IsNullOrWhiteSpace(r.StateId) || r.Occurrence < 0))
+                throw new InvalidDataException("Each group member needs a scene ID and a non-negative occurrence.");
+            // Missing/duplicate memberships cannot attach themselves to a later inserted scene.
+            var seen = new HashSet<(string, int)>();
+            group.Scenes.RemoveAll(r => !sceneKeys.Contains((r.StateId, r.Occurrence)) || !seen.Add((r.StateId, r.Occurrence)));
+        }
         return project;
     }
     public static DialogueProject Load(string path)
