@@ -60,6 +60,7 @@ public sealed partial class MainWindow
         content.Children.Add(Ui.Stack(Ui.Text("Groups & chapters", 23), summary, Ui.Text("Edits apply immediately. Close to Undo/Redo.", 12, true))); Grid.SetRow(body, 1); content.Children.Add(body);
         var close = Ui.Button("Close", () => window!.Close()); Grid.SetRow(close, 2); content.Children.Add(close);
         window = Ui.Dialog(this, "Groups & chapters", content, 740, 570, preferences.Scale); window.Opened += (_, _) => name.Focus();
+        window.MinWidth = 560 * preferences.Scale; window.MinHeight = 360 * preferences.Scale;
         var result = await window.ShowDialog<(string Id, bool Filter)?>(this);
         if (result is not { } command || project.SceneGroups.FirstOrDefault(g => g.Id == command.Id) is not { } chosen) return;
         if (command.Filter)

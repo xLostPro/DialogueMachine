@@ -198,7 +198,7 @@ internal static class GraphOrganizationChecks
                 dialog.Width = 560 * scale; dialog.Height = 360 * scale; Dispatcher.UIThread.RunJobs(); capture(dialog, render + "-dialog-compact");
                 Named<TextBox>(dialog, "SceneGroupName").Focus(); for (var tab = 0; tab < 6; tab++) Key(dialog, Avalonia.Input.Key.Tab);
                 var filterAction = Named<Button>(dialog, "FilterSceneGroup"); var actionBottom = filterAction.TranslatePoint(new Point(0, filterAction.Bounds.Height), dialog)!.Value.Y;
-                check(Named<ListBox>(dialog, "SceneGroupList").Bounds.Height > 40 && Named<TextBox>(dialog, "SceneGroupName").Bounds.Width > 100 && filterAction.IsFocused && actionBottom < dialog.Height - 60 * scale, "compact group manager keeps its list usable and Tab scrolls later actions into view at " + theme + " " + scale); Close(dialog);
+                check(dialog.MinWidth == 560 * scale && dialog.MinHeight == 360 * scale && Named<ListBox>(dialog, "SceneGroupList").Bounds.Height > 40 && Named<TextBox>(dialog, "SceneGroupName").Bounds.Width > 100 && filterAction.IsFocused && actionBottom < dialog.Height - 60 * scale, "compact group manager keeps its list usable and Tab scrolls later actions into view at " + theme + " " + scale); Close(dialog);
             }
         window.ChangeAppearance("Dark"); window.Width = 1540; window.Height = 940; Dispatcher.UIThread.RunJobs();
         Press(Control<Button>("HideMinimap")); check(!Control<Border>("MinimapPanel").IsVisible && graph.IsFocused && ProjectStore.Serialize(window.Project) == before, "minimap close restores graph focus without a document edit");
