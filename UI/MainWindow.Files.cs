@@ -5,7 +5,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using DialogueMachine.Core;
 using System.IO;
-using System.Text;
 using System.Text.Json;
 
 namespace DialogueMachine.UI;
@@ -23,6 +22,13 @@ public sealed partial class MainWindow
             await Task.Delay(500); Graph.Fit(); UpdateLayout();
             using var bitmap = new RenderTargetBitmap(new PixelSize((int)ClientSize.Width, (int)ClientSize.Height));
             bitmap.Render(this); Directory.CreateDirectory(output); bitmap.Save(Path.Combine(output, "native-workspace.png"), PngBitmapEncoderOptions.Default);
+            if (hasProject)
+            {
+                var snapshot = ProjectStore.Serialize(project); var viewport = Graph.ViewportWorld;
+                GraphImageExport.Save(project, Path.Combine(output, "native-story-graph.png"));
+                ProjectStore.AtomicWrite(Path.Combine(output, "native-story-script.md"), ScriptExport.Markdown(project, new(IncludeNotes: true)));
+                if (ProjectStore.Serialize(project) != snapshot || Graph.ViewportWorld != viewport) throw new InvalidOperationException("Native exports changed the story or viewport.");
+            }
             var heading = Welcome.FindControl<TextBlock>("WelcomeHeading")!;
             ProjectStore.AtomicWrite(Path.Combine(output, "native-smoke.json"), JsonSerializer.Serialize(new { Platform = Environment.OSVersion.ToString(), HasProject = hasProject, WelcomeVisible = Welcome.IsVisible, Scenes = project.ListOfCharacterStates.Count, Errors = hasProject ? DialogueEngine.Validate(project).Count(d => d.Severity == "Error") : 0, FileDialogsAvailable = StorageProvider.CanOpen && StorageProvider.CanSave, CanvasWidth = Graph.Bounds.Width, EditorWidth = Editor.Bounds.Width, WelcomeHeading = new { heading.Text, Foreground = heading.Foreground?.ToString(), Bounds = heading.Bounds.ToString(), heading.IsVisible }, Header = new { C<TextBlock>("ProjectTitle").Text, Foreground = C<TextBlock>("ProjectTitle").Foreground?.ToString(), Bounds = C<TextBlock>("ProjectTitle").Bounds.ToString() } }, ProjectStore.Options));
         }
@@ -104,10 +110,8 @@ public sealed partial class MainWindow
         ((StackPanel)w.Content!).Margin = new Thickness(24);
         if (await w.ShowDialog<bool>(this)) Mutate(() => { project.ProjectName = string.IsNullOrWhiteSpace(name.Text) ? "Untitled story" : name.Text.Trim(); project.CharacterId = character.Text?.Trim() ?? ""; });
     }
-    private async Task<string?> PickExport(string title, string name, string extension)
-    {
-        var f = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = title, SuggestedFileName = name, DefaultExtension = extension, ShowOverwritePrompt = true }); return f?.TryGetLocalPath();
-    }
+    private Task<string?> PickExport(string title, string name, string extension)
+        => projectFilePicker.ExportAsync(this, title, name, extension);
     private async Task ExportWeb()
     {
         Commit();
@@ -116,33 +120,10 @@ public sealed partial class MainWindow
         var path = await PickExport("Export website / game JSON", project.CharacterId + ".json", "json");
         if (path is not null) await WriteExport(path, ProjectStore.WebExport(project));
     }
-    private async Task ExportScript()
-    {
-        var path = await PickExport("Export readable script", "story-script.md", "md"); if (path is null) return;
-        var sb = new StringBuilder("# " + project.ProjectName + "\n\n");
-        foreach (var s in project.ListOfCharacterStates)
-        {
-            sb.AppendLine("## " + s.Title + " [" + s.State + "]\n\n**" + s.Speaker + "**\n\n" + DialogueEngine.PlainText(s.Text) + "\n");
-            foreach (var c in s.Choices) sb.AppendLine("- " + DialogueEngine.PlainText(c.ButtonText) + " → " + (c.NextStateId ?? s.DefaultNextId ?? "(unset)"));
-            sb.AppendLine("\nContinue → " + (s.DefaultNextId ?? "(unset)") + "\n");
-        }
-        await WriteExport(path, sb.ToString());
-    }
     private async Task WriteExport(string path, string content)
     {
         try { ProjectStore.AtomicWrite(path, content); Status("Exported " + path); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { await Ui.Ask(this, "Could not export", ex.Message, "Close"); }
-    }
-    private async Task ExportGraph()
-    {
-        var path = await PickExport("Export the visible graph", "story-graph.png", "png"); if (path is null) return;
-        try
-        {
-            SetView(false); Graph.UpdateLayout();
-            using var bitmap = new RenderTargetBitmap(new PixelSize((int)Math.Max(1, Graph.Bounds.Width * 2), (int)Math.Max(1, Graph.Bounds.Height * 2)), new Vector(192,192));
-            bitmap.Render(Graph); bitmap.Save(path, PngBitmapEncoderOptions.Default); Status("Exported the current graph view to " + path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { await Ui.Ask(this, "Could not export graph", ex.Message, "Close"); }
     }
     private RecoveryStore RecoveriesStore => new(Path.Combine(dataDir, "Recovery"));
     private void WriteRecovery()
@@ -225,6 +206,8 @@ public sealed partial class MainWindow
     private async Task ShowHelp()
     {
         var text = "1. Write your story\nAdd scenes, name the speaker, and write one dialogue page per line. Give player choices a destination, or use the scene's continue destination. Choose End conversation for an ending.\n\n2. Connect the story\nCtrl/Cmd-click or Shift-click toggles scenes. Shift-drag adds a set. Drag any selected scene or use arrows to move the set; Shift moves farther. Each move is one undo step. Escape cancels a gesture or clears selection. Ctrl/Cmd+A selects all; Ctrl/Cmd+Tab (Shift to reverse) focuses nodes, Space toggles, Enter selects one. The outline supports Ctrl/Cmd toggles and Shift ranges. The editor edits the active scene; duplicate/delete/rename/play-selected use that scene. Outgoing/internal links are purple (yellow in High contrast), incoming green; continue links stay dashed. Drag output dots onto another scene, or use Choose… to search destination titles and IDs. Down focuses results; Enter chooses; Cancel/Escape preserves the target. Jump opens connected scenes, and Notes lists incoming/outgoing links. Outline filters combine group, speaker, tag and diagnostics with text search. Clear search & filters restores the list. Fit story shows the whole graph; Arrange lays it out by connections. Script gives a readable overview.\n\nGroups & chapters\nStory tools or Ctrl/Cmd+Shift+G opens the group manager. Create an empty group, rename/delete it, assign/remove the selected scene set, select its members, or filter the outline. A scene can belong to several groups. Deleting a group preserves scenes and connections. Each edit is one Undo/Redo step after closing the manager. Copies, duplicates and template insertions start ungrouped within and across projects. Groups persist in desktop files and recovery and are omitted from website exports.\n\nMinimap\nView or Ctrl/Cmd+Shift+M shows/hides the story map, selected scenes and green viewport. Click/drag to navigate. Focus it and use arrows (Shift pans farther), Enter/Home to fit and Escape to return to graph focus. Alt+arrows pans the graph viewport with the map hidden too. Visibility is a workspace preference; navigation leaves the story unchanged.\n\n3. Add logic\nConditions compare affinity or inventory against an integer. All conditions must pass. Actions add or subtract values; inventory stays at zero or above. Event, Script and Shop integrations are preserved in exports and logged during playtests.\n\n4. Play and check\nF5 starts at the story's start. Shift+F5 starts at the selected scene. Edit test variables, use Back to revisit decisions, and export the transcript. Diagnostics find missing connections, unreachable scenes and loops without endings.\n\nFind & replace\nCtrl/Cmd+H or Ctrl/Cmd+Shift+F searches dialogue, responses, titles and notes. Choose fields and the entire project or selected scene. Preview replacements, jump to exact matches, or replace selected/all. Each replacement applies immediately and can be undone after closing the dialog. Use Variables & characters to rename variable references.\n\nReuse content\nNew scene… on a choice creates and connects a blank scene in one undo step. Edit → Copy selected scenes copies the graph/outline set. Copy scenes… preselects that set; Paste scenes selects all copies, assigns fresh IDs and remaps internal links. The scene clipboard lasts until this window closes, including project changes; other targets are retained. Save scene templates in Notes and choice templates in Content. Edit → Scene & choice templates… searches, previews, inserts and deletes project-owned definitions. Down focuses results, Enter inserts, Escape closes previews. Scene templates keep self-links and endings and clear other targets; choice templates use continue fallback. Variable renames include template references. Set variable starting values and substitutions when copying into another project.\n\nInline text\n[b]bold[/b], [i]italic[/i], [u]underline[/u], [colour=#79DFC8]colour[/colour]\n{player_name}, {npc_name}, {inv:coin}\n[if aff:trust >= 1]Trusted[else]Stranger[/if]\nNested conditions and negative integer thresholds are supported.\n\nKeyboard shortcuts\nCtrl/Cmd+N: new · Ctrl/Cmd+O: open · Ctrl/Cmd+S: save\nCtrl/Cmd+Shift+S: save as · Ctrl/Cmd+F: outline search\nCtrl/Cmd+H / Shift+F: find & replace\nCtrl/Cmd+Z: undo · Ctrl/Cmd+Shift+Z: redo\nCtrl/Cmd+D: duplicate · Ctrl/Cmd+0: fit graph\nCtrl/Cmd+Shift+G: groups · Ctrl/Cmd+Shift+M: minimap\nCtrl/Cmd+C / V: copy / paste scenes when graph or outline is focused\nF5: play · Shift+F5: play selected · F1: this guide\n\nFiles and recovery\nSave keeps the complete desktop project. Export website / game JSON keeps the original website schema and puts the start scene first. Recovery files and preferences live in:\n" + dataDir;
+        var exportGuide = "\n\nExport your story\nFile → Export graph image exports every scene and connection, using full story bounds and the current theme. Choose 1× or 2× resolution; Fit within limits can reduce oversized images to 0.25×. Limits are 16,384 pixels per side and 32 megapixels. Larger stories need closer scene spacing or a script export. Selection, focus, minimap and editor overlays are excluded. Export leaves your view, filters, selection, pan/zoom, positions and Undo/Redo intact.\n\nFile → Export script creates readable Markdown with options for conditions/visibility, response actions, scene exit actions and writer’s notes (off by default). Entry comes first, then project order; pages/candidates and choices retain their order. Inline conditions always retain both branches, substitutions stay literal, and author-written Markdown is escaped. Destinations label inherited continue, endings, unset and missing targets. Cancel/Escape or a failed write preserves your work and any existing export.";
+        text = text.Replace("\n\nFiles and recovery", exportGuide + "\n\nFiles and recovery");
         var panel = Ui.Stack(Ui.Text("Your guide to Dialogue Machine", 26), Ui.Text(text, 14)); panel.Margin = new Thickness(28);
         await Ui.Dialog(this, "Guide & shortcuts", new ScrollViewer { Content = panel }, 690, 740).ShowDialog(this);
     }

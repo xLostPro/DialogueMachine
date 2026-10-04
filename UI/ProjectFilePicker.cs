@@ -9,6 +9,7 @@ public interface IProjectFilePicker
 {
     Task<string?> OpenAsync(Window owner);
     Task<string?> SaveAsync(Window owner, string suggestedName);
+    Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension);
 }
 
 public sealed class NativeProjectFilePicker : IProjectFilePicker
@@ -22,6 +23,11 @@ public sealed class NativeProjectFilePicker : IProjectFilePicker
     public async Task<string?> SaveAsync(Window owner, string suggestedName)
     {
         var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = "Save your story", SuggestedFileName = suggestedName, DefaultExtension = "json", FileTypeChoices = [ProjectType], ShowOverwritePrompt = true });
+        return file?.TryGetLocalPath();
+    }
+    public async Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension)
+    {
+        var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = title, SuggestedFileName = suggestedName, DefaultExtension = extension, ShowOverwritePrompt = true });
         return file?.TryGetLocalPath();
     }
 }

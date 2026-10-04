@@ -15,6 +15,7 @@ Core/                         Platform-independent class library; no UI dependen
   SceneNavigation.cs          Indexed destinations, connections and outline filtering
   AuthoringOperations.cs      Detached scene copies, remapped paste and reusable templates
   GraphGeometry.cs            Node dimensions shared by layout and drawing
+  ScriptExport.cs             Read-only Markdown generation and optional authoring details
   SceneGroups.cs              Desktop group membership and safe identity rebinding
   Templates.cs                Blank and lighthouse example stories
 UI/
@@ -31,6 +32,8 @@ UI/
   MainWindow.Authoring.cs     Connected scenes, scene clipboard and template dialogs
   GraphCanvas.cs              Graph selection sets, drawing and pointer/keyboard gestures
   GraphMinimap.cs             Viewport overview and pointer/keyboard navigation
+  GraphImageExport.cs         Full-story raster bounds, allocation limits and atomic PNG writes
+  MainWindow.Exports.cs       Scaled, scrollable export options and storage orchestration
   MainWindow.Groups.cs        Group manager and compact graph overlays
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
@@ -92,6 +95,14 @@ Scene groups/chapters are an additive desktop root collection (`SceneGroups`) in
 Navigation snapshots include group IDs, so group/ungrouped outline filters intersect existing filters without document work on each keystroke. The group filter follows a rename by ID and falls back to Any group when its group disappears. Group selection retains a member active scene or activates the first member in project order; empty groups clear selection. History preserves an explicitly empty selection. Group operations leave the editor's scene set intact. Scene bundles, duplication and templates contain scene data only: all new copies are ungrouped within and across projects. Groups never enter website exports or scene Metadata.
 
 The minimap is a UI control using shared node geometry and the graph's world viewport. Graph redraw notifications refresh it for selection, movement, zoom, pan and replacement. It shows connections, selected nodes and the viewport with theme resources. Its aspect-preserving transform fits the union of story bounds and viewport; pointer navigation freezes that transform until release/capture loss. Click/drag centers the graph, arrow keys pan, Shift pans farther, Enter/Home fits and Escape focuses the graph. Alt+arrows offers graph viewport panning when the map is hidden. The map resizes and extra gesture guidance hides in compact windows. `ShowMinimap` is a workspace preference, defaulting to false; navigation/visibility never change project history. Script view hides it while retaining the preference.
+
+## Authoring exports
+
+`ScriptExport.Markdown` in Core reads the complete project without simulation or path traversal. It emits the first matching entry scene followed by the remaining scenes in project order, retaining unreachable and repairable duplicate-ID scenes. Dialogue pages/random candidates and choices retain their authored order. Conditions/visibility, response actions, scene exit actions and notes are independent options; notes default off. Inline conditional markers and both branches always remain literal, even when requirement/visibility details are omitted. Formatting tags become plain text; substitutions are not resolved. Markdown punctuation and HTML in authored fields are escaped, multiline structural labels are flattened, and output uses deterministic LF newlines. Destinations distinguish inherited continue, explicit ending, unset and missing targets. Action lists describe runtime response-before-scene ordering without executing hooks.
+
+Graph PNG export belongs to UI. `GraphImageExport.Plan` unions all node rectangles, shared Bezier path bounds and arrow extents, then adds padding for ports/strokes. It indexes destinations once and includes inherited links, cycles, self-links and scenes hidden by outline filters. A separate arranged `GraphCanvas` shares the live node/link drawing code, using an export transform rather than the live viewport. It has no selection, focus, grid, drag/marquee overlay or minimap. Export never switches view, changes the live canvas transform or edits the project/history.
+
+Standard/detailed output uses 1×/2× world resolution with 96-DPI pixels, independent of interface scale. Bitmap allocation is limited to 16,384 pixels per side and 32 million pixels (about 128 MB of raw RGBA data, excluding renderer/encoder overhead). Oversized output requires explicit fitting; fitting preserves aspect ratio and cannot reduce below 0.25×. Unreadable/extreme spans, empty stories and invalid geometry receive actionable errors before allocation. PNG output uses a sibling temporary file and atomic replacement, retaining an existing export on failure. Export dialogs keep Cancel/file actions outside the scrollable options area, honor interface scale, and do not commit document edits. Injected export pickers exercise success, cancellation and failure; package smoke checks also render/export the native example.
 
 ## Simulation semantics
 

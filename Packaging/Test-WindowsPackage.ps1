@@ -23,5 +23,12 @@ foreach ($kind in @('welcome', 'project')) {
         throw "Unexpected native $kind startup state. Inspect $folder."
     }
     if ($kind -eq 'project' -and ($report.Scenes -ne 5 -or $report.CanvasWidth -lt 250 -or $report.EditorWidth -lt 260)) { throw 'The project workspace did not lay out correctly.' }
+    if ($kind -eq 'project') {
+        $graphExport = Join-Path $folder 'native-story-graph.png'
+        $scriptExport = Join-Path $folder 'native-story-script.md'
+        if (-not (Test-Path -LiteralPath $graphExport -PathType Leaf) -or (Get-Item -LiteralPath $graphExport).Length -lt 10000) { throw 'The native full-story graph export is missing or empty.' }
+        if (-not (Test-Path -LiteralPath $scriptExport -PathType Leaf) -or -not (Get-Content -LiteralPath $scriptExport -Raw).Contains('**Choices (authored order):**')) { throw 'The native readable script export is missing or incomplete.' }
+        Write-Host 'PASS native full-story PNG and readable script exports'
+    }
     Write-Host "PASS native $kind startup"
 }
