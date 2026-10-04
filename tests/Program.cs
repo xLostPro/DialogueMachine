@@ -344,10 +344,12 @@ AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new AvaloniaHe
 var main = new MainWindow(null, testMode: true); main.Show(); Dispatcher.UIThread.RunJobs();
 var output = args.FirstOrDefault() ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../artifacts")); Directory.CreateDirectory(output);
 GraphOrganizationChecks.Core(Check, Throws, output);
+ExportChecks.Core(Check, Throws, output);
 File.WriteAllLines(Path.Combine(output, "navigation-benchmarks.txt"), navigationBenchmarks);
 ProjectStore.AtomicWrite(Path.Combine(output,"lighthouse.dialogue.json"), ProjectStore.Serialize(Templates.Harbour()));
 void Capture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using var frame = window.CaptureRenderedFrame() ?? throw new Exception("No rendered frame"); frame.Save(Path.Combine(output,name + ".png"), PngBitmapEncoderOptions.Default); }
 GraphOrganizationChecks.UI(Check, output, Capture);
+ExportChecks.UI(Check, output, Capture);
 T Find<T>(string name) where T : Control => main.FindControl<T>(name)!;
 void Click(string name) { Find<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
 Check(!main.HasProject && Find<WelcomeView>("Welcome").IsVisible, "startup shows welcome without automatically loading a sample"); Capture(main,"welcome-dark");
@@ -973,4 +975,5 @@ sealed class TestFilePicker : IProjectFilePicker
     public Queue<string?> SavePaths { get; } = new();
     public Task<string?> OpenAsync(Window owner) => Task.FromResult(OpenPaths.Count > 0 ? OpenPaths.Dequeue() : null);
     public Task<string?> SaveAsync(Window owner, string suggestedName) => Task.FromResult(SavePaths.Count > 0 ? SavePaths.Dequeue() : null);
+    public Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension) => Task.FromResult(SavePaths.Count > 0 ? SavePaths.Dequeue() : null);
 }

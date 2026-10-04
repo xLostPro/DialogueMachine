@@ -31,6 +31,7 @@ public sealed class GraphCanvas : Control
     private DialogueState? linkSource;
     private Choice? linkChoice;
     private Point linkEnd;
+    internal GraphImagePlan? ExportPlan { get; init; }
     public GraphCanvas()
     {
         Focusable = true; ClipToBounds = true;
@@ -75,21 +76,18 @@ public sealed class GraphCanvas : Control
     {
         base.Render(dc);
         dc.FillRectangle(Ui.Brush("Base"), new Rect(Bounds.Size));
+        if (ExportPlan is { } plan)
+        {
+            using (dc.PushTransform(Matrix.CreateTranslation(-plan.WorldBounds.X, -plan.WorldBounds.Y) * Matrix.CreateScale(plan.Scale, plan.Scale)))
+                DrawStory(dc);
+            return;
+        }
         var grid = 28 * Zoom;
         for (var x = offset.X % grid; x < Bounds.Width; x += grid)
             for (var y = offset.Y % grid; y < Bounds.Height; y += grid) dc.DrawEllipse(Ui.Brush("GraphGrid"), null, new Point(x, y), .9, .9);
         using (dc.PushTransform(Matrix.CreateScale(Zoom, Zoom) * Matrix.CreateTranslation(offset)))
         {
-            var destinations = new Dictionary<string, DialogueState>(StringComparer.Ordinal);
-            foreach (var scene in Project.ListOfCharacterStates) destinations.TryAdd(scene.State, scene);
-            // Draw highlighted connections last so they stay visible at crossings.
-            foreach (var highlighted in new[] { false, true })
-                foreach (var s in Project.ListOfCharacterStates)
-                {
-                    for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false, destinations, highlighted);
-                    if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true, destinations, highlighted);
-                }
-            foreach (var s in Project.ListOfCharacterStates) DrawNode(dc, s);
+            DrawStory(dc);
             if (linkSource is not null)
             {
                 var index = linkChoice is null ? -1 : linkSource.Choices.IndexOf(linkChoice);
@@ -101,6 +99,19 @@ public sealed class GraphCanvas : Control
         }
         if (Project.ListOfCharacterStates.Count == 0) DrawText(dc, "Your story starts with a scene.\nChoose Add scene to begin.", new(60, 100), 20, "Muted", 420, 100);
     }
+    private void DrawStory(DrawingContext dc)
+    {
+        var destinations = new Dictionary<string, DialogueState>(StringComparer.Ordinal);
+        foreach (var scene in Project.ListOfCharacterStates) if (scene.State != "[EXIT]") destinations.TryAdd(scene.State, scene);
+        // Draw highlighted connections last so they stay visible at crossings.
+        foreach (var highlighted in new[] { false, true })
+            foreach (var s in Project.ListOfCharacterStates)
+            {
+                for (var i = 0; i < s.Choices.Count; i++) DrawLink(dc, s, string.IsNullOrWhiteSpace(s.Choices[i].NextStateId) ? s.DefaultNextId : s.Choices[i].NextStateId, new(s.VisualX + NodeWidth, s.VisualY + 135 + i * 34), false, destinations, highlighted);
+                if (!string.IsNullOrWhiteSpace(s.DefaultNextId)) DrawLink(dc, s, s.DefaultNextId, new(s.VisualX + NodeWidth, s.VisualY + NodeHeight(s) - 17), true, destinations, highlighted);
+            }
+        foreach (var s in Project.ListOfCharacterStates) DrawNode(dc, s);
+    }
     private void DrawLink(DrawingContext dc, DialogueState source, string? targetId, Point start, bool fallback, Dictionary<string, DialogueState> destinations, bool highlighted)
     {
         if (targetId is null || !destinations.TryGetValue(targetId, out var target)) return;
@@ -108,10 +119,15 @@ public sealed class GraphCanvas : Control
         if ((highlight is not null) != highlighted) return;
         Curve(dc, start, new(target.VisualX, target.VisualY + 35), Ui.Brush(highlight ?? "GraphLink"), fallback, highlighted);
     }
-    private static void Curve(DrawingContext dc, Point a, Point b, IBrush brush, bool dashed, bool highlighted = false)
+    internal static StreamGeometry ConnectionCurve(Point a, Point b)
     {
         var geometry = new StreamGeometry();
         using (var g = geometry.Open()) { g.BeginFigure(a, false); var length = Math.Max(65, Math.Abs(b.X - a.X) * .45); g.CubicBezierTo(new(a.X + length, a.Y), new(b.X - length, b.Y), b); g.EndFigure(false); }
+        return geometry;
+    }
+    private static void Curve(DrawingContext dc, Point a, Point b, IBrush brush, bool dashed, bool highlighted = false)
+    {
+        var geometry = ConnectionCurve(a, b);
         if (highlighted) dc.DrawGeometry(null, new Pen(Ui.Brush("Base"), 7), geometry);
         var pen = new Pen(brush, highlighted ? 3.5 : 1.5, dashed ? new DashStyle([4, 4], 0) : null);
         dc.DrawGeometry(null, pen, geometry);
