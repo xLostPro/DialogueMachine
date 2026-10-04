@@ -15,6 +15,7 @@ Core/                         Platform-independent class library; no UI dependen
   SceneNavigation.cs          Indexed destinations, connections and outline filtering
   AuthoringOperations.cs      Detached scene copies, remapped paste and reusable templates
   GraphGeometry.cs            Node dimensions shared by layout and drawing
+  SceneGroups.cs              Desktop group membership and safe identity rebinding
   Templates.cs                Blank and lighthouse example stories
 UI/
   MainWindow.axaml             Declarative shell; menus, outline, graph, editor, status
@@ -29,6 +30,8 @@ UI/
   MainWindow.Navigation.cs    Searchable destination picker, filters and connection jumps
   MainWindow.Authoring.cs     Connected scenes, scene clipboard and template dialogs
   GraphCanvas.cs              Graph selection sets, drawing and pointer/keyboard gestures
+  GraphMinimap.cs             Viewport overview and pointer/keyboard navigation
+  MainWindow.Groups.cs        Group manager and compact graph overlays
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
   Ui.cs                      Small common control builders and labelled fields
@@ -81,6 +84,14 @@ Copy selected scenes and graph/outline Ctrl/Cmd+C snapshot that transient set th
 Scene and choice templates are additive desktop root collections in format version 1, saved with the project and included in recovery/history. Website exports omit these collections. A scene template captures content, metadata, shop data, delivery and logic; self-links and endings survive, while external destinations become unset. Choice templates capture responses, visibility, conditions and actions, and insert with fresh identity and a continue fallback. Template insertion and deletion each form one history entry; previewing, searching and closing do not mutate the document. Variable reference counts, deletion guards and renames include template content. Alias resolution considers each template in its prospective insertion context, while inactive template variables never enter runtime discovery. Templates and copied scenes retain variable IDs but do not transfer root starting values or text substitutions to another project.
 
 The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
+
+## Scene groups and minimap
+
+Scene groups/chapters are an additive desktop root collection (`SceneGroups`) in format version 1. A group has a stable ID, a display name and member references by scene ID plus duplicate-ID occurrence. Memberships may overlap. Core owns create/rename/delete/assign/remove and resolves sets in project order; each UI mutation uses the existing snapshot history once. Names must be non-empty and unique ignoring case for authoring operations. Group/member extension data round-trips. Import rejects malformed group identities/references, normalizes null collections and removes duplicate/stale memberships so they cannot bind to a future inserted scene. Group deletion never changes scene data or connections. Scene rename and deletion capture memberships by object identity before rebinding shifted occurrences, preserving repairable duplicate-ID scenes.
+
+Navigation snapshots include group IDs, so group/ungrouped outline filters intersect existing filters without document work on each keystroke. The group filter follows a rename by ID and falls back to Any group when its group disappears. Group selection retains a member active scene or activates the first member in project order; empty groups clear selection. History preserves an explicitly empty selection. Group operations leave the editor's scene set intact. Scene bundles, duplication and templates contain scene data only: all new copies are ungrouped within and across projects. Groups never enter website exports or scene Metadata.
+
+The minimap is a UI control using shared node geometry and the graph's world viewport. Graph redraw notifications refresh it for selection, movement, zoom, pan and replacement. It shows connections, selected nodes and the viewport with theme resources. Its aspect-preserving transform fits the union of story bounds and viewport; pointer navigation freezes that transform until release/capture loss. Click/drag centers the graph, arrow keys pan, Shift pans farther, Enter/Home fits and Escape focuses the graph. Alt+arrows offers graph viewport panning when the map is hidden. The map resizes and extra gesture guidance hides in compact windows. `ShowMinimap` is a workspace preference, defaulting to false; navigation/visibility never change project history. Script view hides it while retaining the preference.
 
 ## Simulation semantics
 

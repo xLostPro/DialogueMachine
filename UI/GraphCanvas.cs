@@ -18,6 +18,7 @@ public sealed class GraphCanvas : Control
     public event Action? InteractionStarted;
     public event Action? Changed;
     public event Action<double>? ZoomChanged;
+    public event Action? OverviewChanged;
     public double Zoom { get; private set; } = .85;
     private Vector offset = new(30, 30);
     private Point last;
@@ -33,21 +34,35 @@ public sealed class GraphCanvas : Control
     public GraphCanvas()
     {
         Focusable = true; ClipToBounds = true;
-        LostFocus += (_, _) => { FinishInteraction(); InvalidateVisual(); };
-        GotFocus += (_, _) => { keyboardScene ??= Selected ?? Project.ListOfCharacterStates.FirstOrDefault(); InvalidateVisual(); };
+        LostFocus += (_, _) => { FinishInteraction(); RefreshVisual(); };
+        GotFocus += (_, _) => { keyboardScene ??= Selected ?? Project.ListOfCharacterStates.FirstOrDefault(); RefreshVisual(); };
     }
     private const double NodeWidth = GraphGeometry.NodeWidth;
     private static double NodeHeight(DialogueState s) => GraphGeometry.NodeHeight(s);
     private static Rect BoundsOf(DialogueState s) => new(s.VisualX, s.VisualY, NodeWidth, NodeHeight(s));
     private Point World(Point p) => new((p.X - offset.X) / Zoom, (p.Y - offset.Y) / Zoom);
     public Point WorldToViewport(Point point) => new(point.X * Zoom + offset.X, point.Y * Zoom + offset.Y);
+    public Rect ViewportWorld => new(World(new Point(0, 0)), new Size(Bounds.Width / Zoom, Bounds.Height / Zoom));
+    public Rect StoryBounds => Project.ListOfCharacterStates.Count == 0 ? new Rect(0, 0, 1, 1) : Project.ListOfCharacterStates.Select(BoundsOf).Aggregate((a, b) => a.Union(b));
+    private void RefreshVisual() { InvalidateVisual(); OverviewChanged?.Invoke(); }
+    public void CentreWorld(Point point)
+    {
+        if (!double.IsFinite(point.X) || !double.IsFinite(point.Y)) return;
+        offset = new(Bounds.Width / 2 - point.X * Zoom, Bounds.Height / 2 - point.Y * Zoom); RefreshVisual();
+    }
+    public void PanViewport(Key direction, bool farther = false)
+    {
+        var step = (farther ? 160 : 60) / Zoom;
+        var delta = direction switch { Key.Left => new Vector(-step, 0), Key.Right => new Vector(step, 0), Key.Up => new Vector(0, -step), Key.Down => new Vector(0, step), _ => default };
+        CentreWorld(ViewportWorld.Center + delta);
+    }
     public void SetSelection(IEnumerable<DialogueState> scenes, DialogueState? active)
     {
         var available = Project.ListOfCharacterStates.ToHashSet();
         selection.Clear(); selection.UnionWith(scenes.Where(available.Contains));
         Selected = active is not null && selection.Contains(active) ? active : SelectedScenes.FirstOrDefault();
         if (keyboardScene is null || !Project.ListOfCharacterStates.Contains(keyboardScene)) keyboardScene = Selected;
-        InvalidateVisual();
+        RefreshVisual();
     }
     private void Select(IEnumerable<DialogueState> scenes, DialogueState? active)
     {
@@ -166,7 +181,7 @@ public sealed class GraphCanvas : Control
         }
         else if (props.IsLeftButtonPressed || props.IsMiddleButtonPressed) panning = true;
         else return;
-        last = point; e.Pointer.Capture(this); InvalidateVisual(); e.Handled = true;
+        last = point; e.Pointer.Capture(this); RefreshVisual(); e.Handled = true;
     }
     protected override void OnPointerMoved(PointerEventArgs e)
     {
@@ -180,7 +195,7 @@ public sealed class GraphCanvas : Control
         if (linkSource is not null) linkEnd = World(p);
         if (marqueeStart is not null) marqueeEnd = World(p);
         last = p;
-        if (dragging || panning || linkSource is not null || marqueeStart is not null) InvalidateVisual();
+        if (dragging || panning || linkSource is not null || marqueeStart is not null) RefreshVisual();
     }
     protected override void OnPointerReleased(PointerReleasedEventArgs e)
     {
@@ -203,7 +218,7 @@ public sealed class GraphCanvas : Control
             Select(next, Selected);
         }
         FinishInteraction(); e.Pointer.Capture(null);
-        if (connectionChanged) Changed?.Invoke(); InvalidateVisual();
+        if (connectionChanged) Changed?.Invoke(); RefreshVisual();
     }
     private void StartMove() => moveOrigins ??= SelectedScenes.ToDictionary(s => s, s => new Point(s.VisualX, s.VisualY));
     public void FinishInteraction(bool cancel = false)
@@ -212,14 +227,14 @@ public sealed class GraphCanvas : Control
         if (cancel && moveOrigins is not null)
             foreach (var (scene, origin) in moveOrigins) { scene.VisualX = origin.X; scene.VisualY = origin.Y; }
         moveOrigins = null; moveKeys.Clear(); dragging = false; linkSource = null; linkChoice = null; panning = false; marqueeStart = marqueeEnd = null;
-        if (changed && !cancel) Changed?.Invoke(); InvalidateVisual();
+        if (changed && !cancel) Changed?.Invoke(); RefreshVisual();
     }
     protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e) { FinishInteraction(); base.OnPointerCaptureLost(e); }
     protected override void OnPointerWheelChanged(PointerWheelEventArgs e) { SetZoom(Zoom * (e.Delta.Y > 0 ? 1.12 : .89), e.GetPosition(this)); e.Handled = true; }
     public void SetZoom(double value, Point? anchor = null)
     {
         var a = anchor ?? new Point(Bounds.Width / 2, Bounds.Height / 2); var w = World(a);
-        Zoom = Math.Clamp(value, .2, 2); offset = new(a.X - w.X * Zoom, a.Y - w.Y * Zoom); ZoomChanged?.Invoke(Zoom); InvalidateVisual();
+        Zoom = Math.Clamp(value, .2, 2); offset = new(a.X - w.X * Zoom, a.Y - w.Y * Zoom); ZoomChanged?.Invoke(Zoom); RefreshVisual();
     }
     public void Fit()
     {
@@ -227,13 +242,17 @@ public sealed class GraphCanvas : Control
         var all = Project.ListOfCharacterStates.Select(BoundsOf).Aggregate((a, b) => a.Union(b));
         Zoom = Math.Clamp(Math.Min((Bounds.Width - 90) / all.Width, (Bounds.Height - 130) / all.Height), .2, 1);
         offset = new((Bounds.Width - all.Width * Zoom) / 2 - all.X * Zoom, (Bounds.Height - all.Height * Zoom) / 2 - all.Y * Zoom);
-        ZoomChanged?.Invoke(Zoom); InvalidateVisual();
+        ZoomChanged?.Invoke(Zoom); RefreshVisual();
     }
-    public void Centre(DialogueState s) { offset = new(Bounds.Width / 2 - (s.VisualX + NodeWidth / 2) * Zoom, Bounds.Height / 2 - (s.VisualY + NodeHeight(s) / 2) * Zoom); InvalidateVisual(); }
+    public void Centre(DialogueState s) => CentreWorld(new Point(s.VisualX + NodeWidth / 2, s.VisualY + NodeHeight(s) / 2));
     protected override void OnKeyDown(KeyEventArgs e)
     {
         var command = (e.KeyModifiers & (KeyModifiers.Control | KeyModifiers.Meta)) != 0;
-        if (command && e.Key == Key.A)
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Alt) && e.Key is Key.Left or Key.Right or Key.Up or Key.Down)
+        {
+            FinishInteraction(); PanViewport(e.Key, e.KeyModifiers.HasFlag(KeyModifiers.Shift)); e.Handled = true;
+        }
+        else if (command && e.Key == Key.A)
         {
             FinishInteraction(); InteractionStarted?.Invoke(); Select(Project.ListOfCharacterStates, Selected); e.Handled = true;
         }
@@ -267,7 +286,7 @@ public sealed class GraphCanvas : Control
                 if (e.Key == Key.Left) scene.VisualX -= step; if (e.Key == Key.Right) scene.VisualX += step;
                 if (e.Key == Key.Up) scene.VisualY -= step; if (e.Key == Key.Down) scene.VisualY += step;
             }
-            InvalidateVisual(); e.Handled = true;
+            RefreshVisual(); e.Handled = true;
         }
         base.OnKeyDown(e);
     }

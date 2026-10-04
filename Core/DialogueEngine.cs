@@ -111,7 +111,7 @@ public static class DialogueEngine
     public static void Rename(DialogueProject p, DialogueState state, string id)
     {
         if (string.IsNullOrWhiteSpace(id) || id == "[EXIT]" || p.ListOfCharacterStates.Any(s => s != state && s.State == id)) throw new ArgumentException("Use a unique, non-empty ID. [EXIT] is reserved.");
-        var old = state.State; state.State = id;
+        var old = state.State; SceneGroups.PreserveMemberships(p, () => state.State = id);
         if (p.EntryStateId == old) p.EntryStateId = id;
         // Repairing an imported reserved ID must keep intentional ending targets intact.
         if (old == "[EXIT]") return;

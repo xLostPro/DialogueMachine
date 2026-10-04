@@ -1,8 +1,11 @@
 namespace DialogueMachine.Core;
 
 public enum SceneIssueFilter { All, WithIssues, Errors, Warnings, WithoutIssues }
-public sealed record OutlineFilter(string Query = "", string? Speaker = null, string? Tag = null, SceneIssueFilter Issues = SceneIssueFilter.All);
-public sealed record NavigationScene(int Index, string Id, string Title, string Speaker, IReadOnlyList<string> Tags, string SearchText, bool HasErrors, bool HasWarnings);
+public sealed record OutlineFilter(string Query = "", string? Speaker = null, string? Tag = null, SceneIssueFilter Issues = SceneIssueFilter.All, string? GroupId = null);
+public sealed record NavigationScene(int Index, string Id, string Title, string Speaker, IReadOnlyList<string> Tags, string SearchText, bool HasErrors, bool HasWarnings)
+{
+    public IReadOnlyList<string> GroupIds { get; init; } = [];
+}
 public sealed record DestinationOption(string Label, string? Id, int? SceneIndex = null) { public override string ToString() => Label; }
 public sealed record DestinationResults(IReadOnlyList<DestinationOption> Matches, int TotalCount);
 public sealed record SceneConnection(string Label, string? TargetId, int? TargetSceneIndex);
@@ -21,12 +24,21 @@ public sealed class SceneNavigation
     {
         var errors = diagnostics.Where(d => d.Severity == "Error").Select(d => d.StateId).ToHashSet(StringComparer.Ordinal);
         var warnings = diagnostics.Where(d => d.Severity == "Warning").Select(d => d.StateId).ToHashSet(StringComparer.Ordinal);
+        var keys = SceneGroups.Keys(project);
+        var memberships = new Dictionary<(string, int), List<string>>();
+        foreach (var group in project.SceneGroups)
+            foreach (var member in group.Scenes)
+            {
+                var key = (member.StateId, member.Occurrence);
+                if (!memberships.TryGetValue(key, out var groups)) memberships[key] = groups = [];
+                groups.Add(group.Id);
+            }
         Scenes = project.ListOfCharacterStates.Select((scene, i) =>
         {
             var title = scene.Title ?? scene.State; var speaker = scene.Speaker ?? "Character";
             var tags = (scene.Metadata.GetValueOrDefault("tags", "") ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
             var search = string.Join(" ", title, scene.State, speaker, scene.Text, string.Join(" ", scene.Choices.Select(c => c.ButtonText)), string.Join(" ", tags), scene.Metadata.GetValueOrDefault("notes", ""));
-            return new NavigationScene(i, scene.State, title, speaker, tags, search, errors.Contains(scene.State), warnings.Contains(scene.State));
+            return new NavigationScene(i, scene.State, title, speaker, tags, search, errors.Contains(scene.State), warnings.Contains(scene.State)) { GroupIds = memberships.GetValueOrDefault(keys[scene]) ?? [] };
         }).ToArray();
         Speakers = Scenes.Select(s => s.Speaker).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray();
         Tags = Scenes.SelectMany(s => s.Tags).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray();
@@ -49,6 +61,7 @@ public sealed class SceneNavigation
         scene.SearchText.Contains(filter.Query, StringComparison.OrdinalIgnoreCase)
         && (filter.Speaker is null || scene.Speaker.Equals(filter.Speaker, StringComparison.OrdinalIgnoreCase))
         && (filter.Tag is null || scene.Tags.Contains(filter.Tag, StringComparer.OrdinalIgnoreCase))
+        && (filter.GroupId is null || (filter.GroupId == "" ? scene.GroupIds.Count == 0 : scene.GroupIds.Contains(filter.GroupId, StringComparer.Ordinal)))
         && (filter.Issues switch { SceneIssueFilter.WithIssues => scene.HasErrors || scene.HasWarnings, SceneIssueFilter.Errors => scene.HasErrors, SceneIssueFilter.Warnings => scene.HasWarnings, SceneIssueFilter.WithoutIssues => !scene.HasErrors && !scene.HasWarnings, _ => true });
     public NavigationScene? Resolve(string? id) => id is not null && byId.TryGetValue(id, out var scene) ? scene : null;
     public IReadOnlyList<NavigationScene> Incoming(int index) => incoming.TryGetValue(index, out var sources) ? sources.Select(i => Scenes[i]).ToArray() : [];
