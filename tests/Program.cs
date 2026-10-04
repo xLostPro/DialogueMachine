@@ -249,7 +249,7 @@ chain.ListOfCharacterStates[^1].DefaultNextId = "s0";
 Check(DialogueEngine.Validate(chain).Count(d => d.Message.Contains("No path")) == 10000, "ending reachability diagnoses a large closed cycle");
 var temp = Path.Combine(AppContext.BaseDirectory, "atomic-test.json"); ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(p)); ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(renamed));
 Check(ProjectStore.Load(temp).Entry == "opening" && !Directory.EnumerateFiles(AppContext.BaseDirectory, "atomic-test.json.*.tmp").Any(), "atomic saves replace completely and clean up temporary files"); File.Delete(temp);
-var recoveryFolder = Path.Combine(AppContext.BaseDirectory, "recovery-test"); var recovery = new RecoveryStore(recoveryFolder); var recoveryId = Guid.NewGuid().ToString("N");
+var recoveryFolder = Path.Combine(AppContext.BaseDirectory, "recovery-test-" + Guid.NewGuid().ToString("N")); var recovery = new RecoveryStore(recoveryFolder); var recoveryId = Guid.NewGuid().ToString("N");
 recovery.Save(recoveryId, new RecoveryRecord(null, DateTimeOffset.UtcNow, Templates.Harbour()));
 Check(recovery.FindUnsaved().Count == 1 && recovery.FindUnsaved()[0].Record.Project.Entry == "arrival", "unsaved recovery can be loaded and validated");
 recovery.Remove(recoveryId); Check(recovery.FindUnsaved().Count == 0, "completed or discarded recovery is removed and not offered again");
@@ -263,9 +263,11 @@ recovery.Save(recoveryId, new RecoveryRecord(null, DateTimeOffset.UtcNow, Templa
 Check(recovery.FindUnsaved().Count == 1 && File.Exists(semanticRecoveryPath), "semantically invalid recovery is retained and skipped without hiding a valid recovery");
 recovery.Remove(semanticRecoveryId); recovery.Remove(recoveryId);
 ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(Templates.Blank())); var recoveryTime = DateTimeOffset.UtcNow.AddMinutes(1);
-recovery.Save(recoveryId, new RecoveryRecord(temp, recoveryTime, Templates.Harbour()));
+var recoverableStory = Templates.Harbour(); recovery.Save(recoveryId, new RecoveryRecord(temp, recoveryTime, recoverableStory));
 Check(recovery.FindUnsaved().Count == 1, "recovery newer than a project file is offered"); File.SetLastWriteTimeUtc(temp, recoveryTime.UtcDateTime.AddSeconds(1));
-Check(recovery.FindUnsaved().Count == 0, "recovery older than a saved project is ignored"); recovery.Remove(recoveryId); File.Delete(temp);
+Check(recovery.FindUnsaved().Count == 1, "a newer external save cannot hide different recovery content");
+ProjectStore.AtomicWrite(temp, ProjectStore.Serialize(recoverableStory));
+Check(recovery.FindUnsaved().Count == 0, "recovery matching saved content is ignored regardless of timestamps"); recovery.Remove(recoveryId); File.Delete(temp);
 
 var authoringStory = Templates.Harbour();
 var authoringSource = authoringStory.ListOfCharacterStates[0]; var authoringTarget = authoringStory.ListOfCharacterStates[1];
@@ -345,11 +347,13 @@ var main = new MainWindow(null, testMode: true); main.Show(); Dispatcher.UIThrea
 var output = args.FirstOrDefault() ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../artifacts")); Directory.CreateDirectory(output);
 GraphOrganizationChecks.Core(Check, Throws, output);
 ExportChecks.Core(Check, Throws, output);
+ConflictChecks.Core(Check, Throws, output);
 File.WriteAllLines(Path.Combine(output, "navigation-benchmarks.txt"), navigationBenchmarks);
 ProjectStore.AtomicWrite(Path.Combine(output,"lighthouse.dialogue.json"), ProjectStore.Serialize(Templates.Harbour()));
 void Capture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using var frame = window.CaptureRenderedFrame() ?? throw new Exception("No rendered frame"); frame.Save(Path.Combine(output,name + ".png"), PngBitmapEncoderOptions.Default); }
 GraphOrganizationChecks.UI(Check, output, Capture);
 ExportChecks.UI(Check, output, Capture);
+ConflictChecks.UI(Check, output, Capture);
 T Find<T>(string name) where T : Control => main.FindControl<T>(name)!;
 void Click(string name) { Find<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
 Check(!main.HasProject && Find<WelcomeView>("Welcome").IsVisible, "startup shows welcome without automatically loading a sample"); Capture(main,"welcome-dark");
@@ -751,7 +755,8 @@ AuthoringEdit("Scene & choice templates…"); templateDialog = Modal(authoringWo
 var insertTemplateButton = NamedControl<Button>(templateDialog, "InsertTemplate"); var insertPoint = insertTemplateButton.TranslatePoint(default, templateDialog)!.Value;
 Check(insertPoint.Y + insertTemplateButton.Bounds.Height * 1.3 < templateDialog.ClientSize.Height, "compact large-text template manager keeps Insert reachable"); PressAnswer(templateDialog, "Close");
 var authoringSavePicker = new TestFilePicker(); var authoringSave = new MainWindow(null, true, filePicker: authoringSavePicker); authoringSave.Show();
-ProjectStore.AtomicWrite(authoringUiPath, authoringWithTemplates); Pump(authoringSave.OpenProjectAsync(authoringUiPath));
+var authoringRoundtripPath = Path.Combine(workflowRoot, "authoring-template-roundtrip.dialogue.json");
+ProjectStore.AtomicWrite(authoringRoundtripPath, authoringWithTemplates); Pump(authoringSave.OpenProjectAsync(authoringRoundtripPath));
 Check(authoringSave.Project.SceneTemplates.Count == 1 && authoringSave.Project.ChoiceTemplates.Count == 1, "opening a saved project restores reusable template definitions"); authoringSave.Close();
 Pump(authoringWorkspace.SaveProjectAsync()); var otherAuthoringPath = Path.Combine(workflowRoot, "other-authoring.dialogue.json"); ProjectStore.AtomicWrite(otherAuthoringPath, ProjectStore.Serialize(Templates.Blank()));
 Pump(authoringWorkspace.OpenProjectAsync(otherAuthoringPath)); AuthoringEdit("Paste scenes");

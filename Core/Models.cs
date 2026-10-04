@@ -99,4 +99,4 @@ public sealed class ChoiceTemplate
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 public sealed record Diagnostic(string StateId, string Severity, string Message);
-public sealed record RecoveryRecord(string? FilePath, DateTimeOffset SavedAt, DialogueProject Project);
+public sealed record RecoveryRecord(string? FilePath, DateTimeOffset SavedAt, DialogueProject Project, ProjectFileVersion? SavedFileVersion = null);

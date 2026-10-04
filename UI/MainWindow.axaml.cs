@@ -17,6 +17,8 @@ public sealed partial class MainWindow : Window
     private readonly ProjectHistory history = new();
     private string savedSnapshot = "";
     private string? filePath;
+    private ProjectFileVersion? diskVersion;
+    private bool saveInProgress;
     private bool refreshing, allowClose, closePending, hasProject;
     private string editorTab = "Content";
     private readonly DispatcherTimer editTimer = new() { Interval = TimeSpan.FromMilliseconds(700) };

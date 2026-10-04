@@ -51,10 +51,12 @@ public sealed partial class MainWindow
         try
         {
             path = Path.GetFullPath(path);
-            var next = ProjectStore.Load(path); // Validate before replacing the current document.
+            var disk = ProjectFiles.Read(path);
+            var next = disk.Parse(); // Validate before replacing the current document.
             if (!await ConfirmReplace()) return false;
+            ProjectFiles.RequireUnchanged(path, disk.Version);
             if (next.ProjectName == "Untitled story") next.ProjectName = Path.GetFileNameWithoutExtension(path).Replace(".dialogue", "");
-            LoadProject(next, path, false); Remember(path); Status("Opened " + path); return true;
+            LoadProject(next, path, false, disk.Version); Remember(path); Status("Opened " + path); return true;
         }
         catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or JsonException or ArgumentException or InvalidOperationException)
         {
@@ -64,9 +66,9 @@ public sealed partial class MainWindow
             return false;
         }
     }
-    private void LoadProject(DialogueProject next, string? path, bool unsaved)
+    private void LoadProject(DialogueProject next, string? path, bool unsaved, ProjectFileVersion? version = null)
     {
-        editTimer.Stop(); hasProject = true; isExample = false; project = next; filePath = path; recoveryId = Guid.NewGuid().ToString("N");
+        editTimer.Stop(); hasProject = true; isExample = false; project = next; filePath = path; diskVersion = version; recoveryId = Guid.NewGuid().ToString("N");
         selected = project.ListOfCharacterStates.FirstOrDefault(s => s.State == project.Entry) ?? project.ListOfCharacterStates.FirstOrDefault();
         history.Reset(project); savedSnapshot = unsaved ? "" : ProjectStore.Serialize(project);
         Welcome.IsVisible = false; C<Grid>("WorkspacePanel").IsVisible = true;
@@ -77,7 +79,8 @@ public sealed partial class MainWindow
         => await SaveProjectAsync(saveAs);
     public async Task<bool> SaveProjectAsync(bool saveAs = false)
     {
-        if (!hasProject) return false;
+        if (!hasProject || saveInProgress) return false;
+        saveInProgress = true;
         try
         {
             Commit(); var path = filePath;
@@ -87,18 +90,38 @@ public sealed partial class MainWindow
                 path = await projectFilePicker.SaveAsync(this, safeName + ".dialogue.json"); if (path is null) return false;
             }
             path = Path.GetFullPath(path);
-            ProjectStore.AtomicWrite(path, ProjectStore.Serialize(project)); filePath = path; isExample = false; savedSnapshot = ProjectStore.Serialize(project);
-            ClearCurrentRecovery(); Remember(path); Refresh(); Status("Saved " + path); return true;
+            var sameFile = filePath is not null && ProjectFiles.SamePath(path, filePath);
+            var expected = sameFile ? diskVersion : ProjectFiles.Read(path).Version;
+            try
+            {
+                var current = ProjectFiles.RequireUnchanged(path, expected);
+                CompleteSave(path, ProjectStore.Serialize(project), current.Version);
+                return true;
+            }
+            catch (ProjectFileConflictException conflict) { return await ResolveSaveConflict(path, conflict.Current); }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
         { await Ui.Ask(this, "Could not save project", ex.Message + "\nYour changes remain in the editor. Try Save as to another location.", "Close"); return false; }
+        finally { saveInProgress = false; }
+    }
+    private void CompleteSave(string path, string snapshot, ProjectFileVersion expected, bool copy = false)
+    {
+        var version = copy ? ProjectFiles.SaveCopy(path, snapshot) : ProjectFiles.Save(path, snapshot, expected);
+        filePath = path; diskVersion = version; isExample = false; savedSnapshot = snapshot;
+        ClearCurrentRecovery(); Remember(path); Refresh(); Status("Saved " + path);
     }
     private async Task<bool> ConfirmReplace()
     {
         Commit();
         if (!Dirty) return true;
         var answer = await Ui.Ask(this, "Save your changes?", "‘" + project.ProjectName + "’ has unsaved changes.", "Save changes", "Discard changes", "Cancel");
-        if (answer == "Save changes") return await Save();
+        if (answer == "Save changes")
+        {
+            var local = ProjectStore.Serialize(project);
+            // Reload resolves a conflict but does not save these local edits. Keep the
+            // document open so Undo can recover them instead of resetting its history.
+            return await Save() && savedSnapshot == local;
+        }
         if (answer == "Discard changes") { ClearCurrentRecovery(); return true; } return false;
     }
     private async Task ProjectDetails()
@@ -129,7 +152,7 @@ public sealed partial class MainWindow
     private void WriteRecovery()
     {
         if (!Dirty || IsTestMode || !preferences.RecoveryEnabled) return;
-        try { RecoveriesStore.Save(recoveryId, new RecoveryRecord(filePath, DateTimeOffset.Now, project)); Status("Recovery saved locally · " + DateTime.Now.ToString("HH:mm") + " · project has unsaved changes"); }
+        try { RecoveriesStore.Save(recoveryId, new RecoveryRecord(filePath, DateTimeOffset.Now, project, diskVersion)); Status("Recovery saved locally · " + DateTime.Now.ToString("HH:mm") + " · project has unsaved changes"); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { Status("Recovery save failed: " + ex.Message + " · save your project manually."); }
     }
     private void ClearCurrentRecovery()
@@ -144,7 +167,7 @@ public sealed partial class MainWindow
     }
     private void Restore(RecoveryRecord r, string sourcePath)
     {
-        try { LoadProject(ProjectStore.Parse(ProjectStore.Serialize(r.Project)), r.FilePath, true); recoveryId = Path.GetFileNameWithoutExtension(sourcePath); Status("Recovered unsaved changes. Save the project when you're ready."); }
+        try { LoadProject(ProjectStore.Parse(ProjectStore.Serialize(r.Project)), r.FilePath, true, r.SavedFileVersion); recoveryId = Path.GetFileNameWithoutExtension(sourcePath); Status("Recovered unsaved changes. Save the project when you're ready."); }
         catch (Exception ex) when (ex is JsonException or InvalidDataException) { Status("Could not restore this recovery: " + ex.Message); }
     }
     private async Task ShowRecoveries()
@@ -208,6 +231,8 @@ public sealed partial class MainWindow
         var text = "1. Write your story\nAdd scenes, name the speaker, and write one dialogue page per line. Give player choices a destination, or use the scene's continue destination. Choose End conversation for an ending.\n\n2. Connect the story\nCtrl/Cmd-click or Shift-click toggles scenes. Shift-drag adds a set. Drag any selected scene or use arrows to move the set; Shift moves farther. Each move is one undo step. Escape cancels a gesture or clears selection. Ctrl/Cmd+A selects all; Ctrl/Cmd+Tab (Shift to reverse) focuses nodes, Space toggles, Enter selects one. The outline supports Ctrl/Cmd toggles and Shift ranges. The editor edits the active scene; duplicate/delete/rename/play-selected use that scene. Outgoing/internal links are purple (yellow in High contrast), incoming green; continue links stay dashed. Drag output dots onto another scene, or use Choose… to search destination titles and IDs. Down focuses results; Enter chooses; Cancel/Escape preserves the target. Jump opens connected scenes, and Notes lists incoming/outgoing links. Outline filters combine group, speaker, tag and diagnostics with text search. Clear search & filters restores the list. Fit story shows the whole graph; Arrange lays it out by connections. Script gives a readable overview.\n\nGroups & chapters\nStory tools or Ctrl/Cmd+Shift+G opens the group manager. Create an empty group, rename/delete it, assign/remove the selected scene set, select its members, or filter the outline. A scene can belong to several groups. Deleting a group preserves scenes and connections. Each edit is one Undo/Redo step after closing the manager. Copies, duplicates and template insertions start ungrouped within and across projects. Groups persist in desktop files and recovery and are omitted from website exports.\n\nMinimap\nView or Ctrl/Cmd+Shift+M shows/hides the story map, selected scenes and green viewport. Click/drag to navigate. Focus it and use arrows (Shift pans farther), Enter/Home to fit and Escape to return to graph focus. Alt+arrows pans the graph viewport with the map hidden too. Visibility is a workspace preference; navigation leaves the story unchanged.\n\n3. Add logic\nConditions compare affinity or inventory against an integer. All conditions must pass. Actions add or subtract values; inventory stays at zero or above. Event, Script and Shop integrations are preserved in exports and logged during playtests.\n\n4. Play and check\nF5 starts at the story's start. Shift+F5 starts at the selected scene. Edit test variables, use Back to revisit decisions, and export the transcript. Diagnostics find missing connections, unreachable scenes and loops without endings.\n\nFind & replace\nCtrl/Cmd+H or Ctrl/Cmd+Shift+F searches dialogue, responses, titles and notes. Choose fields and the entire project or selected scene. Preview replacements, jump to exact matches, or replace selected/all. Each replacement applies immediately and can be undone after closing the dialog. Use Variables & characters to rename variable references.\n\nReuse content\nNew scene… on a choice creates and connects a blank scene in one undo step. Edit → Copy selected scenes copies the graph/outline set. Copy scenes… preselects that set; Paste scenes selects all copies, assigns fresh IDs and remaps internal links. The scene clipboard lasts until this window closes, including project changes; other targets are retained. Save scene templates in Notes and choice templates in Content. Edit → Scene & choice templates… searches, previews, inserts and deletes project-owned definitions. Down focuses results, Enter inserts, Escape closes previews. Scene templates keep self-links and endings and clear other targets; choice templates use continue fallback. Variable renames include template references. Set variable starting values and substitutions when copying into another project.\n\nInline text\n[b]bold[/b], [i]italic[/i], [u]underline[/u], [colour=#79DFC8]colour[/colour]\n{player_name}, {npc_name}, {inv:coin}\n[if aff:trust >= 1]Trusted[else]Stranger[/if]\nNested conditions and negative integer thresholds are supported.\n\nKeyboard shortcuts\nCtrl/Cmd+N: new · Ctrl/Cmd+O: open · Ctrl/Cmd+S: save\nCtrl/Cmd+Shift+S: save as · Ctrl/Cmd+F: outline search\nCtrl/Cmd+H / Shift+F: find & replace\nCtrl/Cmd+Z: undo · Ctrl/Cmd+Shift+Z: redo\nCtrl/Cmd+D: duplicate · Ctrl/Cmd+0: fit graph\nCtrl/Cmd+Shift+G: groups · Ctrl/Cmd+Shift+M: minimap\nCtrl/Cmd+C / V: copy / paste scenes when graph or outline is focused\nF5: play · Shift+F5: play selected · F1: this guide\n\nFiles and recovery\nSave keeps the complete desktop project. Export website / game JSON keeps the original website schema and puts the start scene first. Recovery files and preferences live in:\n" + dataDir;
         var exportGuide = "\n\nExport your story\nFile → Export graph image exports every scene and connection, using full story bounds and the current theme. Choose 1× or 2× resolution; Fit within limits can reduce oversized images to 0.25×. Limits are 16,384 pixels per side and 32 megapixels. Larger stories need closer scene spacing or a script export. Selection, focus, minimap and editor overlays are excluded. Export leaves your view, filters, selection, pan/zoom, positions and Undo/Redo intact.\n\nFile → Export script creates readable Markdown with options for conditions/visibility, response actions, scene exit actions and writer’s notes (off by default). Entry comes first, then project order; pages/candidates and choices retain their order. Inline conditions always retain both branches, substitutions stay literal, and author-written Markdown is escaped. Destinations label inherited continue, endings, unset and missing targets. Cancel/Escape or a failed write preserves your work and any existing export.";
         text = text.Replace("\n\nFiles and recovery", exportGuide + "\n\nFiles and recovery");
+        var fileSafetyGuide = "\n\nExternal file changes\nBefore ordinary Save, disk contents are checked against the opened or last saved version. Rewrites, replacements and deletion open a conflict dialog. Compare shows your local edits beside the disk JSON. Reload validates and rechecks the external file; Undo restores your local work. If the file changes again, review the latest version before choosing. Save a copy writes to a new filename and switches the editor to it; existing files are preserved. Cancel, Escape, cancelled browsing and write failures retain local edits and recovery. Save as to the current path has the same protection. Recovery copies remain available when external disk content differs, even if it is newer or malformed.";
+        text = text.Replace("\n\nFiles and recovery", fileSafetyGuide + "\n\nFiles and recovery");
         var panel = Ui.Stack(Ui.Text("Your guide to Dialogue Machine", 26), Ui.Text(text, 14)); panel.Margin = new Thickness(28);
         await Ui.Dialog(this, "Guide & shortcuts", new ScrollViewer { Content = panel }, 690, 740).ShowDialog(this);
     }

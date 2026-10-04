@@ -2,6 +2,8 @@ Dialogue Machine is an offline desktop workspace for branching dialogue.
 
 ## Unreleased
 
+- Detect external project rewrites, replacements and deletion before Save using disk content fingerprints and Windows file identity. Compare local/disk versions, reload validated content with local edits retained in Undo, save a new copy, or cancel. Recheck repeated external changes, protect current-path Save as, preserve story/files/recents/recovery on cancellation and write failures, and support every theme/interface size in compact dialogs. Recovery discovery compares content so external saves cannot hide local recovery work.
+
 - Export the full story graph to PNG from either editor view, independent of viewport, zoom, selection and outline filters. Bounds include negative positions, tall scenes and looping connections. Choose 1×/2× resolution or explicit fitting within 16,384-pixel/32-megapixel limits; unreadable oversized graphs receive guidance. Images exclude editor overlays, minimap and selection/focus adornments. Export, cancellation and failure preserve the editor and history; failed writes retain an existing export.
 - Configure readable Markdown script exports with conditions/visibility, response actions, scene exit actions and optional writer's notes. Keep every scene, speaker, ordered page/candidate and choice; preserve both inline condition branches, literal substitutions and explicit inherited/ending/unset/missing destination labels. Escape authored Markdown/HTML safely. Export dialogs support all themes/interface sizes and compact keyboard workflows.
 
