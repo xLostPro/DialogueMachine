@@ -11,6 +11,7 @@ public sealed class PlaytestWindow : Window
 {
     private readonly DialogueProject original;
     private readonly string? start;
+    private readonly PlaytestScenario? scenario;
     private Simulation simulation;
     private readonly StackPanel story = new() { Spacing = 17 };
     private readonly StackPanel variablePanel = new() { Spacing = 10 };
@@ -18,19 +19,25 @@ public sealed class PlaytestWindow : Window
     private readonly TextBlock location = Ui.Text("", 12, true);
     private readonly Button back;
     public Simulation Session => simulation;
-    public PlaytestWindow(DialogueProject project, string? startId)
+    public PlaytestWindow(DialogueProject project, string? startId, double scale = 1) : this(project, startId, null, scale, false) { }
+    public PlaytestWindow(DialogueProject project, PlaytestScenario scenario, double scale, bool recordPath) : this(project, scenario.StartStateId, scenario, scale, recordPath) { }
+    private PlaytestWindow(DialogueProject project, string? startId, PlaytestScenario? definition, double scale, bool recordPath)
     {
-        original = ProjectStore.Clone(project); start = startId; simulation = new Simulation(original, start);
-        Title = "Playtest · " + project.ProjectName; Width = 1040; Height = 770; MinWidth = 820; MinHeight = 560; WindowStartupLocation = WindowStartupLocation.CenterOwner;
-        var grid = new Grid { RowDefinitions = new RowDefinitions("76,*,Auto"), ColumnDefinitions = new ColumnDefinitions("*,300") };
-        var title = Ui.Stack(Ui.Text("PLAYTEST", 11, true), Ui.Text(project.ProjectName, 22));
+        original = ProjectStore.Clone(project); start = startId; scenario = definition is null ? null : ScenarioStore.Clone(definition);
+        simulation = scenario is null ? new Simulation(original, start) : ScenarioReplay.Start(original, scenario);
+        Title = "Playtest · " + (scenario?.Name ?? project.ProjectName); Width = 1040 * scale; Height = 770 * scale; MinWidth = 660 * scale; MinHeight = 440 * scale; WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        var grid = new Grid { RowDefinitions = new RowDefinitions("Auto,*,Auto"), ColumnDefinitions = new ColumnDefinitions("*,250") };
+        var title = Ui.Stack(Ui.Text("PLAYTEST · SEED " + simulation.Seed, 11, true), Ui.Text(scenario?.Name ?? project.ProjectName, 22));
         back = Ui.Button("← Back", () => { simulation.Back(); Refresh(); });
-        var header = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto"), Margin = new Thickness(26,15) }; header.Children.Add(title);
-        var tools = Ui.Row(back, Ui.Button("↺ Restart", () => { simulation = new Simulation(original, start); Refresh(); }), Ui.AsyncButton("Export transcript", ExportTranscript)); Grid.SetColumn(tools, 1); header.Children.Add(tools); Grid.SetColumnSpan(header, 2); grid.Children.Add(header);
+        var tools = new WrapPanel { Orientation = Orientation.Horizontal };
+        foreach (var button in new[] { back, Ui.Button("↺ Restart", () => { simulation.Restart(); Refresh(); }), Ui.AsyncButton("Export transcript", ExportTranscript) }) { button.Margin = new Thickness(0,0,8,8); tools.Children.Add(button); }
+        if (recordPath) { var accept = Ui.Button("Use recorded path", () => Close(simulation), "primary"); accept.Name = "UseRecordedPath"; tools.Children.Add(accept); }
+        var header = Ui.Stack(title, tools); header.Margin = new Thickness(26,15); Grid.SetColumnSpan(header, 2); grid.Children.Add(header);
         var viewport = new ScrollViewer { Content = story, Margin = new Thickness(38,28) }; Grid.SetRow(viewport, 1); grid.Children.Add(viewport);
         var sidebar = Ui.Stack(Ui.Text("LIVE VARIABLES", 11, true), Ui.Text("Adjust values to test different paths.", 12, true), variablePanel, Ui.Text("INTEGRATION EVENTS", 11, true), Ui.Text("Events, scripts and shops are logged here. Game code is not executed.", 11, true), eventPanel);
         var right = new Border { Background = Ui.Brush("Panel"), BorderBrush = Ui.Brush("Line"), BorderThickness = new Thickness(1,0,0,0), Padding = new Thickness(22), Child = new ScrollViewer { Content = sidebar } }; Grid.SetColumn(right, 1); Grid.SetRow(right, 1); grid.Children.Add(right);
-        var footer = new Border { Background = Ui.Brush("Panel"), Padding = new Thickness(22,12), Child = Ui.Row(location, Ui.Text("Escape closes playtest", 11, true)) }; Grid.SetRow(footer, 2); Grid.SetColumnSpan(footer, 2); grid.Children.Add(footer); Content = grid;
+        var footer = new Border { Background = Ui.Brush("Panel"), Padding = new Thickness(22,12), Child = Ui.Stack(location, Ui.Text("Back restores the path and random state · Escape closes playtest", 11, true)) }; Grid.SetRow(footer, 2); Grid.SetColumnSpan(footer, 2); grid.Children.Add(footer);
+        Content = scale == 1 ? grid : new LayoutTransformControl { Child = grid, LayoutTransform = new Avalonia.Media.ScaleTransform(scale, scale) };
         KeyDown += (_, e) => { if (e.Key == Key.Escape) { Close(); e.Handled = true; } }; Refresh();
     }
     private void Refresh(bool rebuildVariables = true)
@@ -39,7 +46,7 @@ public sealed class PlaytestWindow : Window
         if (simulation.Current is not { } current)
         {
             story.Children.Add(Ui.Text("○", 50, true)); story.Children.Add(Ui.Text("The conversation ends here.", 28)); story.Children.Add(Ui.Text("Try another path, change the starting values, or return to your story to keep writing.", 15, true));
-            story.Children.Add(Ui.Button("Restart story", () => { simulation = new Simulation(original, start); Refresh(); }, "play")); location.Text = "Conversation complete";
+            story.Children.Add(Ui.Button("Restart story", () => { simulation.Restart(); Refresh(); }, "play")); location.Text = "Conversation complete · " + simulation.Trace.Count + " trace entries";
         }
         else
         {
@@ -58,15 +65,15 @@ public sealed class PlaytestWindow : Window
                     if (!met && choice.Visibility == VisibilityMode.Hide) continue;
                     if (met) available++;
                     var c = choice;
-                    var label = DialogueEngine.PlainText(DialogueEngine.ResolveText(choice.ButtonText, simulation.Variables, original.TextVariables));
+                    var label = DialogueEngine.PlainText(DialogueEngine.ResolveText(choice.ButtonText, simulation.Variables, simulation.TextVariables));
                     var button = Ui.Button("↳  " + label, () => Transition(() => simulation.Choose(c)));
                     button.HorizontalAlignment = HorizontalAlignment.Stretch; button.HorizontalContentAlignment = HorizontalAlignment.Left; button.Content = Ui.Text("↳  " + label, 15); button.IsEnabled = met;
                     if (!met) ToolTip.SetTip(button, reason);
                     story.Children.Add(button); if (!met) story.Children.Add(Ui.Text(reason, 11, true));
                 }
                 if (current.Choices.Count == 0 || available == 0)
-                    if (current.DefaultNextId is not null) story.Children.Add(Ui.Button(current.DefaultNextId == "[EXIT]" ? "End conversation →" : "Continue →", () => Transition(simulation.Continue), "primary"));
-                if (available == 0 && current.Choices.Count > 0 && current.DefaultNextId is null) story.Children.Add(Ui.Text("No response is available with these values. Adjust the live variables or go back.", 13, true));
+                    if (simulation.CanContinue) story.Children.Add(Ui.Button(current.DefaultNextId == "[EXIT]" ? "End conversation →" : "Continue →", () => Transition(simulation.Continue), "primary"));
+                if (available == 0 && current.Choices.Count > 0 && !simulation.CanContinue) story.Children.Add(Ui.Text("No response is available with these values. Adjust the live variables or go back.", 13, true));
             }
         }
         if (rebuildVariables)
@@ -79,6 +86,11 @@ public sealed class PlaytestWindow : Window
                 variablePanel.Children.Add(Ui.Field(k, input));
             }
             if (simulation.Variables.Count == 0) variablePanel.Children.Add(Ui.Text("This story has no numeric variables.", 12, true));
+            foreach (var key in simulation.TextVariables.Keys.Order(StringComparer.Ordinal).ToArray())
+            {
+                var k = key; var input = Ui.Input(simulation.TextVariables[k], value => { simulation.SetTextVariable(k, value); Refresh(false); });
+                variablePanel.Children.Add(Ui.Field(k + " (text)", input));
+            }
         }
         eventPanel.Children.Clear(); foreach (var entry in simulation.Events.TakeLast(12)) eventPanel.Children.Add(Ui.Text(entry, 12, true));
         if (simulation.Events.Count == 0) eventPanel.Children.Add(Ui.Text("No integration events yet.", 12, true));

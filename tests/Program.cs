@@ -14,6 +14,11 @@ using System.Text.Json;
 
 try
 {
+if (args.Contains("--write-scenario-fixtures"))
+{
+    ProjectStore.AtomicWrite(Path.GetFullPath("tests/Fixtures/repeatable.dialogue.json"), ProjectStore.Serialize(ScenarioChecks.Fixture()));
+    return;
+}
 if (args.Contains("--performance"))
 {
     PerformanceChecks.Run(args);
@@ -22,6 +27,15 @@ if (args.Contains("--performance"))
 var passed = 0;
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); passed++; Console.WriteLine("PASS " + message); }
 void Throws(Action action, string message) { try { action(); } catch { Check(true, message); return; } throw new Exception(message); }
+if (args.FirstOrDefault() == "--scenario-checks")
+{
+    var scenarioOutput = args.ElementAtOrDefault(1) ?? "artifacts/stage3"; Directory.CreateDirectory(scenarioOutput);
+    ScenarioChecks.Core(Check, Throws, scenarioOutput);
+    AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).SetupWithoutStarting();
+    void ScenarioCapture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using var frame = window.CaptureRenderedFrame() ?? throw new Exception("No rendered frame"); frame.Save(Path.Combine(scenarioOutput, name + ".png"), PngBitmapEncoderOptions.Default); }
+    ScenarioChecks.UI(Check, scenarioOutput, ScenarioCapture);
+    Console.WriteLine($"SUCCESS: {passed} scenario checks. Screenshots: {scenarioOutput}"); return;
+}
 
 var p = Templates.Harbour();
 Check(DialogueEngine.Validate(p).Count == 0, "example is valid and every scene can be reached");
@@ -351,6 +365,7 @@ AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new AvaloniaHe
 var main = new MainWindow(null, testMode: true); main.Show(); Dispatcher.UIThread.RunJobs();
 var output = args.FirstOrDefault() ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../artifacts")); Directory.CreateDirectory(output);
 GraphOrganizationChecks.Core(Check, Throws, output);
+ScenarioChecks.Core(Check, Throws, output);
 ExportChecks.Core(Check, Throws, output);
 ConflictChecks.Core(Check, Throws, output);
 File.WriteAllLines(Path.Combine(output, "navigation-benchmarks.txt"), navigationBenchmarks);
@@ -360,6 +375,7 @@ GraphOrganizationChecks.UI(Check, output, Capture);
 ExportChecks.UI(Check, output, Capture);
 ConflictChecks.UI(Check, output, Capture);
 EditorPerformanceRegressions.Run(Check, output, Capture);
+ScenarioChecks.UI(Check, output, Capture);
 T Find<T>(string name) where T : Control => main.FindControl<T>(name)!;
 void Click(string name) { Find<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
 Check(!main.HasProject && Find<WelcomeView>("Welcome").IsVisible, "startup shows welcome without automatically loading a sample"); Capture(main,"welcome-dark");

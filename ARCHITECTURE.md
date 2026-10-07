@@ -9,7 +9,11 @@ Core/                         Platform-independent class library; no UI dependen
   ProjectFiles.cs             Disk fingerprints, identity, guarded saves and detached reloads
   RecoveryStore.cs            Validated recovery storage and saved-file comparison
   WorkspaceStore.cs           Preferences migration, titled recents and startup decisions
-  DialogueEngine.cs           Conditions, validation, safe renaming, layout, simulation
+  DialogueEngine.cs           Conditions, validation, safe renaming, layout
+  Simulation.cs               Seeded runtime, reversible state, structured delivery/hook traces
+  PlaytestScenarios.cs         Desktop definitions, semantic replay references and authoring operations
+  ScenarioReplay.cs           Shared replay/assertions, observed coverage and bounded configuration analysis
+  StoryTestCommand.cs         Core-only CLI command parsing, JSON reports and exit-code contract
   DialogueText.cs             Structural conditional and formatting checks for all text fields
   VariableStore.cs            Discovery, typed references, safe variable rename/delete
   ProjectSearch.cs            Literal authoring search, scoped previews and replacement
@@ -37,11 +41,14 @@ UI/
   GraphImageExport.cs         Full-story raster bounds, allocation limits and atomic PNG writes
   MainWindow.Exports.cs       Scaled, scrollable export options and storage orchestration
   MainWindow.Groups.cs        Group manager and compact graph overlays
+  MainWindow.Scenarios.cs     Scenario drafts, recorder, asynchronous runs/results and transient coverage
   PlaytestWindow.cs           Isolated simulation, variables, transcript export
   RichDialogue.cs            Safe rendering of the supported formatting tags
   Ui.cs                      Small common control builders and labelled fields
 App.axaml / App.axaml.cs      Shared styling and theme palette
 tests/                       Executable core and headless UI regression checks
+  Fixtures/                  Committed seeded scenario stories replayed locally and in Windows CI
+CLI/                         Console entry point referencing Core only (no Avalonia)
 build.ps1 / build.sh          Self-contained platform publishing
 Packaging/*.ps1              Release version checks, native startup checks and Windows ZIP
 Packaging/publish-release.sh  Draft/upload/publish lifecycle with immutable published releases
@@ -120,13 +127,25 @@ Standard/detailed output uses 1×/2× world resolution with 96-DPI pixels, indep
 
 ## Simulation semantics
 
-Simulation clones the document. Entering a scene does not fire exit actions. Choosing a response verifies its conditions, validates its destination, snapshots the runtime, runs response actions, then scene exit actions, and enters the target. Page advances also snapshot runtime. Back restores scene, pages, variables, transcript and event log. Inventory is nonnegative and arithmetic saturates at integer limits. All transitions are user-driven; graph cycles are allowed. Script and Event actions are recorded rather than executed, keeping a local preview independent from game code.
+Simulation clones the document and indexes scene identities once. Entering a scene does not fire exit actions. Choosing a response verifies its conditions, validates its destination, snapshots the runtime, runs response actions, then scene exit actions, and enters the target. Page advances and live numeric/text edits also snapshot runtime. Back restores scene, pages, candidate index, numeric/text variables, random state, ending and the corresponding transcript/event/structured trace/replay-step lengths. Append-only evidence uses saved lengths rather than copying the entire accumulated trace for each snapshot. Inventory is nonnegative and arithmetic saturates at integer limits. Graph cycles are allowed; interactive transitions remain user-driven. Script, Event and Shop remain logged integration hooks.
 
 Inline condition processing resolves innermost tags first, with a bounded pass count. Rich formatting uses typed text runs rather than HTML or script execution. Text substitutions are evaluated after conditions.
 
 Structural validation checks dialogue and response labels without evaluating their branches. It rejects malformed conditions and nesting beyond the runtime's 64-pass limit; formatting and unknown-substitution diagnostics are advisory. Ending reachability traverses reverse edges from `[EXIT]`, avoiding repeated whole-graph scans.
 
-Use `Simulation.SetVariable` for live test edits. It snapshots runtime, records the value change and any refreshed page text, and lets Back restore everything together. Random delivery retains the chosen candidate index for a scene visit, clamped temporarily if resolved text has fewer lines. Explicit reroll snapshots and selects again; Back also restores that selection. Automatic layout uses the canvas node height and a vertical gap, with a minimum 300-unit row pitch for smaller nodes.
+Use `Simulation.SetVariable` and `SetTextVariable` for live test edits. Structured trace rows record scene visits, delivered pages, responses, before/after numeric changes, text changes, preview refreshes, integration hooks, rerolls and endings. Transitions validate before any action/evidence/history mutation. Random delivery uses portable SplitMix64 arithmetic with explicit 64-bit state and rejection sampling; the signed 32-bit seed initializes that state. A visit retains its candidate index, clamped temporarily if resolved text has fewer lines. Refresh preserves a selected candidate without a new random draw; reroll selects again when candidates exist. If a visit initially resolves no candidates, its first available candidate selection consumes the initial seeded draw. Back restores the stream and selected line, so repeating an operation repeats delivery. Restart resets the seed, overrides, history, trace and results to the initial visit. Automatic layout uses the canvas node height and a vertical gap, with a minimum 300-unit row pitch for smaller nodes.
+
+## Saved scenarios, replay and CLI
+
+`PlaytestScenarios` is an additive root collection in desktop format 1. Definitions contain stable IDs/names, explicit starting scene, seed, numeric/text overrides, bounded replay operations, ending policy and typed final assertions. Scenario/step/assertion extension data round-trips through the ordinary snapshot, file, recovery and conflict machinery. Missing collections normalize to empty; null rows/duplicate scenario identities are rejected before replacement. Stale references and unsupported operation/assertion kinds remain openable for repair and fail during replay. Website exports omit every definition and result. Scenarios do not introduce inactive variable IDs into runtime discovery, but variable reference/deletion/rename services include their overrides, recorded live edits and assertions.
+
+Replay references resolve by scene ID plus response GUID, never by index or label. A versioned semantic SHA-256 signature covers dialogue/delivery/speaker/shop, effective fallback destination, requirements, response actions and scene exit actions. Reordering responses or changing layout/title/notes leaves the path valid. Missing/ambiguous identities, changed signatures, unexpected scenes and unavailable operations return structured, actionable diagnostics with step locations. Safe scene/variable renames rebind only previously valid signatures alongside their references; stale recordings are not healed. Live edits after an ending use the explicit `[EXIT]` runtime reference and `v1:ended` signature. Require-ending and final numeric/text/ending/event assertions evaluate coherent runtime state and emitted hooks, including exact event counts/absence.
+
+`ScenarioReplay` and `ScenarioAnalysis` are shared Core services for UI and CLI. Replay bounds operations to a saved limit (maximum 10,000), retains partial failure/cancellation evidence and honors cancellation between operations. Configuration analysis starts from scenario overrides, explores usable branches with the same simulator, deduplicates full scene/variable/text/random configurations and bounds admitted configurations/queued branches to 1,000 in UI (CLI maximum 10,000), with a separate transition-work budget of four times that configuration limit. Analysis forks share the isolated story/index and copy only runtime state; they accumulate no history or traces. Configured dead ends include variable values and unmet requirements. Structural reachability remains separate, as does observed replay coverage. Neither service promises exhaustive cyclic-story verification; limits explicitly report unexplored work. Analysis does not apply manual edits recorded later in a replay.
+
+The scenario manager edits detached drafts; Save/Duplicate/Delete use `Mutate` once and preserve selection. Interactive recording starts from the draft configuration and transfers its current replay operations only on acceptance. Worker runs use a captured story/definition snapshot and publish results only to the still-visible manager on the same document. Closing cancels. Results/analysis/coverage are transient and never dirty the document or clear Redo. Authored changes and history/file replacement invalidate evidence. Graph coverage uses hashed identity sets and the existing culled drawing path, adds no hit targets and never replaces selection styling. Full-story exports exclude the decorations; result/path lists remain virtualized and forms/results scroll at every theme/interface size.
+
+`CLI/DialogueMachine.Cli.csproj` references Core only. `StoryTestCommand` owns validation/replay argument handling, deterministic schema-versioned JSON reports, atomic separate trace output and exit codes (0 pass, 1 validation error, 2 input/write error, 3 replay/assertion/configuration failure, 4 bounded limit, 5 cancelled). The thin console entry point translates Ctrl+C to cancellation. Committed fixture definitions run through both the regression harness and actual CLI in Windows CI. See [STORY_TESTING.md](STORY_TESTING.md) for commands, schema/reference semantics, limits and authoring instructions. Runtime integration/distribution/version/release publishing are outside Stage 3.
 
 ## Adding features
 

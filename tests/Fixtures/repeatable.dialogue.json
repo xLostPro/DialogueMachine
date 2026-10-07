@@ -1,0 +1,648 @@
+{
+  "FormatVersion": 1,
+  "ProjectName": "Repeatable harbour",
+  "CharacterId": "new_character",
+  "EntryStateId": "arrival",
+  "ListOfCharacterStates": [
+    {
+      "State": "arrival",
+      "Type": "Dialogue",
+      "Text": "Welcome {player_name}.\n[if aff:trust \u003E= 1]A friend[else]A stranger[/if] arrives.\nThe lamp is lit.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "10000000-0000-0000-0000-000000000001",
+          "ButtonText": "Ask to enter",
+          "NextStateId": "gate",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "asked",
+              "Amount": 0,
+              "Parameter": "gate"
+            }
+          ],
+          "VisualX": 150,
+          "VisualY": 150
+        },
+        {
+          "InternalId": "10000000-0000-0000-0000-000000000002",
+          "ButtonText": "Go home",
+          "NextStateId": "farewell",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 150,
+          "VisualY": 150
+        }
+      ],
+      "DefaultAfterActions": [
+        {
+          "Type": "Inventory",
+          "TargetId": "coin",
+          "Amount": 1,
+          "Parameter": null
+        },
+        {
+          "Type": "Script",
+          "TargetId": "arrived",
+          "Amount": 0,
+          "Parameter": "harbour"
+        }
+      ],
+      "Metadata": {
+        "title": "Arrival",
+        "speaker": "Keeper"
+      },
+      "VisualX": 0,
+      "VisualY": 0
+    },
+    {
+      "State": "gate",
+      "Type": "Dialogue",
+      "Text": "First page.\nSecond page for {player_name}.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "10000000-0000-0000-0000-000000000003",
+          "ButtonText": "Enter shop",
+          "NextStateId": "market",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Operator": "\u003E=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 150,
+          "VisualY": 150
+        },
+        {
+          "InternalId": "10000000-0000-0000-0000-000000000004",
+          "ButtonText": "Leave",
+          "NextStateId": "farewell",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 150,
+          "VisualY": 150
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Gate",
+        "speaker": "Keeper"
+      },
+      "VisualX": 360,
+      "VisualY": 0
+    },
+    {
+      "State": "market",
+      "Type": "Shop",
+      "Text": "A small shop.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": "harbour_shop"
+      },
+      "Choices": [
+        {
+          "InternalId": "10000000-0000-0000-0000-000000000005",
+          "ButtonText": "Buy lamp",
+          "NextStateId": "farewell",
+          "Visibility": "Always",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": "\u003E=",
+              "Value": "99"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -3,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "purchase",
+              "Amount": 0,
+              "Parameter": "lamp"
+            }
+          ],
+          "VisualX": 150,
+          "VisualY": 150
+        }
+      ],
+      "DefaultAfterActions": [
+        {
+          "Type": "Script",
+          "TargetId": "shop_closed",
+          "Amount": 0,
+          "Parameter": null
+        }
+      ],
+      "Metadata": {
+        "title": "Market",
+        "speaker": "Merchant"
+      },
+      "VisualX": 720,
+      "VisualY": 0
+    },
+    {
+      "State": "farewell",
+      "Type": "Dialogue",
+      "Text": "Goodbye {player_name}.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [
+        {
+          "Type": "Affinity",
+          "TargetId": "limit",
+          "Amount": 99,
+          "Parameter": null
+        }
+      ],
+      "Metadata": {
+        "title": "Farewell",
+        "speaker": "Keeper"
+      },
+      "VisualX": 720,
+      "VisualY": 340
+    }
+  ],
+  "InitialVariables": {
+    "aff:trust": 0,
+    "inv:coin": 0,
+    "aff:limit": 2147483647
+  },
+  "TextVariables": {
+    "player_name": "Traveller"
+  },
+  "SceneTemplates": [],
+  "ChoiceTemplates": [
+    {
+      "Name": "Ask",
+      "Choice": {
+        "InternalId": "10000000-0000-0000-0000-000000000001",
+        "ButtonText": "Ask to enter",
+        "NextStateId": null,
+        "Visibility": "Disable",
+        "Requirements": [],
+        "AfterChoiceActions": [
+          {
+            "Type": "Affinity",
+            "TargetId": "trust",
+            "Amount": 1,
+            "Parameter": null
+          },
+          {
+            "Type": "Event",
+            "TargetId": "asked",
+            "Amount": 0,
+            "Parameter": "gate"
+          }
+        ],
+        "VisualX": 150,
+        "VisualY": 150
+      }
+    }
+  ],
+  "SceneGroups": [
+    {
+      "Id": "harbour-chapter",
+      "Name": "Harbour",
+      "Scenes": [
+        {
+          "StateId": "arrival",
+          "Occurrence": 0
+        },
+        {
+          "StateId": "gate",
+          "Occurrence": 0
+        }
+      ]
+    }
+  ],
+  "PlaytestScenarios": [
+    {
+      "Id": "shop-seeded",
+      "Name": "Shop seeded",
+      "StartStateId": "arrival",
+      "Seed": 42,
+      "NumericOverrides": {
+        "aff:trust": 1,
+        "inv:coin": 2
+      },
+      "TextOverrides": {
+        "player_name": "Ada"
+      },
+      "Steps": [
+        {
+          "Kind": "Choice",
+          "SceneId": "arrival",
+          "ChoiceId": "10000000-0000-0000-0000-000000000001",
+          "Fingerprint": "v1:d435031f62356afe038528c29f27a151d6ff755a9069d2727c9daf2ab8d40c8b",
+          "Label": "Ask to enter",
+          "Key": null,
+          "Number": null,
+          "Text": null,
+          "FutureStep": {
+            "keep": true
+          }
+        },
+        {
+          "Kind": "Page",
+          "SceneId": "gate",
+          "ChoiceId": null,
+          "Fingerprint": "v1:3d019adf56870c6685d02f051d983d2407ac13fc3752d70492dda91bc980efb0",
+          "Label": null,
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Choice",
+          "SceneId": "gate",
+          "ChoiceId": "10000000-0000-0000-0000-000000000003",
+          "Fingerprint": "v1:8b48d958ea55edf7a30fd1881c59f4a4a904e977fbc4a5fa915a4db0183ddbfd",
+          "Label": "Enter shop",
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Choice",
+          "SceneId": "market",
+          "ChoiceId": "10000000-0000-0000-0000-000000000005",
+          "Fingerprint": "v1:b9db9e44190603a3756d52a8f798cbea21965919146403adfabadeae77fcda2f",
+          "Label": "Buy lamp",
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Continue",
+          "SceneId": "farewell",
+          "ChoiceId": null,
+          "Fingerprint": "v1:9b838ca38a92125948c8fdda5f4553a6ec424324b797857841652667d2436209",
+          "Label": null,
+          "Key": null,
+          "Number": null,
+          "Text": null
+        }
+      ],
+      "Assertions": [
+        {
+          "Kind": "Numeric",
+          "Key": "aff:trust",
+          "Number": 2,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null,
+          "FutureAssertion": "keep"
+        },
+        {
+          "Kind": "Numeric",
+          "Key": "inv:coin",
+          "Number": 0,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Numeric",
+          "Key": "aff:limit",
+          "Number": 2147483647,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Text",
+          "Key": "player_name",
+          "Number": null,
+          "Text": "Ada",
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Ending",
+          "Key": "",
+          "Number": null,
+          "Text": null,
+          "SceneId": "farewell",
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Event",
+          "Key": "asked",
+          "Number": null,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": "Event",
+          "Parameter": "gate",
+          "Count": 1
+        },
+        {
+          "Kind": "Event",
+          "Key": "arrived",
+          "Number": null,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": "Script",
+          "Parameter": "harbour",
+          "Count": 1
+        },
+        {
+          "Kind": "Event",
+          "Key": "harbour_shop",
+          "Number": null,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": "Shop",
+          "Parameter": null,
+          "Count": 1
+        },
+        {
+          "Kind": "Event",
+          "Key": "purchase",
+          "Number": null,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": "Event",
+          "Parameter": "lamp",
+          "Count": 1
+        },
+        {
+          "Kind": "Event",
+          "Key": "shop_closed",
+          "Number": null,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": "Script",
+          "Parameter": null,
+          "Count": 1
+        }
+      ],
+      "RequireEnding": true,
+      "MaxSteps": 1000,
+      "FutureScenario": 42
+    },
+    {
+      "Id": "leave-seeded",
+      "Name": "Leave seeded",
+      "StartStateId": "arrival",
+      "Seed": -17,
+      "NumericOverrides": {
+        "aff:trust": 0,
+        "inv:coin": 0
+      },
+      "TextOverrides": {
+        "player_name": "Ben"
+      },
+      "Steps": [
+        {
+          "Kind": "Choice",
+          "SceneId": "arrival",
+          "ChoiceId": "10000000-0000-0000-0000-000000000001",
+          "Fingerprint": "v1:d435031f62356afe038528c29f27a151d6ff755a9069d2727c9daf2ab8d40c8b",
+          "Label": "Ask to enter",
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Page",
+          "SceneId": "gate",
+          "ChoiceId": null,
+          "Fingerprint": "v1:3d019adf56870c6685d02f051d983d2407ac13fc3752d70492dda91bc980efb0",
+          "Label": null,
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Choice",
+          "SceneId": "gate",
+          "ChoiceId": "10000000-0000-0000-0000-000000000004",
+          "Fingerprint": "v1:dea0cf69d084dfb715a3c01ec1f6f7f7eaf1c9ad3f41bf1e9ffbffdae574ee84",
+          "Label": "Leave",
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Continue",
+          "SceneId": "farewell",
+          "ChoiceId": null,
+          "Fingerprint": "v1:9b838ca38a92125948c8fdda5f4553a6ec424324b797857841652667d2436209",
+          "Label": null,
+          "Key": null,
+          "Number": null,
+          "Text": null
+        }
+      ],
+      "Assertions": [
+        {
+          "Kind": "Numeric",
+          "Key": "aff:trust",
+          "Number": 1,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Numeric",
+          "Key": "inv:coin",
+          "Number": 1,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Numeric",
+          "Key": "aff:limit",
+          "Number": 2147483647,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Text",
+          "Key": "player_name",
+          "Number": null,
+          "Text": "Ben",
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Ending",
+          "Key": "",
+          "Number": null,
+          "Text": null,
+          "SceneId": "farewell",
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        }
+      ],
+      "RequireEnding": true,
+      "MaxSteps": 1000
+    },
+    {
+      "Id": "home-seeded",
+      "Name": "Home seeded",
+      "StartStateId": "arrival",
+      "Seed": 0,
+      "NumericOverrides": {
+        "aff:trust": 0,
+        "inv:coin": 0
+      },
+      "TextOverrides": {
+        "player_name": "Traveller"
+      },
+      "Steps": [
+        {
+          "Kind": "Choice",
+          "SceneId": "arrival",
+          "ChoiceId": "10000000-0000-0000-0000-000000000002",
+          "Fingerprint": "v1:288ac17020ebcb285b8a0152b0926032cd091738609ce4127c026ad7bc2dc6a0",
+          "Label": "Go home",
+          "Key": null,
+          "Number": null,
+          "Text": null
+        },
+        {
+          "Kind": "Continue",
+          "SceneId": "farewell",
+          "ChoiceId": null,
+          "Fingerprint": "v1:9b838ca38a92125948c8fdda5f4553a6ec424324b797857841652667d2436209",
+          "Label": null,
+          "Key": null,
+          "Number": null,
+          "Text": null
+        }
+      ],
+      "Assertions": [
+        {
+          "Kind": "Numeric",
+          "Key": "aff:trust",
+          "Number": 0,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Numeric",
+          "Key": "inv:coin",
+          "Number": 1,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Numeric",
+          "Key": "aff:limit",
+          "Number": 2147483647,
+          "Text": null,
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Text",
+          "Key": "player_name",
+          "Number": null,
+          "Text": "Traveller",
+          "SceneId": null,
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        },
+        {
+          "Kind": "Ending",
+          "Key": "",
+          "Number": null,
+          "Text": null,
+          "SceneId": "farewell",
+          "ChoiceId": null,
+          "EventType": null,
+          "Parameter": null,
+          "Count": null
+        }
+      ],
+      "RequireEnding": true,
+      "MaxSteps": 1000
+    }
+  ],
+  "FutureProject": "keep"
+}

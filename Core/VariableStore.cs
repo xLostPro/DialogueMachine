@@ -82,6 +82,13 @@ public static class VariableStore
             var isolated = new DialogueProject { ListOfCharacterStates = [scene], InitialVariables = DiscoverNumeric(context).ToDictionary(k => k, _ => 0), TextVariables = p.TextVariables };
             foreach (var reference in References(isolated, key, textVariable)) references.Add(new(label, reference.Field, true));
         }
+        foreach (var scenario in p.PlaytestScenarios)
+        {
+            var label = "Scenario: " + scenario.Name;
+            if (textVariable ? scenario.TextOverrides.ContainsKey(key) : scenario.NumericOverrides.ContainsKey(key)) references.Add(new(label, "Starting override"));
+            foreach (var step in scenario.Steps.Where(s => s.Kind == (textVariable ? "SetText" : "SetNumeric") && s.Key == key)) references.Add(new(label, "Recorded live edit"));
+            foreach (var assertion in scenario.Assertions.Where(a => a.Kind == (textVariable ? "Text" : "Numeric") && a.Key == key)) references.Add(new(label, "Final assertion"));
+        }
         return references;
     }
 
@@ -112,6 +119,7 @@ public static class VariableStore
                 return ResolveConditionKey(id, renamedKeys) != binding ? m.Groups[1].Value + binding : m.Value;
             });
         }
+        var rebindScenarios = ScenarioStore.CaptureValidReferences(p);
         foreach (var (s, scopeKeys) in scopes)
         {
             s.Text = Rewrite(s.Text, scopeKeys);
@@ -125,6 +133,14 @@ public static class VariableStore
         }
         if (textVariable) { var value = p.TextVariables[oldKey]; p.TextVariables.Remove(oldKey); p.TextVariables[newKey] = value; }
         else { var value = p.InitialVariables.GetValueOrDefault(oldKey); p.InitialVariables.Remove(oldKey); p.InitialVariables[newKey] = value; }
+        foreach (var scenario in p.PlaytestScenarios)
+        {
+            if (textVariable) { if (scenario.TextOverrides.Remove(oldKey, out var value)) scenario.TextOverrides[newKey] = value; }
+            else { if (scenario.NumericOverrides.Remove(oldKey, out var value)) scenario.NumericOverrides[newKey] = value; }
+            foreach (var step in scenario.Steps.Where(s => s.Kind == (textVariable ? "SetText" : "SetNumeric") && s.Key == oldKey)) step.Key = newKey;
+            foreach (var assertion in scenario.Assertions.Where(a => a.Kind == (textVariable ? "Text" : "Numeric") && a.Key == oldKey)) assertion.Key = newKey;
+        }
+        rebindScenarios();
     }
 
     public static void Delete(DialogueProject p, string key, bool textVariable = false)

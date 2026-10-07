@@ -48,7 +48,15 @@ jobs:
           dotnet run --project tests/DialogueMachine.Tests.csproj --no-restore -c Release -- artifacts | Tee-Object -FilePath verification.txt
           if ($LASTEXITCODE -ne 0) { throw 'Regression checks failed.' }
       - name: Build the self-contained app
+        # Scenario fixtures exercise the Core-only entry point independently of Avalonia.
+        # Replay is bounded; cycle analysis never claims exhaustive verification.
         run: ./build.ps1 -Runtime win-x64
+      - name: Validate and replay committed scenario fixtures
+        run: |
+          dotnet run --project CLI/DialogueMachine.Cli.csproj --no-restore -c Release -- validate tests/Fixtures/repeatable.dialogue.json | Tee-Object -FilePath artifacts/ci-scenario-validation.json
+          if ($LASTEXITCODE -ne 0) { throw 'CLI fixture validation failed.' }
+          dotnet run --project CLI/DialogueMachine.Cli.csproj --no-build -c Release -- replay tests/Fixtures/repeatable.dialogue.json --all --analyze --trace artifacts/ci-scenario-trace.json
+          if ($LASTEXITCODE -ne 0) { throw 'CLI scenario fixtures failed.' }
       - name: Check native Windows startup
         run: ./Packaging/Test-WindowsPackage.ps1
       - name: Create release ZIP and checksum
@@ -72,6 +80,7 @@ jobs:
             artifacts/**/*.png
             artifacts/native/**/*.json
             artifacts/native/**/*.txt
+            artifacts/ci-scenario-*.json
           retention-days: 14
           overwrite: true
 

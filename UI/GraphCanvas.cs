@@ -16,6 +16,15 @@ public sealed class GraphCanvas : Control
         set { if (!ReferenceEquals(project, value)) ClearTextLayouts(); project = value; }
     }
     public DialogueState? Selected { get; private set; }
+    private readonly HashSet<string> visitedScenes = new(StringComparer.Ordinal);
+    private readonly HashSet<ChoiceCoverage> visitedChoices = [];
+    public CoverageReport? Coverage { get; private set; }
+    public void SetCoverage(CoverageReport? coverage)
+    {
+        Coverage = coverage; visitedScenes.Clear(); visitedChoices.Clear();
+        if (coverage is not null) { visitedScenes.UnionWith(coverage.Scenes); visitedChoices.UnionWith(coverage.Choices); }
+        RefreshVisual();
+    }
     private readonly HashSet<DialogueState> selection = [];
     public IReadOnlyList<DialogueState> SelectedScenes => Project.ListOfCharacterStates.Where(selection.Contains).ToList();
     private DialogueState? keyboardScene;
@@ -167,6 +176,11 @@ public sealed class GraphCanvas : Control
         var rect = BoundsOf(s); var active = s == Selected; var included = selection.Contains(s); var isEntry = s.State == Project.Entry;
         dc.DrawRectangle(Ui.Brush("Panel"), new Pen(Ui.Brush(included ? "GraphSelection" : "Line"), active ? 3 : included ? 2 : 1), rect, 11, 11);
         dc.DrawRectangle(Ui.Brush(included ? "Selection" : "Raised"), null, new Rect(rect.X + 1, rect.Y + 1, rect.Width - 2, 64), 10, 10);
+        if (ExportPlan is null && visitedScenes.Contains(s.State))
+        {
+            dc.DrawRectangle(Ui.Brush("MintInk"), null, new Rect(rect.X + 6, rect.Y + 70, 3, rect.Height - 80));
+            DrawText(dc, "✓", new(rect.Right - 24, rect.Y + 12), 12, "MintInk", 18, 18);
+        }
         if (IsFocused && s == keyboardScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphIncoming"), 1.5 / Zoom, new DashStyle([3, 3], 0)), rect.Inflate(5), 13, 13);
         DrawText(dc, (isEntry ? "◆  START  /  " : "●  ") + s.Speaker.ToUpperInvariant(), new(rect.X + 16, rect.Y + 12), 10, isEntry ? "MintInk" : "Muted", 236, 16);
         DrawText(dc, s.Title, new(rect.X + 16, rect.Y + 31), 15, "Ink", 236, 24, true);
@@ -175,6 +189,8 @@ public sealed class GraphCanvas : Control
         dc.DrawEllipse(Ui.Brush("Panel"), new Pen(Ui.Brush("Line"), 2), new(rect.X, rect.Y + 35), 5, 5);
         for (var i = 0; i < s.Choices.Count; i++)
         {
+            if (ExportPlan is null && visitedChoices.Contains(new(s.State, s.Choices[i].InternalId)))
+                dc.DrawEllipse(Ui.Brush("MintInk"), null, new(rect.X + 8, rect.Y + 135 + i * 34), 3, 3);
             var y = rect.Y + 120 + i * 34;
             dc.DrawLine(new Pen(Ui.Brush("Line"), 1), new(rect.X + 12, y), new(rect.Right - 12, y));
             var c = s.Choices[i]; var prefix = c.Requirements.Count > 0 ? "◇  " : "↳  ";
