@@ -56,6 +56,7 @@ public static class ProjectStore
             var seen = new HashSet<(string, int)>();
             group.Scenes.RemoveAll(r => !sceneKeys.Contains((r.StateId, r.Occurrence)) || !seen.Add((r.StateId, r.Occurrence)));
         }
+        ScenarioStore.Normalize(project);
         return project;
     }
     public static DialogueProject Load(string path)

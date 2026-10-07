@@ -68,6 +68,7 @@ public sealed partial class MainWindow
     }
     private void LoadProject(DialogueProject next, string? path, bool unsaved, ProjectFileVersion? version = null)
     {
+        ClearScenarioResults();
         editTimer.Stop(); hasProject = true; isExample = false; project = next; filePath = path; diskVersion = version; recoveryId = Guid.NewGuid().ToString("N");
         selected = project.ListOfCharacterStates.FirstOrDefault(s => s.State == project.Entry) ?? project.ListOfCharacterStates.FirstOrDefault();
         history.Reset(project); pendingEdits = false; savedSnapshot = unsaved ? "" : history.CurrentSnapshot;
@@ -237,6 +238,8 @@ public sealed partial class MainWindow
         text = text.Replace("\n\nFiles and recovery", exportGuide + "\n\nFiles and recovery");
         var fileSafetyGuide = "\n\nExternal file changes\nBefore ordinary Save, disk contents are checked against the opened or last saved version. Rewrites, replacements and deletion open a conflict dialog. Compare shows your local edits beside the disk JSON. Reload validates and rechecks the external file; Undo restores your local work. If the file changes again, review the latest version before choosing. Save a copy writes to a new filename and switches the editor to it; existing files are preserved. Cancel, Escape, cancelled browsing and write failures retain local edits and recovery. Save as to the current path has the same protection. Recovery copies remain available when external disk content differs, even if it is newer or malformed.";
         text = text.Replace("\n\nFiles and recovery", fileSafetyGuide + "\n\nFiles and recovery");
+        var scenarioGuide = "\n\nRepeatable story tests\nStory → Test scenarios saves named starting scenes, numeric/text overrides and random seeds. Record path opens the player; Use recorded path transfers the current route to the draft. Back restores random state, values, text, events and trace; Restart resets the seed and overrides. Save scenario applies one undoable definition change; save the project to persist it. Duplicate/Delete are undoable after closing. Add assertions for final numeric/text values, ending scenes and emitted Event/Script/Shop hooks (which stay logged only). Run draft or Run all saved keeps results separate from the story; Cancel run or closing cancels. View/Export results explains failures and configured dead ends. Visited scene marks and response dots show observed coverage without changing selection or exports. Authored edits invalidate results. References use scene IDs and choice identities, detecting changes instead of guessing by label/index; review failures and re-record changed paths. Configuration analysis starts at supplied values, has a 1,000-configuration budget and remains distinct from structural reachability. Neither replay nor analysis proves every cyclic path. Core CLI commands and exit codes are documented in STORY_TESTING.md.";
+        text = text.Replace("\n\nFiles and recovery", scenarioGuide + "\n\nFiles and recovery");
         var panel = Ui.Stack(Ui.Text("Your guide to Dialogue Machine", 26), Ui.Text(text, 14)); panel.Margin = new Thickness(28);
         await Ui.Dialog(this, "Guide & shortcuts", new ScrollViewer { Content = panel }, 690, 740).ShowDialog(this);
     }

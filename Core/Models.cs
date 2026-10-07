@@ -17,6 +17,7 @@ public sealed class DialogueProject
     public List<SceneTemplate> SceneTemplates { get; set; } = [];
     public List<ChoiceTemplate> ChoiceTemplates { get; set; } = [];
     public List<SceneGroup> SceneGroups { get; set; } = [];
+    public List<PlaytestScenario> PlaytestScenarios { get; set; } = [];
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     [JsonIgnore] public string Entry => EntryStateId ?? ListOfCharacterStates.FirstOrDefault()?.State ?? "";
 }

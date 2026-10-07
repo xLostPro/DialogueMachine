@@ -10,7 +10,7 @@ The initial recommendation was a focused reliability patch. **Stage 1 is merged 
 
 **Stage 2 priorities 1–8 are implemented**, with 773 passing regression checks. Variable management, project-wide find/replace, destination navigation and reusable authoring operations are merged in PRs #3–#6, with passing Windows CI. Graph organization includes mouse/keyboard selection sets, group movement with one-step undo/redo, selected connection highlighting and scene-set copy/paste. Persistent scene groups/chapters support overlapping memberships, one-step edits, group selection and intersecting outline filters; the optional minimap adds mouse/keyboard viewport navigation. Exports include the complete graph with bounded resolution and configurable readable Markdown scripts. File safety now detects external changes before Save, offers compare/reload/save-a-copy/cancel, validates and rechecks external content, and preserves local work through conflict cancellation, failures and undoable Reload. Full-editor performance fixtures and before/after measurements now cover 100/1,000/10,000 scenes, allocations and retained memory. Evidence supports viewport culling, bounded text layouts, virtualized outline rows, deferred hidden script controls, fewer redundant document scans and compressed complete snapshots; see [PERFORMANCE.md](PERFORMANCE.md). These source changes do not imply a published release.
 
-Stage 2 authoring and performance work is complete. The proposed next work is Stage 3 repeatable story testing, followed separately by one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
+Stage 2 authoring/performance and Stage 3 repeatable story testing are implemented. The proposed next work is Stage 4: one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
 
 The app already implements the basic write → connect → validate → playtest → export loop. Its main gaps are correctness at the edges, efficient editing as stories grow, and confidence that exported dialogue behaves as expected in its destination runtime.
 
@@ -104,7 +104,7 @@ These measure Core operations and allocated bytes, excluding graph drawing, UI r
 
 Completion gate: a writer can reorganize and revise a substantial story without repeatedly typing IDs, inspecting JSON, or losing references; all bulk changes undo reliably.
 
-## Stage 3 — make story testing repeatable
+## Stage 3 — make story testing repeatable: implemented
 
 - Save named playtest scenarios with starting scene, numeric/text values, and random seed.
 - Record scenes, choices, variable changes, integration events and endings in a structured trace.
@@ -113,7 +113,9 @@ Completion gate: a writer can reorganize and revise a substantial story without 
 - Add condition-aware dead-end checks for supplied scenarios. Keep structural reachability distinct from what a particular variable configuration can reach; do not promise exhaustive verification of all paths in cyclic stories.
 - Expose a Core-based CLI for validation and scenario replay, with JSON diagnostics and meaningful exit codes.
 
-Completion gate: changing a branch or action can be checked against saved scenarios locally and in CI, with enough trace detail to reproduce a failure.
+Implemented with additive desktop scenario definitions, detached creation/edit/duplicate/delete drafts, interactive path recording, seeded SplitMix64 simulation, reversible random/text/trace state, stable scene/GUID references with semantic fingerprints, final numeric/text/ending/hook assertions, observed graph coverage and separate bounded configuration dead-end analysis. UI and the Core-only CLI share these services; cancellation and limits retain actionable partial evidence without promising exhaustive cyclic verification. Three committed seeded paths run in the local regression harness and actual CLI in Windows CI. See [STORY_TESTING.md](STORY_TESTING.md) for the command and schema contracts.
+
+Completion gate: changing a branch or action can be checked against saved scenarios locally and in CI, with enough trace detail to reproduce a failure. The full harness now contains 910 checks, including 137 Stage 3 checks. Scenario/result/recorder/assertion dialogs and coverage are rendered across all nine themes/interface sizes, including compact layouts. Windows packaging/native smoke verification is part of the delivery gate. These source changes do not publish a release.
 
 ## Stage 4 — prove the runtime handoff
 
@@ -145,4 +147,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Stage 2 is complete, including the measured performance batch and its practical story-size guidance. The next proposed batch is Stage 3 repeatable story testing; it has not been implemented here. Priorities 1–8 are implemented, including external modification detection/conflict-safe saving, full-story graph PNG and configurable Core Markdown exports, graph organization, groups/minimap, variable/reference management, project-wide find/replace, destination navigation and reusable authoring operations. Stage 1 is merged. Repeatable story testing, the runtime handoff, release publishing and native Mac/Linux verification remain separate work.
+Stages 2 and 3 are implemented, including measured editor performance and repeatable scenario testing. The next proposed batch is Stage 4 runtime handoff, choosing one actual destination and verifying a complete sample. Priorities 1–8 are implemented, including external modification detection/conflict-safe saving, full-story graph PNG and configurable Core Markdown exports, graph organization, groups/minimap, variable/reference management, project-wide find/replace, destination navigation and reusable authoring operations. Stage 1 is merged. The runtime handoff, release publishing and native Mac/Linux verification remain separate work.

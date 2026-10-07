@@ -157,7 +157,7 @@ public sealed partial class MainWindow : Window
         var copySelected = Item("Copy selected scenes", CopySelectedScenes); copySelected.IsEnabled = selectedScenes.Count > 0;
         var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), copySelected, Item("Copy scenes…", () => _ = CopyScenes()), paste, Item("Scene & choice templates…", () => _ = ShowTemplates()), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
         var view = new MenuItem { Header = "_View", ItemsSource = new object[] { ProjectItem("Story graph", () => SetView(false)), ProjectItem("Script", () => SetView(true)), ProjectItem("Fit story", Graph.Fit, "Ctrl+0"), ProjectItem(preferences.ShowMinimap ? "Hide minimap" : "Show minimap", ToggleMinimap, "Ctrl+Shift+M"), ProjectItem("Groups & chapters…", () => _ = ShowGroups(), "Ctrl+Shift+G"), ProjectItem("Diagnostics", ToggleProblems), new Separator(), Item("Appearance & accessibility…", () => _ = ShowSettings()) } };
-        var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems) } };
+        var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Test scenarios…", () => _ = ShowScenariosAsync()), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems) } };
         edit.IsEnabled = hasProject; story.IsEnabled = hasProject;
         var help = new MenuItem { Header = "_Help", ItemsSource = new object[] { Item("Guide & shortcuts", () => _ = ShowHelp(), "F1"), Item("About Dialogue Machine", () => _ = Ui.Ask(this, "Dialogue Machine", "Desktop edition 1.1.1 · Built with C# and Avalonia.\nAn offline workspace for branching stories. Your projects stay on your computer.", "Close")) } };
         C<Menu>("AppMenu").ItemsSource = new object[] { file, edit, view, story, help };
@@ -188,6 +188,7 @@ public sealed partial class MainWindow : Window
     private void SwitchTab(string tab) { Commit(); editorTab = tab; RefreshEditor(); }
     private void Edited()
     {
+        ClearScenarioResults();
         pendingEdits = true;
         if (selected is not null)
         {
@@ -206,6 +207,7 @@ public sealed partial class MainWindow : Window
         pendingEdits = false;
         if (changed)
         {
+            ClearScenarioResults();
             RebuildStatistics(); scriptDirty = true;
             if (diagnostics) RefreshDiagnostics();
         }
@@ -240,6 +242,7 @@ public sealed partial class MainWindow : Window
             if (scene == selected) active = key;
         }
         project = p; pendingEdits = false; selectedScenes.Clear(); selected = null; occurrences.Clear();
+        ClearScenarioResults();
         foreach (var scene in project.ListOfCharacterStates)
         {
             var key = (scene.State, occurrences.GetValueOrDefault(scene.State)); occurrences[scene.State] = key.Item2 + 1;
@@ -372,6 +375,8 @@ public sealed partial class MainWindow : Window
         Commit(); RefreshDiagnostics();
         if (DialogueEngine.Validate(project).Any(i => i.Severity == "Error")) { C<Border>("DiagnosticsBorder").IsVisible = true; Status("Resolve the story errors before playtesting. Select an issue to open its scene."); return; }
         if (project.ListOfCharacterStates.Count == 0) return;
-        await new PlaytestWindow(project, fromSelected ? selected?.State : null).ShowDialog(this);
+        var playtest = new PlaytestWindow(project, fromSelected ? selected?.State : null, preferences.Scale);
+        await playtest.ShowDialog(this);
+        SetCoverage(ScenarioReplay.Coverage(project, playtest.Session.Trace));
     }
 }
