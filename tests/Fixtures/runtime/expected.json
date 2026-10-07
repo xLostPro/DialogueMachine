@@ -1,0 +1,3783 @@
+{
+  "shop": [
+    {
+      "Scene": "arrival",
+      "Pages": [
+        " Buyer purse ."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, Ada",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198527,
+      "Delivered": [
+        " Buyer purse ."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198527,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 1,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000004",
+          "Text": "Locked friend path",
+          "Visibility": 1,
+          "Enabled": false,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000005",
+          "Text": "Enter anyway",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000006",
+          "Text": "Wait",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198527,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "market",
+      "Pages": [
+        "Rope and supplies."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000007",
+          "Text": "Buy lantern",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "farewell"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845396,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "Rope and supplies."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "farewell",
+      "Pages": [
+        "(No dialogue)"
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845396,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "Rope and supplies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": null,
+      "Pages": [],
+      "Page": 0,
+      "Choices": [],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": "farewell",
+      "EndingChoice": null,
+      "Random": 4354685564936845396,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "Rope and supplies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell",
+        "farewell-\u003E[EXIT]"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "ended",
+          "Parameter": null,
+          "Scene": "farewell",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    }
+  ],
+  "fallback": [
+    {
+      "Scene": "arrival",
+      "Pages": [
+        "The light is 2147483647."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, Ada",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198468,
+      "Delivered": [
+        "The light is 2147483647."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "fallback",
+      "Pages": [
+        "No unlocked replies."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000009",
+          "Text": "Disabled",
+          "Visibility": 1,
+          "Enabled": false,
+          "Destination": "farewell"
+        }
+      ],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198468,
+      "Delivered": [
+        "The light is 2147483647.",
+        "No unlocked replies."
+      ],
+      "Transitions": [
+        "arrival-\u003Efallback"
+      ],
+      "Hooks": [
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "farewell",
+      "Pages": [
+        "(No dialogue)"
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198468,
+      "Delivered": [
+        "The light is 2147483647.",
+        "No unlocked replies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Efallback",
+        "fallback-\u003Efarewell"
+      ],
+      "Hooks": [
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": null,
+      "Pages": [],
+      "Page": 0,
+      "Choices": [],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": "farewell",
+      "EndingChoice": null,
+      "Random": 11400714819323198468,
+      "Delivered": [
+        "The light is 2147483647.",
+        "No unlocked replies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Efallback",
+        "fallback-\u003Efarewell",
+        "farewell-\u003E[EXIT]"
+      ],
+      "Hooks": [
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "ended",
+          "Parameter": null,
+          "Scene": "farewell",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    }
+  ],
+  "inventory-ceiling": [
+    {
+      "Scene": "arrival",
+      "Pages": [
+        " Buyer purse ."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, Ada",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198485,
+      "Delivered": [
+        " Buyer purse ."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198485,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 2147483647,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198485,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 1,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000003",
+          "Text": "Hidden rich path",
+          "Visibility": 0,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000004",
+          "Text": "Locked friend path",
+          "Visibility": 1,
+          "Enabled": false,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000005",
+          "Text": "Enter anyway",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000006",
+          "Text": "Wait",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 2147483647,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198485,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "market",
+      "Pages": [
+        "Lantern for Ada."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000007",
+          "Text": "Buy lantern",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "farewell"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 2147483647,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845354,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "Lantern for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483647,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483647,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "farewell",
+      "Pages": [
+        "(No dialogue)"
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 2147483642,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845354,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "Lantern for Ada.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483647,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483647,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483642,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483642,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": null,
+      "Pages": [],
+      "Page": 0,
+      "Choices": [],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 2147483642,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": "farewell",
+      "EndingChoice": null,
+      "Random": 4354685564936845354,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "Lantern for Ada.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell",
+        "farewell-\u003E[EXIT]"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483647,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483647,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483642,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483642,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "ended",
+          "Parameter": null,
+          "Scene": "farewell",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 2147483642,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    }
+  ],
+  "self-loop": [
+    {
+      "Scene": "arrival",
+      "Pages": [
+        " Buyer purse ."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, Ada",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse ."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Page": 1,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000004",
+          "Text": "Locked friend path",
+          "Visibility": 1,
+          "Enabled": false,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000005",
+          "Text": "Enter anyway",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000006",
+          "Text": "Wait",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 3."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 3,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 3."
+      ],
+      "Page": 1,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000004",
+          "Text": "Locked friend path",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000005",
+          "Text": "Enter anyway",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000006",
+          "Text": "Wait",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 3,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada.",
+        "Affinity alias 3."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 4."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 4,
+        "inv:coin": 3,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada.",
+        "Affinity alias 3.",
+        "First page for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 3,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Ada.",
+        "Affinity alias 4."
+      ],
+      "Page": 1,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000004",
+          "Text": "Locked friend path",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000005",
+          "Text": "Enter anyway",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000006",
+          "Text": "Wait",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 4,
+        "inv:coin": 3,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714817175714837,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada.",
+        "Affinity alias 3.",
+        "First page for Ada.",
+        "Affinity alias 4."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 3,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "market",
+      "Pages": [
+        "Lantern for Ada."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000007",
+          "Text": "Buy lantern",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "farewell"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 4,
+        "inv:coin": 4,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685562789361706,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada.",
+        "Affinity alias 3.",
+        "First page for Ada.",
+        "Affinity alias 4.",
+        "Lantern for Ada."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Emarket"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 3,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 4,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 4,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "farewell",
+      "Pages": [
+        "(No dialogue)"
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 4,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685562789361706,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada.",
+        "Affinity alias 3.",
+        "First page for Ada.",
+        "Affinity alias 4.",
+        "Lantern for Ada.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 3,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 4,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 4,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": null,
+      "Pages": [],
+      "Page": 0,
+      "Choices": [],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 4,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": "farewell",
+      "EndingChoice": null,
+      "Random": 4354685562789361706,
+      "Delivered": [
+        " Buyer purse .",
+        "First page for Ada.",
+        "Affinity alias 2.",
+        "First page for Ada.",
+        "Affinity alias 3.",
+        "First page for Ada.",
+        "Affinity alias 4.",
+        "Lantern for Ada.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell",
+        "farewell-\u003E[EXIT]"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 3,
+            "inv:coin": 2,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 3,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 4,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 4,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "ended",
+          "Parameter": null,
+          "Scene": "farewell",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 4,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Ada"
+          }
+        }
+      ]
+    }
+  ],
+  "live-text-random": [
+    {
+      "Scene": "arrival",
+      "Pages": [
+        "The light is 2147483647."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, Ada",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Ada"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198484,
+      "Delivered": [
+        "The light is 2147483647."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "arrival",
+      "Pages": [
+        "The light is 2147483647."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, [if aff:trust \u003E 0]literal[/if]\uE000",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 11400714819323198484,
+      "Delivered": [
+        "The light is 2147483647."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "arrival",
+      "Pages": [
+        "Welcome [if aff:trust \u003E 0]literal[/if]\uE000."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, [if aff:trust \u003E 0]literal[/if]\uE000",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 2,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845353,
+      "Delivered": [
+        "The light is 2147483647."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "arrival",
+      "Pages": [
+        "Welcome [if aff:trust \u003E 0]literal[/if]\uE000."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, [if aff:trust \u003E 0]literal[/if]\uE000",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845353,
+      "Delivered": [
+        "The light is 2147483647."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "arrival",
+      "Pages": [
+        "Welcome [if aff:trust \u003E 0]literal[/if]\uE000."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000001",
+          "Text": "Enter, [if aff:trust \u003E 0]literal[/if]\uE000",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000002",
+          "Text": "Go home",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "fallback"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845353,
+      "Delivered": [
+        "The light is 2147483647."
+      ],
+      "Transitions": [],
+      "Hooks": []
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845353,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Grace.",
+        "Affinity alias 2."
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Grace"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845353,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "gate",
+      "Pages": [
+        "First page for Grace.",
+        "Affinity alias 2."
+      ],
+      "Page": 1,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000004",
+          "Text": "Locked friend path",
+          "Visibility": 1,
+          "Enabled": false,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000005",
+          "Text": "Enter anyway",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "market"
+        },
+        {
+          "Id": "40000000-0000-0000-0000-000000000006",
+          "Text": "Wait",
+          "Visibility": 1,
+          "Enabled": true,
+          "Destination": "gate"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Grace"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 4354685564936845353,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "market",
+      "Pages": [
+        "Rope and supplies."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000007",
+          "Text": "Buy lantern",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "farewell"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Grace"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 15755400384260043838,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2.",
+        "Rope and supplies."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "market",
+      "Pages": [
+        "Lantern for Grace."
+      ],
+      "Page": 0,
+      "Choices": [
+        {
+          "Id": "40000000-0000-0000-0000-000000000007",
+          "Text": "Buy lantern",
+          "Visibility": 2,
+          "Enabled": true,
+          "Destination": "farewell"
+        }
+      ],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 1,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Grace"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 8709371129873690707,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2.",
+        "Rope and supplies."
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": "farewell",
+      "Pages": [
+        "(No dialogue)"
+      ],
+      "Page": 0,
+      "Choices": [],
+      "Continue": true,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Grace"
+      },
+      "Ending": null,
+      "EndingChoice": null,
+      "Random": 8709371129873690707,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2.",
+        "Rope and supplies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": null,
+      "Pages": [],
+      "Page": 0,
+      "Choices": [],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Grace"
+      },
+      "Ending": "farewell",
+      "EndingChoice": null,
+      "Random": 8709371129873690707,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2.",
+        "Rope and supplies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell",
+        "farewell-\u003E[EXIT]"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "ended",
+          "Parameter": null,
+          "Scene": "farewell",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        }
+      ]
+    },
+    {
+      "Scene": null,
+      "Pages": [],
+      "Page": 0,
+      "Choices": [],
+      "Continue": false,
+      "Numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:trust": 0
+      },
+      "Text": {
+        "inv:coin": "purse",
+        "player_name": "Done"
+      },
+      "Ending": "farewell",
+      "EndingChoice": null,
+      "Random": 8709371129873690707,
+      "Delivered": [
+        "The light is 2147483647.",
+        "First page for [if aff:trust \u003E 0]literal[/if]\uE000.",
+        "Affinity alias 2.",
+        "Rope and supplies.",
+        "(No dialogue)"
+      ],
+      "Transitions": [
+        "arrival-\u003Egate",
+        "gate-\u003Emarket",
+        "market-\u003Efarewell",
+        "farewell-\u003E[EXIT]"
+      ],
+      "Hooks": [
+        {
+          "Type": "Event",
+          "Id": "asked",
+          "Parameter": "gate",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 0,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "arrived",
+          "Parameter": "harbour",
+          "Scene": "arrival",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "[if aff:trust \u003E 0]literal[/if]\uE000"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "gate_exit",
+          "Parameter": "leaving",
+          "Scene": "gate",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Shop",
+          "Id": "harbour_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 1,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "purchase",
+          "Parameter": "lantern",
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Script",
+          "Id": "close_shop",
+          "Parameter": null,
+          "Scene": "market",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        },
+        {
+          "Type": "Event",
+          "Id": "ended",
+          "Parameter": null,
+          "Scene": "farewell",
+          "Numeric": {
+            "aff:high": 2147483647,
+            "aff:low": -2147483648,
+            "aff:trust": 2,
+            "inv:coin": 0,
+            "inv:trust": 0
+          },
+          "Text": {
+            "inv:coin": "purse",
+            "player_name": "Grace"
+          }
+        }
+      ]
+    }
+  ]
+}

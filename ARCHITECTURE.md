@@ -14,6 +14,8 @@ Core/                         Platform-independent class library; no UI dependen
   PlaytestScenarios.cs         Desktop definitions, semantic replay references and authoring operations
   ScenarioReplay.cs           Shared replay/assertions, observed coverage and bounded configuration analysis
   StoryTestCommand.cs         Core-only CLI command parsing, JSON reports and exit-code contract
+  RuntimeExport.cs            Versioned companion with unchanged website JSON and explicit initial state
+  RuntimeExportCommand.cs     Core-only runtime-export CLI and atomic companion writing
   DialogueText.cs             Structural conditional and formatting checks for all text fields
   VariableStore.cs            Discovery, typed references, safe variable rename/delete
   ProjectSearch.cs            Literal authoring search, scoped previews and replacement
@@ -49,6 +51,8 @@ App.axaml / App.axaml.cs      Shared styling and theme palette
 tests/                       Executable core and headless UI regression checks
   Fixtures/                  Committed seeded scenario stories replayed locally and in Windows CI
 CLI/                         Console entry point referencing Core only (no Avalonia)
+Integration/WebsitePlayer/    Inspected website source and opt-in contract adapter; no Core reference
+Integration/Sample/           Runnable Blazor Server host with Event/Script/Shop effects
 build.ps1 / build.sh          Self-contained platform publishing
 Packaging/*.ps1              Release version checks, native startup checks and Windows ZIP
 Packaging/publish-release.sh  Draft/upload/publish lifecycle with immutable published releases
@@ -64,6 +68,8 @@ Retain original PascalCase field names and website enum ordering: Hide=0, Disabl
 State IDs are graph identity; titles are editable metadata. Every rename goes through `DialogueEngine.Rename` so entry, choice and continue connections stay consistent. Export starts with the chosen entry because the website starts at index zero. An intentional ending is `[EXIT]`, never an invalid target. Import sanitation is separate from graph validation so damaged graphs can be opened and repaired without losing data.
 
 Only desktop format version 1 is currently supported. Files without a version use that default for website compatibility; explicitly unsupported versions are rejected before document replacement. Reserved scene IDs, unsupported scene types and invalid numeric visibility values remain openable for repair, but validation blocks playtest/export. Repairing an imported `[EXIT]` ID updates the entry without rewriting intentional ending targets.
+
+Stage 4 adds a separate schema-1 companion (`dialogue-machine.website.v1`); desktop format 1 and ordinary website JSON are unchanged, so no project migration is needed. It carries the exact website export string/hash, entry, discovered active numeric values, text substitutions, seed and bounded operation limit. `RuntimeExport` reads the project without mutation. Unsupported contracts and malformed legacy runtime IDs produce repair guidance before target execution. Full unknown-field/history/recovery/conflict behavior remains in the existing project stores.
 
 ## Changes, history and persistence
 
@@ -128,6 +134,8 @@ Standard/detailed output uses 1×/2× world resolution with 96-DPI pixels, indep
 ## Simulation semantics
 
 Simulation clones the document and indexes scene identities once. Entering a scene does not fire exit actions. Choosing a response verifies its conditions, validates its destination, snapshots the runtime, runs response actions, then scene exit actions, and enters the target. Page advances and live numeric/text edits also snapshot runtime. Back restores scene, pages, candidate index, numeric/text variables, random state, ending and the corresponding transcript/event/structured trace/replay-step lengths. Append-only evidence uses saved lengths rather than copying the entire accumulated trace for each snapshot. Inventory is nonnegative and arithmetic saturates at integer limits. Graph cycles are allowed; interactive transitions remain user-driven. Script, Event and Shop remain logged integration hooks.
+
+The independent website assembly compiles the actual unchanged xLostProHome component/Razor/models/service at revision `58ebc2a8`, with source hashes checked in regressions. `RuntimePlayer` subclasses that component, uses its real transition/page/requirement/action methods and adapts detached delivery/state boundaries to the versioned contract. It references neither desktop Core nor Avalonia. Its ordered synchronous Event/Script/Shop host callbacks receive immutable state snapshots; callback failure faults the session because host effects are not reversible. Operation limits and cancellation retain partial evidence. Desktop Simulation and its logged-only hooks are unchanged. The Blazor Server sample demonstrates actual achievements, quest and shop effects; deployed website/WebAssembly support is not claimed. See [RUNTIME_HANDOFF.md](RUNTIME_HANDOFF.md) for differences, setup, semantics and practical limits.
 
 Inline condition processing resolves innermost tags first, with a bounded pass count. Rich formatting uses typed text runs rather than HTML or script execution. Text substitutions are evaluated after conditions.
 

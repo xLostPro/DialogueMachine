@@ -59,6 +59,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'CLI scenario fixtures failed.' }
       - name: Check native Windows startup
         run: ./Packaging/Test-WindowsPackage.ps1
+      - name: Exercise runtime handoff and website sample
+        run: |
+          dotnet run --project CLI/DialogueMachine.Cli.csproj --no-build -c Release -- runtime-export tests/Fixtures/runtime/story.dialogue.json --seed 42 --output artifacts/ci-runtime-handoff.json
+          if ($LASTEXITCODE -ne 0) { throw 'Runtime handoff CLI failed.' }
+          dotnet build Integration/Sample/Sample.csproj --no-restore -c Release
+          if ($LASTEXITCODE -ne 0) { throw 'Website integration sample build failed.' }
+          ./Packaging/Test-RuntimeSample.ps1
       - name: Create release ZIP and checksum
         run: ./Packaging/New-WindowsRelease.ps1
       - name: Upload Windows package
@@ -81,6 +88,9 @@ jobs:
             artifacts/native/**/*.json
             artifacts/native/**/*.txt
             artifacts/ci-scenario-*.json
+            artifacts/ci-runtime-*.json
+            artifacts/runtime/*.json
+            artifacts/runtime-sample/*
           retention-days: 14
           overwrite: true
 
