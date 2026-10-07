@@ -216,6 +216,9 @@
       },
       "dialoguemachine.core": {
         "type": "Project"
+      },
+      "websiteplayer": {
+        "type": "Project"
       }
     }
   }

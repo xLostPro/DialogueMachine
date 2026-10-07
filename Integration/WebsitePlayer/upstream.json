@@ -1,0 +1,84 @@
+{
+  "Repository": "https://github.com/xLostPro/xLostProHome",
+  "Revision": "58ebc2a8dd4eb4749b748975aced35fb30a5be60",
+  "SourceDirectory": "xLostProHome/Ecosystem/Web/DialogueMachine",
+  "WebsiteFramework": "net10.0 / Microsoft.AspNetCore.Components.WebAssembly 10.0.7",
+  "Files": [
+    {
+      "Path": "DialogueMachine/DialogueMachine.razor",
+      "Sha256": "74b32d299b8436b573f27072ae23be1ddfc9651701154a42e79545f95fa95ba9"
+    },
+    {
+      "Path": "DialogueMachine/DialogueMachine.razor.cs",
+      "Sha256": "5ed69593d6003dac661cb27e10fc23896f1ca4c810d4f5593125e93afc2f28af"
+    },
+    {
+      "Path": "DialogueMachine/Components/LogicRow.razor",
+      "Sha256": "8eac2b56be4a3c76879dcaf78f3382169b36626e1fb13a2041f6bf3d038f9b1c"
+    },
+    {
+      "Path": "DialogueMachine/Models/DialogueModels.cs",
+      "Sha256": "78583a62c3a5814d56460fc60497a205ae580a29d634a972d5b830c1cc9c8133"
+    },
+    {
+      "Path": "DialogueMachine/Services/DialogueService.cs",
+      "Sha256": "908df77202d9305afef4f3fb2594502bde18667a52bb212c2594afcc5a3f2329"
+    },
+    {
+      "Path": "DialogueMachine/Services/HistoryManager.cs",
+      "Sha256": "32cc7d5f980b542655aa2b56633bc39ecb4642f8cf772a753de3cb831016c799"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/AddChoiceCommand.cs",
+      "Sha256": "0d51e04274b01a68dab4c099f4792c6394cf3b34fefcfa2b4e256747816c2620"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/AddStateCommand.cs",
+      "Sha256": "0e35a5fbd2559617562d97de0de4144f0413e4fe095a8ce3cdc1878fc2484c41"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/ChoiceTextEditCommand.cs",
+      "Sha256": "f96dd5630d81533d577664ccbd618ad5fde518fd7a5698cf67ab03a28564e99a"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/DeleteChoiceCommand.cs",
+      "Sha256": "11d339d09ed5dfa003eeb52e3bb020c73a319eea8b1d1af176edd70d4bf43776"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/DeleteStateCommand.cs",
+      "Sha256": "1a5844a1e2c29b35d1694e02f8fd48cddee345ca9163a9db07e3cf7feceabb53"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/ICommand.cs",
+      "Sha256": "de1563b3514882bb90a20428e78560efc8b1fc5ddde413ecbb5a2d5f95a395b3"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/MoveNodeCommand.cs",
+      "Sha256": "7faece1a1acc27586cffb7e56f1a002599a2f6eb3b001c6b762a0beee66b97c9"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/SetConnectionCommand.cs",
+      "Sha256": "0c05679f2eace890feb010aeaa19a9782f717e15826f20217a59c58b6803a33e"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/TextEditCommand.cs",
+      "Sha256": "b54009a8d39b3e12d1da9773f641a3a9101bec997a0fd94ca1ebc93d3116d641"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/UpdateLogicListCommand.cs",
+      "Sha256": "29c0fc887e0eff89393a8f3bebffad5bd13cbec1bb3e431d126bda9cc0edd1d3"
+    },
+    {
+      "Path": "DialogueMachine/Services/Commands/UpdatePropertyCommand.cs",
+      "Sha256": "f3caed4add81fc47ccf312dbd185ad7e3cdfc5efcdabd382338dd695eac9fa5b"
+    },
+    {
+      "Path": "Services/NotificationService.cs",
+      "Sha256": "f2fa9d3c246dd3ffe436bd0c2642e39a04fb5cc26efffc748d5c907680db1352"
+    },
+    {
+      "Path": "Services/ToastService.cs",
+      "Sha256": "028aeaecd2146d11735c7f60b524f9c0638ec7a7596c3a95119c9cbe1c127af1"
+    }
+  ]
+}

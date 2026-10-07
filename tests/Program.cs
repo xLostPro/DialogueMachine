@@ -24,9 +24,15 @@ if (args.Contains("--performance"))
     PerformanceChecks.Run(args);
     return;
 }
+if (args.Contains("--write-runtime-fixtures")) { RuntimeChecks.WriteFixtures(); return; }
 var passed = 0;
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); passed++; Console.WriteLine("PASS " + message); }
 void Throws(Action action, string message) { try { action(); } catch { Check(true, message); return; } throw new Exception(message); }
+if (args.FirstOrDefault() == "--runtime-checks")
+{
+    RuntimeChecks.Run(Check, Throws, args.ElementAtOrDefault(1) ?? "artifacts/runtime");
+    Console.WriteLine($"SUCCESS: {passed} runtime checks."); return;
+}
 if (args.FirstOrDefault() == "--scenario-checks")
 {
     var scenarioOutput = args.ElementAtOrDefault(1) ?? "artifacts/stage3"; Directory.CreateDirectory(scenarioOutput);
@@ -366,6 +372,7 @@ var main = new MainWindow(null, testMode: true); main.Show(); Dispatcher.UIThrea
 var output = args.FirstOrDefault() ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../artifacts")); Directory.CreateDirectory(output);
 GraphOrganizationChecks.Core(Check, Throws, output);
 ScenarioChecks.Core(Check, Throws, output);
+RuntimeChecks.Run(Check, Throws, Path.Combine(output, "runtime"));
 ExportChecks.Core(Check, Throws, output);
 ConflictChecks.Core(Check, Throws, output);
 File.WriteAllLines(Path.Combine(output, "navigation-benchmarks.txt"), navigationBenchmarks);

@@ -1,0 +1,129 @@
+﻿@namespace xLostProHome.Ecosystem.Web.DialogueMachine.Components
+
+<div class="dm-logic-row overflow-visible mb-2">
+    @* TYPE SELECTOR: British English 'Affinity'/'Inventory' *@
+    <div class="dm-logic-segment w-28">
+        <select @bind="Type" class="bg-transparent border-none text-[8px] font-black uppercase tracking-widest px-2 w-full text-slate-900 dark:text-white">
+            <option value="Affinity">Affinity</option>
+            <option value="Inventory">Inventory</option>
+            <option value="Event">Event</option>
+            <option value="Script">Script</option>
+        </select>
+    </div>
+
+    @* TARGET ID WITH INTELLISENSE *@
+    <div class="relative flex-1 dm-logic-segment">
+        <input type="text" @bind="TargetId" @bind:event="oninput" 
+               @onfocus="HandleFocus" 
+               @onblur="HandleBlur"
+               placeholder="@(Type == "Event" || Type == "Script" ? "Method/Key Name" : "Variable ID")" 
+               class="bg-transparent border-none w-full px-4 text-[10px] text-slate-900 dark:text-white h-full" />
+        
+        @if (IsIntellisenseActive && Suggestions.Any()) {
+            <div class="intellisense-dropdown no-scrollbar">
+                @foreach (var sug in Suggestions) {
+                    <button type="button" @onmousedown:preventDefault="true" @onclick="() => OnSelectSuggestion.InvokeAsync(sug)"
+                            class="w-full text-left px-4 py-2 text-[10px] font-mono hover:bg-blue-600 hover:text-white border-b border-slate-50 dark:border-slate-800/50 text-slate-900 dark:text-white">
+                        @sug
+                    </button>
+                }
+            </div>
+        }
+    </div>
+    
+    @* PARAMETER FIELD: Visible for Unity Events and Scripts *@
+    @if (Type == "Script" || Type == "Event") 
+    {
+        <div class="dm-logic-segment flex-1 border-l border-slate-100 dark:border-slate-800">
+            <input type="text" @bind="Parameter" placeholder="Parameter (e.g. Shake, Blue, 1.5)" 
+                   class="bg-transparent border-none w-full px-4 text-[10px] italic text-blue-400" />
+        </div>
+    }
+
+    @* OPERATOR (FOR REQUIREMENTS ONLY) *@
+    @if (IsRequirement) {
+        <div class="w-12 dm-logic-segment">
+            <select @bind="Operator" class="bg-transparent border-none font-mono px-1 w-full text-center text-slate-900 dark:text-white">
+                <option>==</option><option>!=</option><option>&gt;</option><option>&lt;</option><option>&gt;=</option><option>&lt;=</option>
+            </select>
+        </div>
+    }
+
+    @* AMOUNT/VALUE *@
+    @if (Type == "Affinity" || Type == "Inventory")
+    {
+        <div class="w-16 dm-logic-segment border-r-0">
+            @if (IsRequirement)
+            {
+                <input type="text" @bind="Value" class="w-full px-1 text-[10px] font-black text-center text-blue-600 bg-transparent border-none"/>
+            }
+            else
+            {
+                <input type="number" @bind="Amount" class="w-full px-1 text-[10px] font-black text-center text-emerald-500 bg-transparent border-none"/>
+            }
+        </div>
+    }
+
+    <button type="button" @onclick="OnDelete" class="px-2 opacity-30 hover:opacity-100 hover:text-red-500">&times;</button>
+</div>
+
+@code {
+    [Parameter] public object Model { get; set; } = default!;
+    [Parameter] public bool IsRequirement { get; set; }
+    [Parameter] public bool IsIntellisenseActive { get; set; }
+    [Parameter] public IEnumerable<string> Suggestions { get; set; } = Enumerable.Empty<string>();
+    [Parameter] public EventCallback<string> OnFocus { get; set; }
+    [Parameter] public EventCallback OnBlur { get; set; }
+    [Parameter] public EventCallback<string> OnSelectSuggestion { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback OnChanged { get; set; }
+
+    private string Type 
+    { 
+        get => (string)GetProp("Type"); 
+        set 
+        { 
+            // 1. Initialise the transition
+            string oldType = Type;
+            SetProp("Type", value); 
+
+            // 2. ZENITH-APEX FIELD NEUTRALISATION
+            // Prevents stale data from polluting the JSON across domain switches.
+            if (value == "Event" || value == "Script")
+            {
+                // Clear numeric/logic data when moving to Unity Events
+                SetProp("Amount", 0);
+                SetProp("Value", "0");
+            }
+            else if (value == "Affinity" || value == "Inventory")
+            {
+                // Clear string parameters when moving to variables
+                SetProp("Parameter", (string?)null);
+            }
+
+            // 3. Signal the parent and the Sentinel
+            OnChanged.InvokeAsync(); 
+        } 
+    }
+    private string TargetId { get => (string)GetProp("TargetId"); set { SetProp("TargetId", value); OnChanged.InvokeAsync(); } }
+    private string Operator { get => (string)GetProp("Operator"); set => SetProp("Operator", value); }
+    private string Value { get => (string)GetProp("Value"); set => SetProp("Value", value); }
+    private int Amount { get => (int)GetProp("Amount"); set => SetProp("Amount", value); }
+    
+    private string? Parameter { get => (string?)GetProp("Parameter"); set => SetProp("Parameter", value); }
+
+    private object GetProp(string p) => Model.GetType().GetProperty(p)?.GetValue(Model)!;
+    private void SetProp(string p, object v) => Model.GetType().GetProperty(p)?.SetValue(Model, v);
+    
+    private async Task HandleFocus()
+    {
+        // Notify the parent so it can take a snapshot of the current value
+        await OnFocus.InvokeAsync(Type);
+    }
+
+    private async Task HandleBlur()
+    {
+        // Notify the parent to commit the command if the value changed
+        await OnBlur.InvokeAsync();
+    }
+}

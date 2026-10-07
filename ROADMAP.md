@@ -2,7 +2,7 @@
 
 Assessment date: 1 October 2026. Source baseline: `503f505`; desktop project version: `1.1.0`.
 
-This is a proposed order of work based on the repository, not an existing release commitment. The working assumption is that the product should remain an offline dialogue editor for writers who export stories into a website or game. No GitHub release status or external website/game implementation was checked.
+This is a proposed order of work based on the repository, not an existing release commitment. The working assumption is that the product should remain an offline dialogue editor for writers who export stories into a website or game. No GitHub release status or external runtime was checked at the original assessment baseline; Stage 4 below records the subsequently inspected website source and exercised integration.
 
 ## Recommendation
 
@@ -10,7 +10,7 @@ The initial recommendation was a focused reliability patch. **Stage 1 is merged 
 
 **Stage 2 priorities 1–8 are implemented**, with 773 passing regression checks. Variable management, project-wide find/replace, destination navigation and reusable authoring operations are merged in PRs #3–#6, with passing Windows CI. Graph organization includes mouse/keyboard selection sets, group movement with one-step undo/redo, selected connection highlighting and scene-set copy/paste. Persistent scene groups/chapters support overlapping memberships, one-step edits, group selection and intersecting outline filters; the optional minimap adds mouse/keyboard viewport navigation. Exports include the complete graph with bounded resolution and configurable readable Markdown scripts. File safety now detects external changes before Save, offers compare/reload/save-a-copy/cancel, validates and rechecks external content, and preserves local work through conflict cancellation, failures and undoable Reload. Full-editor performance fixtures and before/after measurements now cover 100/1,000/10,000 scenes, allocations and retained memory. Evidence supports viewport culling, bounded text layouts, virtualized outline rows, deferred hidden script controls, fewer redundant document scans and compressed complete snapshots; see [PERFORMANCE.md](PERFORMANCE.md). These source changes do not imply a published release.
 
-Stage 2 authoring/performance and Stage 3 repeatable story testing are implemented. The proposed next work is Stage 4: one real game integration. Expand distribution and advanced narrative features after those foundations are dependable.
+Stages 2–4 are implemented: measured authoring performance, repeatable story testing and an opt-in integration with the inspected actual website player source. Stage 4 verifies a .NET Blazor Server host of that source; deployed website/WebAssembly execution is not claimed. Distribution expansion and advanced narrative features remain separate decisions.
 
 The app already implements the basic write → connect → validate → playtest → export loop. Its main gaps are correctness at the edges, efficient editing as stories grow, and confidence that exported dialogue behaves as expected in its destination runtime.
 
@@ -115,19 +115,19 @@ Completion gate: a writer can reorganize and revise a substantial story without 
 
 Implemented with additive desktop scenario definitions, detached creation/edit/duplicate/delete drafts, interactive path recording, seeded SplitMix64 simulation, reversible random/text/trace state, stable scene/GUID references with semantic fingerprints, final numeric/text/ending/hook assertions, observed graph coverage and separate bounded configuration dead-end analysis. UI and the Core-only CLI share these services; cancellation and limits retain actionable partial evidence without promising exhaustive cyclic verification. Three committed seeded paths run in the local regression harness and actual CLI in Windows CI. See [STORY_TESTING.md](STORY_TESTING.md) for the command and schema contracts.
 
-Completion gate: changing a branch or action can be checked against saved scenarios locally and in CI, with enough trace detail to reproduce a failure. The full harness now contains 910 checks, including 137 Stage 3 checks. Scenario/result/recorder/assertion dialogs and coverage are rendered across all nine themes/interface sizes, including compact layouts. Windows packaging/native smoke verification is part of the delivery gate. These source changes do not publish a release.
+Completion gate: changing a branch or action can be checked against saved scenarios locally and in CI, with enough trace detail to reproduce a failure. Stage 3 verification covered 910 checks, including 137 Stage 3 checks. Scenario/result/recorder/assertion dialogs and coverage are rendered across all nine themes/interface sizes, including compact layouts. Windows packaging/native smoke verification is part of the delivery gate. These source changes do not publish a release.
 
-## Stage 4 — prove the runtime handoff
+## Stage 4 — prove the runtime handoff: implemented
 
-Choose the first destination from actual usage: the existing website player or one game engine. Build one complete sample before accumulating adapters.
+The selected destination is the existing xLostProHome Blazor player, inspected at clean revision `58ebc2a8`. Its actual unchanged component/models/logic source is compiled independently of Core, preserved with checked source hashes, and invoked through an explicit contract adapter in one runnable Blazor Server sample.
 
 - Document and version the contract: start scene, fallback destinations, visibility, action order, numeric limits, random delivery, inline conditions and substitutions.
-- Maintain destination-runtime compatibility fixtures for imports and exports. The current suite checks local schema behavior; the other runtime is not present here.
+- Maintain destination-runtime compatibility fixtures for imports and exports. Five committed seeded paths and 40 initial/post-operation frames compare delivered text, ordered available choices, transitions, numeric/text outcomes, exact hook order/state and endings against desktop preview and expected fixtures.
 - Provide starting numeric values and text substitutions through an explicit runtime configuration or companion export. Current website JSON deliberately omits them.
 - Define host callbacks for Event, Script and Shop behavior, with a working integration example and deterministic tests. Local playtesting currently logs these hooks.
 - Establish additive migrations and clear messages for incompatible desktop project versions. Keep legacy website exports stable.
 
-Completion gate: the same sample story has matching choices, transitions and variable outcomes in the desktop preview and the selected real runtime.
+Completion gate met for the exercised source-backed .NET target: the same exported story matches desktop preview across five seeded paths, including whitespace fallback, all visibility modes, nested signed conditions/substitutions, numeric boundaries, random refresh/reroll, Shop choices, bounded self-loops and host effects. The companion versions the contract and carries explicit initialization without changing format-1 projects or legacy website exports. Unsupported contracts/malformed logic/configuration return repair guidance; limits/cancellation retain evidence. Event/Script/Shop remain logged-only in desktop preview, while the sample host runs observable effects. All 1,036 regression checks (126 runtime checks), Windows build/package checks, sample HTTP/client startup, and live browser shop/fallback paths pass locally. The sample's nine theme/interface combinations were reviewed in normal and compact layouts. See [RUNTIME_HANDOFF.md](RUNTIME_HANDOFF.md) for setup, differences and limits. No exhaustive cycle, deployed website/WebAssembly, other-engine, distribution or release support is implied.
 
 ## Distribution track
 
@@ -147,4 +147,4 @@ The key decisions before committing to later milestones are the primary audience
 
 ## Next implementation batch
 
-Stages 2 and 3 are implemented, including measured editor performance and repeatable scenario testing. The next proposed batch is Stage 4 runtime handoff, choosing one actual destination and verifying a complete sample. Priorities 1–8 are implemented, including external modification detection/conflict-safe saving, full-story graph PNG and configurable Core Markdown exports, graph organization, groups/minimap, variable/reference management, project-wide find/replace, destination navigation and reusable authoring operations. Stage 1 is merged. The runtime handoff, release publishing and native Mac/Linux verification remain separate work.
+Stages 2–4 are implemented, including measured editor performance, repeatable scenario testing and the first source-backed website runtime handoff. Priorities 1–8 and Stage 1 are implemented. The next decisions concern distribution/native Mac/Linux verification or later narrative features; deployed website rollout and additional runtime adapters need their own exercised verification. Release publishing remains separate work.
