@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
-  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../WebsitePlayer/WebsitePlayer.csproj" /></ItemGroup>
-  <!-- Pin the exercised browser client assets instead of following the build SDK's patch. -->
-  <ItemGroup><KnownAspNetCorePack Update="Microsoft.AspNetCore.App.Internal.Assets" AspNetCorePackVersion="10.0.8" /></ItemGroup>
-  <ItemGroup><None Include="../../tests/Fixtures/runtime/handoff.json" Link="handoff.json" CopyToOutputDirectory="PreserveNewest" /></ItemGroup>
-</Project>

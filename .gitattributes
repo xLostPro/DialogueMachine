@@ -4,7 +4,6 @@
 *.md text eol=lf
 *.ps1 text eol=lf
 *.cs text eol=lf
-*.razor text eol=lf
 *.csproj text eol=lf
 *.axaml text eol=lf
 *.slnx text eol=lf
@@ -19,5 +18,3 @@
 *.cmd text eol=crlf
 *.png binary
 *.ico binary
-# Preserve the inspected upstream files byte-for-byte, including their original whitespace.
-Integration/WebsitePlayer/Upstream/** -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab

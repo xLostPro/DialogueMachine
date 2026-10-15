@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
@@ -12,10 +13,45 @@ using DialogueMachine.UI;
 
 internal static class EditorPerformanceRegressions
 {
+    // Deterministic large story shared by the scale regressions below.
+    public static DialogueProject Fixture(int count)
+    {
+        var project = new DialogueProject { ProjectName = $"Performance {count}", CharacterId = "performance", EntryStateId = "scene_00000" };
+        project.InitialVariables["aff:trust"] = 1;
+        var extra = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>("{\"FutureData\":{\"version\":2,\"label\":\"preserved\"}}")!;
+        project.Extra = extra;
+        for (var i = 0; i < count; i++)
+        {
+            string Id(int index) => $"scene_{index:D5}";
+            var scene = Templates.Scene(Id(i), $"Chapter {i / 50:D3} · Scene {i:D5}", i % 2 == 0 ? "Ada" : "Mara",
+                string.Join('\n', Enumerable.Repeat("[b]The harbour[/b] waits for {player_name}. [if aff:trust >= 1]Welcome back.[else]Who are you?[/if] A perf-marker on the old map leads across the water.", i % 20 == 0 ? 12 : 1)),
+                i % 20 * 360 - 360, i / 20 * 520 - 520);
+            scene.Metadata["notes"] = "Follow the perf-marker; preserve the cycle and the ending.";
+            scene.Metadata["tags"] = i % 5 == 0 ? "checkpoint, harbour" : "harbour";
+            scene.Extra = i % 10 == 0 ? extra : null;
+            scene.DefaultNextId = i == count - 1 ? "[EXIT]" : Id(i + 1);
+            var choices = new[] { 0, 1, 2, 3, 5 }[i % 5];
+            for (var c = 0; c < choices; c++)
+            {
+                var bytes = new byte[16]; BitConverter.GetBytes(i).CopyTo(bytes, 0); BitConverter.GetBytes(c).CopyTo(bytes, 4);
+                scene.Choices.Add(new Choice { InternalId = new Guid(bytes), ButtonText = $"Route {c}: follow the perf-marker at scene {i:D5}",
+                    NextStateId = c == 0 ? null : c == 1 ? Id(Math.Max(0, i - 19)) : Id((i + c * 7) % count), Visibility = (VisibilityMode)(c % 3),
+                    Requirements = c % 2 == 0 ? [] : [new() { TargetId = "trust", Value = "1" }], Extra = c == 0 ? extra : null });
+            }
+            project.ListOfCharacterStates.Add(scene);
+        }
+        for (var start = 0; start < count; start += 50)
+            project.SceneGroups.Add(new SceneGroup { Id = $"group_{start:D5}", Name = $"Chapter {start / 50:D3}",
+                Scenes = project.ListOfCharacterStates.Skip(start).Take(60).Select(s => new SceneReference { StateId = s.State }).ToList(), Extra = extra });
+        project.SceneTemplates.Add(new() { Name = "Opening", Scene = ProjectStore.Clone(new DialogueProject { ListOfCharacterStates = [project.ListOfCharacterStates[0]] }).ListOfCharacterStates[0] });
+        project.ChoiceTemplates.Add(new() { Name = "Continue", Choice = new() { InternalId = Guid.Empty, ButtonText = "Continue with {player_name}", Visibility = VisibilityMode.Always } });
+        return project;
+    }
+
     public static void Run(Action<bool, string> check, string output, Action<Window, string> capture)
     {
-        var fixture = PerformanceChecks.Fixture(100);
-        check(ProjectStore.Serialize(fixture) == ProjectStore.Serialize(PerformanceChecks.Fixture(100)), "performance fixtures have deterministic IDs, content, groups and JSON");
+        var fixture = Fixture(100);
+        check(ProjectStore.Serialize(fixture) == ProjectStore.Serialize(Fixture(100)), "performance fixtures have deterministic IDs, content, groups and JSON");
         check(fixture.ListOfCharacterStates.Select(s => s.Choices.Count).Distinct().Count() == 5 && fixture.ListOfCharacterStates[0].Text.Split('\n').Length == 12 && fixture.SceneGroups.Count == 2,
             "performance fixtures include varied choice counts, long dialogue and overlapping groups");
         var historic = new ProjectHistory(); historic.Reset(fixture); var snapshots = new List<string> { historic.CurrentSnapshot };
@@ -46,7 +82,7 @@ internal static class EditorPerformanceRegressions
         exportCanvas.Measure(new Size(800, 400)); exportCanvas.Arrange(new Rect(0, 0, 800, 400)); bitmap.Render(exportCanvas);
         check(exportCanvas.RenderedNodes == 2 && exportCanvas.RenderedLinks == 1, "full graph exports bypass viewport culling and retain every scene and connection");
         exportCanvas.ClearTextLayouts();
-        var stress = new GraphCanvas { Project = PerformanceChecks.Fixture(1000), ExportPlan = new(new Rect(0, 0, 800, 400), new PixelSize(800, 400), .02, true) };
+        var stress = new GraphCanvas { Project = Fixture(1000), ExportPlan = new(new Rect(0, 0, 800, 400), new PixelSize(800, 400), .02, true) };
         stress.Measure(new Size(800, 400)); stress.Arrange(new Rect(0, 0, 800, 400)); bitmap.Render(stress);
         check(stress.RenderedNodes == 1000 && stress.CachedTextLayouts <= GraphTextCache.Capacity && stress.CachedTextCharacters <= GraphTextCache.CharacterBudget, "graph text caches stay bounded while drawing a complete 1,000-scene overview");
         canvas.Project = stress.Project; stress.ClearTextLayouts();
@@ -61,7 +97,7 @@ internal static class EditorPerformanceRegressions
         ((App)Application.Current!).SetPalette("Dark"); canvas.ClearTextLayouts();
 
         var folder = Path.Combine(output, "performance-regressions"); Directory.CreateDirectory(folder);
-        var path = Path.Combine(folder, "story.dialogue.json"); ProjectStore.AtomicWrite(path, ProjectStore.Serialize(PerformanceChecks.Fixture(1000)));
+        var path = Path.Combine(folder, "story.dialogue.json"); ProjectStore.AtomicWrite(path, ProjectStore.Serialize(Fixture(1000)));
         var window = new MainWindow(null, true); window.Show(); window.OpenProjectAsync(path, false).GetAwaiter().GetResult(); Dispatcher.UIThread.RunJobs();
         T C<T>(string name) where T : Control => window.FindControl<T>(name)!;
         void Press(string name) { Dispatcher.UIThread.RunJobs(DispatcherPriority.Normal); C<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
