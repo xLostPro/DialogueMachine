@@ -1,25 +1,39 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
-## Unreleased
+## 1.2.0
 
-- Save named playtest scenarios with starting scenes, numeric/text overrides and seeds. Create, edit, duplicate and delete with Undo/Redo; record paths in the player and assert final variables, endings and logged Event/Script/Shop hooks. Deterministic random state, live text, trace and recorded steps restore together through Back/restart/reroll. Stable scene/response identities and semantic signatures report stale paths explicitly.
-- Run shared Core replay services from the editor or a Core-only CLI with JSON evidence and meaningful exit codes. Highlight observed scene/response coverage, keep configuration dead ends separate from structural reachability, and bound/cancel replay and branching analysis without claiming exhaustive cyclic-story verification. Desktop scenario definitions preserve unknown fields, recovery and safe saving; results stay transient and website exports stay unchanged. Committed seeded fixtures run locally and in Windows CI; distribution expansion and publishing remain separate.
+### Writing
 
-- Detect external project rewrites, replacements and deletion before Save using disk content fingerprints and Windows file identity. Compare local/disk versions, reload validated content with local edits retained in Undo, save a new copy, or cancel. Recheck repeated external changes, protect current-path Save as, preserve story/files/recents/recovery on cancellation and write failures, and support every theme/interface size in compact dialogs. Recovery discovery compares content so external saves cannot hide local recovery work.
+- Find & replace text across the whole project with Ctrl/Cmd+H.
+- Save scenes and choices as templates and reuse them anywhere in the project.
+- Manage variables in one place: search them, see where each is used, rename it everywhere, and delete unused ones.
+- Variable edits stay a draft until you apply them, and one Undo reverts them all.
+- Logic fields suggest variable IDs, and the Variable… picker inserts a text substitution at the cursor.
+- Ordinary prose no longer creates stray variables.
 
-- Export the full story graph to PNG from either editor view, independent of viewport, zoom, selection and outline filters. Bounds include negative positions, tall scenes and looping connections. Choose 1×/2× resolution or explicit fitting within 16,384-pixel/32-megapixel limits; unreadable oversized graphs receive guidance. Images exclude editor overlays, minimap and selection/focus adornments. Export, cancellation and failure preserve the editor and history; failed writes retain an existing export.
-- Configure readable Markdown script exports with conditions/visibility, response actions, scene exit actions and optional writer's notes. Keep every scene, speaker, ordered page/candidate and choice; preserve both inline condition branches, literal substitutions and explicit inherited/ending/unset/missing destination labels. Escape authored Markdown/HTML safely. Export dialogs support all themes/interface sizes and compact keyboard workflows.
+### Organizing
 
-- Save named scene groups/chapters with overlapping memberships. Create, rename, delete, assign/remove selected sets, select a group's scenes and combine a group filter with other outline filters. Each group edit has one Undo/Redo step; deleting a group keeps every scene and connection. Groups survive save/load, recovery, scene-ID repair and history. Copied, duplicated and template-inserted scenes start ungrouped in every project.
-- Toggle a story minimap with Ctrl/Cmd+Shift+M. It shows selected scenes, connections and the viewport, supports click/drag and keyboard navigation, and adapts to compact windows. Its visibility is a workspace preference. Alt+arrows pans the graph without moving scenes; Fit and existing keyboard scene navigation remain available.
-- Select multiple graph scenes with Ctrl/Cmd-click, Shift-click or Shift-drag. Use the outline's native multiple selection, or graph Ctrl/Cmd+Tab and Space; Ctrl/Cmd+A selects all and Escape clears selection.
-- Drag or nudge a selected set while preserving relative positions. Each drag or held arrow-key gesture is one Undo/Redo step; Escape restores an unfinished move. Pending text edits remain separate history steps.
-- See thicker outgoing/internal and incoming selected connections with distinct colors in all themes, including yellow selection in High contrast. Continue links remain dashed.
-- Copy the graph/outline set directly with Edit → Copy selected scenes or Ctrl/Cmd+C, preselect it in the existing copy dialog, and select every pasted scene. Paste retains internal link remapping, unknown fields and one-step undo; text inputs keep native clipboard shortcuts.
-- Search numeric starting values and text substitutions in Variables & characters, inspect reference counts and scene locations, and rename IDs across actions, requirements and inline text. Unused variables can be deleted; referenced variables remain protected until their uses are resolved.
-- Variable edits stay in a draft until Apply changes. Cancel or Escape preserves the story, and one Undo restores all applied changes and reference rewrites.
-- Logic fields suggest IDs for their selected affinity/inventory type. The Content toolbar's Variable… picker searches known IDs and inserts a substitution at the cursor.
-- Inline-only numeric variables are discovered for editing and playtesting; ordinary prose no longer creates variables. Reference rewrites preserve inventory-first condition aliases and legacy text substitutions.
+- Pick a link's destination by searching scene titles or IDs, and jump along connections.
+- Filter the outline by speaker, tag or problem, combined with text search.
+- Select several scenes with Ctrl/Cmd-click, Shift-click, Shift-drag or Ctrl/Cmd+A, then move them together with one Undo step.
+- Copy and paste selected scenes with Ctrl/Cmd+C; links between pasted scenes are kept.
+- Sort scenes into named groups or chapters, and filter the outline by group.
+- Toggle a minimap with Ctrl/Cmd+Shift+M, and pan the graph with Alt+arrows.
+- Selected scenes' connections are thicker and colored so you can follow them.
+
+### Testing & exporting
+
+- Save named test scenarios with a starting scene, values and seed, record a path through the story, and check its outcome.
+- Run all scenarios at once and see which scenes and choices they visited on the graph.
+- Find scenes where a scenario's starting values leave the player stuck.
+- Export the whole story graph as a PNG image.
+- Export a readable Markdown script, with optional conditions, actions and writer's notes.
+
+### Safety
+
+- Dialogue Machine warns you before Save overwrites changes made to the file outside the app, and lets you compare, reload, save a copy or cancel.
+- Recovery still finds your unsaved work when the file was changed elsewhere.
+- Large stories stay responsive while editing and navigating.
 
 ## 1.1.1
 
