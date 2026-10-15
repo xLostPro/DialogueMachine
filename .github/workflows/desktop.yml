@@ -48,8 +48,6 @@ jobs:
           dotnet run --project tests/DialogueMachine.Tests.csproj --no-restore -c Release -- artifacts | Tee-Object -FilePath verification.txt
           if ($LASTEXITCODE -ne 0) { throw 'Regression checks failed.' }
       - name: Build the self-contained app
-        # Scenario fixtures exercise the Core-only entry point independently of Avalonia.
-        # Replay is bounded; cycle analysis never claims exhaustive verification.
         run: ./build.ps1 -Runtime win-x64
       - name: Validate and replay committed scenario fixtures
         run: |
@@ -59,16 +57,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'CLI scenario fixtures failed.' }
       - name: Check native Windows startup
         run: ./Packaging/Test-WindowsPackage.ps1
-      - name: Exercise runtime handoff and website sample
-        run: |
-          dotnet run --project CLI/DialogueMachine.Cli.csproj --no-build -c Release -- runtime-export tests/Fixtures/runtime/story.dialogue.json --seed 42 --output artifacts/ci-runtime-handoff.json
-          if ($LASTEXITCODE -ne 0) { throw 'Runtime handoff CLI failed.' }
-          dotnet build Integration/Sample/Sample.csproj --no-restore -c Release
-          if ($LASTEXITCODE -ne 0) { throw 'Website integration sample build failed.' }
-          ./Packaging/Test-RuntimeSample.ps1
       - name: Create release ZIP and checksum
         run: ./Packaging/New-WindowsRelease.ps1
+      # Every run builds the ZIP; only release tags store it, for the release job.
       - name: Upload Windows package
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-package
@@ -77,8 +70,9 @@ jobs:
           compression-level: 0
           retention-days: 7
           overwrite: true
+      # Screenshots and logs are only kept to diagnose failed runs.
       - name: Upload verification results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-verification
@@ -88,10 +82,7 @@ jobs:
             artifacts/native/**/*.json
             artifacts/native/**/*.txt
             artifacts/ci-scenario-*.json
-            artifacts/ci-runtime-*.json
-            artifacts/runtime/*.json
-            artifacts/runtime-sample/*
-          retention-days: 14
+          retention-days: 3
           overwrite: true
 
   release:

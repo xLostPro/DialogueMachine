@@ -1,150 +1,25 @@
-# Dialogue Machine: project assessment and proposed roadmap
+# Roadmap
 
-Assessment date: 1 October 2026. Source baseline: `503f505`; desktop project version: `1.1.0`.
+Dialogue Machine is an offline editor for writers who export branching dialogue to the website or a game. Keep it focused on that: writing, connecting, checking and playtesting stories, then exporting them.
 
-This is a proposed order of work based on the repository, not an existing release commitment. The working assumption is that the product should remain an offline dialogue editor for writers who export stories into a website or game. No GitHub release status or external runtime was checked at the original assessment baseline; Stage 4 below records the subsequently inspected website source and exercised integration.
+## Done
 
-## Recommendation
+- **1.1.1:** recovery, validation, arrangement and playtest reliability fixes.
+- **Unreleased (on `master`):** variable management, project-wide find & replace, destination search and navigation, reusable scenes/templates, multi-selection, groups/chapters, minimap, PNG and Markdown exports, conflict-safe saving, large-story performance work and saved test scenarios.
 
-The initial recommendation was a focused reliability patch. **Stage 1 is merged in [PR #2](https://github.com/xLostPro/DialogueMachine/pull/2) for version 1.1.1**, with passing Windows CI. Recovery handling, import/validation consistency, text diagnostics, node-height-aware arrangement and playtest refresh consistency have been addressed. The original findings below describe the assessment baseline.
+## Next
 
-**Stage 2 priorities 1–8 are implemented**, with 773 passing regression checks. Variable management, project-wide find/replace, destination navigation and reusable authoring operations are merged in PRs #3–#6, with passing Windows CI. Graph organization includes mouse/keyboard selection sets, group movement with one-step undo/redo, selected connection highlighting and scene-set copy/paste. Persistent scene groups/chapters support overlapping memberships, one-step edits, group selection and intersecting outline filters; the optional minimap adds mouse/keyboard viewport navigation. Exports include the complete graph with bounded resolution and configurable readable Markdown scripts. File safety now detects external changes before Save, offers compare/reload/save-a-copy/cancel, validates and rechecks external content, and preserves local work through conflict cancellation, failures and undoable Reload. Full-editor performance fixtures and before/after measurements now cover 100/1,000/10,000 scenes, allocations and retained memory. Evidence supports viewport culling, bounded text layouts, virtualized outline rows, deferred hidden script controls, fewer redundant document scans and compressed complete snapshots; see [PERFORMANCE.md](PERFORMANCE.md). These source changes do not imply a published release.
+1. **Ship it.** Cut a release from the current `master` so writers get the unreleased features.
+2. **Use it on a real story.** Write or import a full story and fix the friction that turns up. Let real use, not speculation, decide the next features.
+3. **Simplify where it hurts.** Split `MainWindow` and the large test files when changing them, and remove features that turn out to be unused.
 
-Stages 2–4 are implemented: measured authoring performance, repeatable story testing and an opt-in integration with the inspected actual website player source. Stage 4 verifies a .NET Blazor Server host of that source; deployed website/WebAssembly execution is not claimed. Distribution expansion and advanced narrative features remain separate decisions.
+## Later, only if needed
 
-The app already implements the basic write → connect → validate → playtest → export loop. Its main gaps are correctness at the edges, efficient editing as stories grow, and confidence that exported dialogue behaves as expected in its destination runtime.
+- **Character roster:** if multi-speaker stories become common (speakers are plain text today).
+- **Richer logic:** flags, OR conditions or set/toggle actions, when a story needs them. Any change to the exported JSON must stay compatible with the website.
+- **Mac/Linux releases:** the build scripts already produce them; they need a native smoke test before being published.
+- **Localization or voice references:** only after deciding how the website/game would consume them.
 
-## Original assessment feature inventory
+## Out of scope
 
-| Area | Implemented | Remaining gap |
-| --- | --- | --- |
-| Project lifecycle | Welcome, named projects, recent files, optional reopen, save/save-as, cancellation, atomic writes, recovery | Malformed recovery handling, future format policy, external file change detection |
-| Authoring | Scene titles, free-text speakers, dialogue pages, ordered choices, notes, tags, script overview, duplication, safe ID rename, undo/redo | Find/replace, searchable destinations, variable rename/delete, reusable content, structured character management |
-| Graph | Node movement, connections, pan/zoom, fit, automatic arrangement, keyboard alternatives | Arrangement overlap, navigation at scale, groups, multiple selection, full-story export |
-| Logic | Integer affinity/inventory, AND requirements, visibility modes, additive actions, inline conditions/substitutions | Consistent text diagnostics, reference assistance, richer types and expressions if needed |
-| Playtesting | Start/selected scene, live variables, Back, restart, transcript, integration event log | Display/transcript consistency, repeatable randomness, saved scenarios, coverage, assertions |
-| Interchange | Website schema import/export, numeric enum export, unknown-field preservation in desktop round trips | Destination-runtime contract fixtures, real integration sample, runtime initialization handoff |
-| Distribution | Self-contained publishing scripts, Windows CI, native Windows startup checks, ZIP/checksum/tag release workflow | Native Mac/Linux verification, native accessibility testing, signing and installation experience |
-
-The `Core` library is separated from Avalonia. That is a useful base for a command-line validator or game adapter. There is no need for a broad architectural rewrite before the next features; move individual editor panes and services out of `MainWindow` as their responsibilities grow.
-
-## Evidence and verification
-
-At the original assessment, the regression harness passed **91/91 checks**:
-
-```powershell
-dotnet run --project tests/DialogueMachine.Tests.csproj -c Release --no-restore -- artifacts/roadmap-review
-```
-
-It covers substantial core and headless UI behavior, including file workflows. I inspected the compact workspace render. The review did not manually exercise native file dialogs, screen readers, or Mac/Linux builds. Passing the existing suite does not cover the defects below.
-
-Additional probes against the current Core assembly are retained under `artifacts/roadmap-review/probes/Program.txt` and `results.txt` (ignored build artifacts).
-
-| Finding | Evidence | Consequence |
-| --- | --- | --- |
-| A semantically invalid recovery can escape error handling | Recovery JSON with a scene whose ID is empty throws `InvalidDataException` from `RecoveryStore.FindUnsaved`. The per-record catch omits that exception. Welcome loads recoveries during window construction. See `Core/RecoveryStore.cs:15` and `UI/MainWindow.Files.cs:159`. | A damaged recovery can prevent startup instead of being skipped while valid recoveries remain available. |
-| Reserved scene IDs can enter through import | An imported scene named `[EXIT]` produces zero diagnostics, but simulation ends immediately. Rename rejects that ID; parsing and validation do not. See `Core/ProjectStore.cs:24` and `Core/DialogueEngine.cs:62`. | An apparently valid imported story can silently skip its content. |
-| Choice text does not receive inline-condition validation | Choice label `[if aff:trust >= 1]unfinished` produces zero errors. Validation checks `s.Text` only. See `Core/DialogueEngine.cs:87`. | Malformed choice labels can reach playtest and export. Formatting-tag diagnostics also need a defined policy. |
-| Arrange can overlap scenes | Two same-layer nodes are spaced 300 units apart. A six-choice node is 362 units tall; the probe overlaps the next node by 62 units. See `Core/DialogueEngine.cs:124` and `UI/GraphCanvas.cs:26`. | Ordinary branching scenes can become obscured after Arrange. |
-| Live text refresh and transcript diverge | Change `aff:trust` from 0 to 1: the displayed page changes from “Stranger” to “Friend”, while the transcript retains “Stranger”. See `Core/DialogueEngine.cs:150` and `UI/PlaytestWindow.cs:77`. | Exported test evidence does not explain everything the tester saw. Random-line delivery also selects a new line on every text refresh by code inspection. |
-| Project format versions are unchecked | JSON containing `FormatVersion: 999` is accepted. See `Core/Models.cs:9` and `Core/ProjectStore.cs:15`. | Future incompatible files could be edited without a compatibility warning. Define a policy before changing the format. |
-
-A synthetic single-chain story gave these one-run timings on this machine, measured for Core validation and serialization only:
-
-| Scenes | Validation | Serialize one snapshot | JSON snapshot size |
-| --- | --- | --- | --- |
-| 100 | 8.7 ms | 0.2 ms | 33 KB |
-| 1,000 | 67.2 ms | 1.4 ms | 334 KB |
-| 10,000 | 2,163.4 ms | 19.9 ms | 3.36 MB |
-
-These are directional measurements, not a full UI benchmark. Validation's repeated ending-reachability scan is particularly expensive on this chain. Diagnostics run synchronously during commits. Graph rendering searches the scene list for each destination and draws every node; history stores up to 100 complete JSON strings; dirty checks repeatedly serialize the document. At the import limit, history alone can occupy hundreds of megabytes. Establish a tested practical story size rather than treating the 10,000-scene import limit as a responsiveness guarantee.
-
-After replacing the repeated ending scan with reverse-edge traversal in Stage 1, the same synthetic 10,000-scene chain validated in **44.0 ms** in a one-run local follow-up, including the expanded diagnostics, versus 2,163.4 ms at baseline. This does not measure full editor responsiveness. Follow-up results are in `artifacts/reliability-patch/benchmark-results.txt`.
-
-## Stage 1 — reliability patch: merged
-
-Merged for version 1.1.1. The scope and completion criteria are retained here for review; publishing a release remains separate.
-
-1. **Handle damaged recovery records safely.** Catch semantic validation failures per record, retain damaged files for investigation, and keep valid recovery choices available. Add a startup regression using a structurally valid but semantically invalid recovery.
-2. **Align import, validation, and runtime invariants.** Diagnose reserved IDs, invalid enum values, unsupported scene types, and unsupported format versions consistently. Keep the existing policy of opening repairable graphs; do not reject every missing connection during import. Preserve the current document on rejected imports.
-3. **Validate text wherever it appears.** Apply shared conditional-tag checks to scene dialogue and choice labels. Identify the exact choice/field in diagnostics. Add cases for malformed nesting, extra else tags, and conditions hidden inside unused branches. Define how unclosed formatting tags and unknown substitutions are reported.
-4. **Arrange using actual node dimensions.** Share node geometry between layout and drawing, account for choice count, and leave a consistent gap. Test same-layer scenes with different numbers of choices and cycles.
-5. **Define playtest refresh semantics.** Record live variable edits and refreshed page text in an explicit trace, or update the current transcript entry consistently. Preserve the selected random line for a visit; allow an explicit reroll. Back must restore the corresponding text, variables, and trace.
-
-Completion gate: all existing checks plus targeted regressions pass; damaged recovery cannot block Welcome; imported reserved IDs cannot pass unnoticed; Arrange does not overlap nodes; exported playtest evidence explains live edits; desktop/web round trips remain compatible.
-
-## Stage 2 — make writing faster
-
-Recommended first feature release after the patch:
-
-| Priority | Feature | What done looks like |
-| --- | --- | --- |
-| 1 — implemented | Variable management and reference assistance | Searchable manager and inline insertion, typed logic suggestions, reference counts/locations, rename across actions/requirements/inline text/starting values, unused deletion, cancel-safe changes and one-step undo |
-| 2 — implemented | Project-wide find and replace | Search dialogue, responses, titles and notes; highlighted match/replacement previews; case/whole-word options; field and scene scope; jump to matching text; replace selected/all with one-step undo/redo |
-| 3 — implemented | Destination search and better navigation | Search destinations by title/ID; retain missing/fallback/unset/ending values; undo connections; jump to incoming/outgoing scenes; intersect outline text/speaker/tag/diagnostic filters; keyboard selection and compact layouts |
-| 4 — implemented | Reusable authoring operations | Create a connected scene from a choice; multi-scene copying/pasting with fresh IDs and remapped internal links; saved scene/choice templates with preview, insertion, deletion and variable-reference safety; single-step undo/redo |
-| 5 — implemented | Better graph organization | Mouse/keyboard multiple selection and relative group movement; selected connection highlighting; scene-set copy/paste; persistent overlapping groups/chapters with create/rename/delete, set assignment/removal, group selection/filtering and one-step undo; optional story/viewport/selection minimap with pointer and keyboard navigation; additive desktop schema preserving website exports |
-| 6 — implemented | Export improvements | Full-story PNG independent of viewport/view/selection/filters, accurate node/curve bounds, 1×/2× resolution and explicit bounded fitting, atomic output and preserved editor/history; Core Markdown generation with conditions/visibility, separate response/scene actions and optional notes, both inline branches, escaped authored text, deterministic order and explicit destinations; all theme/interface sizes and compact layouts |
-| 7 — implemented | External modification detection and conflict-safe saving | Exact-byte fingerprints and Windows file identity detect rewrites/replacements/deletion before ordinary Save; detached compare, validated/rechecked undoable Reload, new-file copies and cancel preserve local edits; guarded atomic saves, repeated-change handling, content-based recovery discovery, delayed lifecycle updates and all theme/interface-size/compact checks |
-| 8 — implemented | Full-editor performance and practical limits | Deterministic 100/1,000/10,000-scene fixtures; editor/render latency, allocations and retained-memory baselines; evidence-supported culling, bounded layouts, virtualized outline, reduced document work and compressed complete snapshots; repeatable commands, raw before/after results, behavioral regressions and qualified story-size guidance |
-
-External modification detection is implemented before ordinary Save overwrites a project changed by another app or editor instance. Compare/reload/save-a-copy/cancel choices retain local edits; failed/stale Reload preserves the story, and successful Reload keeps local edits in Undo. Atomic writes prevent partial files; exact-byte checks and editor-instance coordination guard saves. Filesystem transactions with arbitrary external writers are outside this optimistic detection model; see ARCHITECTURE.md.
-
-The remaining performance batch is implemented. [PERFORMANCE.md](PERFORMANCE.md) records deterministic fixtures, environment, methodology, commands, raw samples and before/after full-editor measurements. At 10,000 scenes, local graph rendering fell from 1,526 ms to 7 ms and typing from 5,660 ms to 14 ms; commit remains 342 ms and Undo/Redo about 986 ms in the headless run. Retained managed memory after the history workload fell from 2.21 GB to 517 MB. Native Windows cross-checks cover 1,000 scenes. Recommend roughly 1,000 scenes for everyday writing on comparable hardware, with explicit workload/platform limitations. Complete snapshot semantics remain; archived entries are compressed rather than replaced by reversible commands.
-
-Navigation now caches searchable scene summaries and connection indices, avoiding validation and serialization while typing filters. A one-run synthetic Core probe measured:
-
-| Scenes | Build navigation index | Search destinations | Filter outline | Index allocations |
-| --- | --- | --- | --- | --- |
-| 100 | 0.44 ms | 0.01 ms | 0.01 ms | 102,904 bytes |
-| 1,000 | 1.09 ms | 0.04 ms | 0.03 ms | 1,004,776 bytes |
-| 10,000 | 17.18 ms | 1.74 ms | 0.43 ms | 9,928,096 bytes |
-
-These measure Core operations and allocated bytes, excluding graph drawing, UI rendering and retained process memory. Results are retained in `artifacts/destination-navigation/navigation-benchmarks-baseline.txt`; the harness also checks full counts with bounded destination previews at all three sizes. Those earlier Core-only probes are historical; the complete editor profiling results now appear in PERFORMANCE.md.
-
-Completion gate: a writer can reorganize and revise a substantial story without repeatedly typing IDs, inspecting JSON, or losing references; all bulk changes undo reliably.
-
-## Stage 3 — make story testing repeatable: implemented
-
-- Save named playtest scenarios with starting scene, numeric/text values, and random seed.
-- Record scenes, choices, variable changes, integration events and endings in a structured trace.
-- Highlight visited scenes and choices, and report coverage across scenarios.
-- Support replayable choice sequences and assertions on final variables, endings and emitted events.
-- Add condition-aware dead-end checks for supplied scenarios. Keep structural reachability distinct from what a particular variable configuration can reach; do not promise exhaustive verification of all paths in cyclic stories.
-- Expose a Core-based CLI for validation and scenario replay, with JSON diagnostics and meaningful exit codes.
-
-Implemented with additive desktop scenario definitions, detached creation/edit/duplicate/delete drafts, interactive path recording, seeded SplitMix64 simulation, reversible random/text/trace state, stable scene/GUID references with semantic fingerprints, final numeric/text/ending/hook assertions, observed graph coverage and separate bounded configuration dead-end analysis. UI and the Core-only CLI share these services; cancellation and limits retain actionable partial evidence without promising exhaustive cyclic verification. Three committed seeded paths run in the local regression harness and actual CLI in Windows CI. See [STORY_TESTING.md](STORY_TESTING.md) for the command and schema contracts.
-
-Completion gate: changing a branch or action can be checked against saved scenarios locally and in CI, with enough trace detail to reproduce a failure. Stage 3 verification covered 910 checks, including 137 Stage 3 checks. Scenario/result/recorder/assertion dialogs and coverage are rendered across all nine themes/interface sizes, including compact layouts. Windows packaging/native smoke verification is part of the delivery gate. These source changes do not publish a release.
-
-## Stage 4 — prove the runtime handoff: implemented
-
-The selected destination is the existing xLostProHome Blazor player, inspected at clean revision `58ebc2a8`. Its actual unchanged component/models/logic source is compiled independently of Core, preserved with checked source hashes, and invoked through an explicit contract adapter in one runnable Blazor Server sample.
-
-- Document and version the contract: start scene, fallback destinations, visibility, action order, numeric limits, random delivery, inline conditions and substitutions.
-- Maintain destination-runtime compatibility fixtures for imports and exports. Five committed seeded paths and 40 initial/post-operation frames compare delivered text, ordered available choices, transitions, numeric/text outcomes, exact hook order/state and endings against desktop preview and expected fixtures.
-- Provide starting numeric values and text substitutions through an explicit runtime configuration or companion export. Current website JSON deliberately omits them.
-- Define host callbacks for Event, Script and Shop behavior, with a working integration example and deterministic tests. Local playtesting currently logs these hooks.
-- Establish additive migrations and clear messages for incompatible desktop project versions. Keep legacy website exports stable.
-
-Completion gate met for the exercised source-backed .NET target: the same exported story matches desktop preview across five seeded paths, including whitespace fallback, all visibility modes, nested signed conditions/substitutions, numeric boundaries, random refresh/reroll, Shop choices, bounded self-loops and host effects. The companion versions the contract and carries explicit initialization without changing format-1 projects or legacy website exports. Unsupported contracts/malformed logic/configuration return repair guidance; limits/cancellation retain evidence. Event/Script/Shop remain logged-only in desktop preview, while the sample host runs observable effects. All 1,036 regression checks (126 runtime checks), Windows build/package checks, sample HTTP/client startup, and live browser shop/fallback paths pass locally. The sample's nine theme/interface combinations were reviewed in normal and compact layouts. See [RUNTIME_HANDOFF.md](RUNTIME_HANDOFF.md) for setup, differences and limits. No exhaustive cycle, deployed website/WebAssembly, other-engine, distribution or release support is implied.
-
-## Distribution track
-
-Windows is the verified primary target in the repository. Before claiming Mac/Linux support, run native launch, dialogs, fonts/rendering, keyboard and accessibility checks on those systems and add CI jobs. Cross-publishing alone is insufficient.
-
-For broader distribution, add signing/notarization where applicable, a suitable installer or portable onboarding, and file associations. Consider updating only once release channels and signing are settled. Native Windows accessibility and file-picker checks remain useful near-term manual gates even before expanding platforms.
-
-## Later features and product decisions
-
-- **Character roster:** useful if multi-speaker stories are common. Currently speakers are strings in scene metadata and “characters” primarily means text substitutions.
-- **Localization and audio:** stable text identifiers, translation import/export, speaker/voice asset references and missing-content diagnostics. Decide the runtime contract first.
-- **Richer logic:** flags, set/toggle actions, OR groups, and more advanced expressions should follow concrete authoring needs and a compatibility plan.
-- **Multi-project libraries:** useful after single-project navigation and reusable content are working well.
-- **Collaboration/cloud sync:** a separate product decision involving project identity, conflict handling and infrastructure. It should not displace the offline editor roadmap without demonstrated demand.
-
-The key decisions before committing to later milestones are the primary audience, typical and largest intended story sizes, first export destination, and whether multi-character/localized stories are core use cases. These do not block the reliability patch or the first authoring improvements.
-
-## Next implementation batch
-
-Stages 2–4 are implemented, including measured editor performance, repeatable scenario testing and the first source-backed website runtime handoff. Priorities 1–8 and Stage 1 are implemented. The next decisions concern distribution/native Mac/Linux verification or later narrative features; deployed website rollout and additional runtime adapters need their own exercised verification. Release publishing remains separate work.
+Accounts, cloud sync, collaboration, auto-updaters, and engine-specific runtime adapters. The website JSON export is the integration point; the website and games own playback.

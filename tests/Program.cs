@@ -19,20 +19,9 @@ if (args.Contains("--write-scenario-fixtures"))
     ProjectStore.AtomicWrite(Path.GetFullPath("tests/Fixtures/repeatable.dialogue.json"), ProjectStore.Serialize(ScenarioChecks.Fixture()));
     return;
 }
-if (args.Contains("--performance"))
-{
-    PerformanceChecks.Run(args);
-    return;
-}
-if (args.Contains("--write-runtime-fixtures")) { RuntimeChecks.WriteFixtures(); return; }
 var passed = 0;
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); passed++; Console.WriteLine("PASS " + message); }
 void Throws(Action action, string message) { try { action(); } catch { Check(true, message); return; } throw new Exception(message); }
-if (args.FirstOrDefault() == "--runtime-checks")
-{
-    RuntimeChecks.Run(Check, Throws, args.ElementAtOrDefault(1) ?? "artifacts/runtime");
-    Console.WriteLine($"SUCCESS: {passed} runtime checks."); return;
-}
 if (args.FirstOrDefault() == "--scenario-checks")
 {
     var scenarioOutput = args.ElementAtOrDefault(1) ?? "artifacts/stage3"; Directory.CreateDirectory(scenarioOutput);
@@ -174,16 +163,13 @@ Check(SceneNavigation.FindDestinations(destinationOptions, "SMALL KINDNESS").Mat
 Check(ProjectStore.Serialize(navigationStory) == navigationBefore, "indexing, filtering and connection navigation never modify story JSON");
 var nullNavigation = ProjectStore.Parse("""{"ListOfCharacterStates":[{"State":"start","Text":"Hello","Metadata":{"title":null,"speaker":null,"notes":null,"tags":null}}]}"""); var nullNavigationBefore = ProjectStore.Serialize(nullNavigation);
 Check(new SceneNavigation(nullNavigation, []).Filter(new(Speaker: "Character")).Single().Title == "start" && ProjectStore.Serialize(nullNavigation) == nullNavigationBefore, "null imported metadata remains navigable without rewriting legacy JSON");
-var navigationBenchmarks = new List<string>();
 foreach (var size in new[] { 100, 1000, 10000 })
 {
     var largeNavigation = new DialogueProject { ListOfCharacterStates = Enumerable.Range(0, size).Select(i => Templates.Scene($"scene_{i:D5}", "Chapter " + i, i % 2 == 0 ? "Ada" : "Mara", "A line of dialogue.", 0, 0)).ToList() };
-    var allocatedBefore = GC.GetAllocatedBytesForCurrentThread(); var timer = System.Diagnostics.Stopwatch.StartNew(); var largeIndex = new SceneNavigation(largeNavigation, []); timer.Stop();
-    var indexMs = timer.Elapsed.TotalMilliseconds; var indexBytes = GC.GetAllocatedBytesForCurrentThread() - allocatedBefore;
-    var options = largeIndex.Destinations(false, null); timer.Restart(); var largeMatches = SceneNavigation.FindDestinations(options, "Chapter"); timer.Stop(); var destinationMs = timer.Elapsed.TotalMilliseconds;
-    timer.Restart(); var filteredNavigation = largeIndex.Filter(new($"scene_{size - 1:D5}", Speaker: "Mara")); timer.Stop();
+    var largeIndex = new SceneNavigation(largeNavigation, []);
+    var largeMatches = SceneNavigation.FindDestinations(largeIndex.Destinations(false, null), "Chapter");
+    var filteredNavigation = largeIndex.Filter(new($"scene_{size - 1:D5}", Speaker: "Mara"));
     Check(largeMatches.TotalCount == size && largeMatches.Matches.Count == Math.Min(size, SceneNavigation.DestinationLimit) && filteredNavigation.Single().Index == size - 1, "large navigation retains complete counts with bounded destination previews at " + size + " scenes");
-    navigationBenchmarks.Add($"{size} scenes: index {indexMs:F2} ms / {indexBytes:N0} allocated bytes; destination search {destinationMs:F2} ms; filtered outline {timer.Elapsed.TotalMilliseconds:F2} ms.");
 }
 Check(DialogueEngine.ResolveText("[IF aff:trust <= -1]low [if inv:coin > 0]coin[else]none[/if][else]high[/if] {player_name}", vars, p.TextVariables) == "low coin Traveller", "nested, case-insensitive inline conditions support negative values");
 var textStory = Templates.Blank(); textStory.ListOfCharacterStates[0].Text = "Hello";
@@ -372,10 +358,8 @@ var main = new MainWindow(null, testMode: true); main.Show(); Dispatcher.UIThrea
 var output = args.FirstOrDefault() ?? Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../../../artifacts")); Directory.CreateDirectory(output);
 GraphOrganizationChecks.Core(Check, Throws, output);
 ScenarioChecks.Core(Check, Throws, output);
-RuntimeChecks.Run(Check, Throws, Path.Combine(output, "runtime"));
 ExportChecks.Core(Check, Throws, output);
 ConflictChecks.Core(Check, Throws, output);
-File.WriteAllLines(Path.Combine(output, "navigation-benchmarks.txt"), navigationBenchmarks);
 ProjectStore.AtomicWrite(Path.Combine(output,"lighthouse.dialogue.json"), ProjectStore.Serialize(Templates.Harbour()));
 void Capture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using var frame = window.CaptureRenderedFrame() ?? throw new Exception("No rendered frame"); frame.Save(Path.Combine(output,name + ".png"), PngBitmapEncoderOptions.Default); }
 GraphOrganizationChecks.UI(Check, output, Capture);

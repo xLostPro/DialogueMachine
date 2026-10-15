@@ -7,7 +7,7 @@ public static class StoryTestCommand
     public const string Help = "Dialogue Machine story tests\nvalidate <project.json>\nreplay <project.json> [--all | --scenario <id-or-name>] [--max-steps <1..10000>] [--analyze] [--max-configurations <1..10000>] [--trace <output.json>]\nExit: 0 passed, 1 invalid story, 2 input/usage/write error, 3 replay/assertion/dead-end failure, 4 bounded limit, 5 cancelled.\n";
     public static int Run(string[] args, TextWriter output, CancellationToken cancellation = default)
     {
-        if (args.Length == 1 && args[0] is "--help" or "-h") { output.Write(Help); output.WriteLine("runtime-export <project.json> [--seed <int32>] [--max-operations <1..10000>] [--output <handoff.json>]"); return 0; }
+        if (args.Length == 1 && args[0] is "--help" or "-h") { output.Write(Help); return 0; }
         object report; var exit = 2; string? tracePath = null;
         try
         {

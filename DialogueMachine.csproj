@@ -20,7 +20,6 @@
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.3" />
     <Compile Remove="tests/**/*.cs" />
     <Compile Remove="CLI/**/*.cs" />
-    <Compile Remove="Integration/**/*.cs" />
     <None Include="Examples/**/*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

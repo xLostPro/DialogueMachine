@@ -165,7 +165,8 @@ internal static class ExportChecks
         check(Control<Button>("RedoButton").IsEnabled && !window.HasUnsavedChanges, "canceling export preserves an existing redo stack");
         picker.Paths.Enqueue(png); task = window.ExportGraphAsync(); Press(Named<Button>(Dialog(), "ConfirmExport"));
         check(Pump(task) && Control<Button>("RedoButton").IsEnabled && !window.HasUnsavedChanges, "successful graph export preserves an existing redo stack");
-        using (var locked = new FileStream(png, FileMode.Open, FileAccess.Read, FileShare.Read))
+        // Only Windows blocks replacing a file that another handle has open.
+        if (OperatingSystem.IsWindows()) using (var locked = new FileStream(png, FileMode.Open, FileAccess.Read, FileShare.Read))
         {
             var existing = File.ReadAllBytes(png); picker.Paths.Enqueue(png); task = window.ExportGraphAsync(); Press(Named<Button>(Dialog(), "ConfirmExport"));
             Press(Dialog().GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Close")));

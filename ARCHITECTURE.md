@@ -1,170 +1,68 @@
-# Maintenance guide
+# Architecture
 
-## Structure
+## Layout
 
 ```
-Core/                         Platform-independent class library; no UI dependencies
-  Models.cs                   Website-compatible schema plus desktop project fields
-  ProjectStore.cs             JSON import/export, atomic writes, bounded history
-  ProjectFiles.cs             Disk fingerprints, identity, guarded saves and detached reloads
-  RecoveryStore.cs            Validated recovery storage and saved-file comparison
-  WorkspaceStore.cs           Preferences migration, titled recents and startup decisions
-  DialogueEngine.cs           Conditions, validation, safe renaming, layout
-  Simulation.cs               Seeded runtime, reversible state, structured delivery/hook traces
-  PlaytestScenarios.cs         Desktop definitions, semantic replay references and authoring operations
-  ScenarioReplay.cs           Shared replay/assertions, observed coverage and bounded configuration analysis
-  StoryTestCommand.cs         Core-only CLI command parsing, JSON reports and exit-code contract
-  RuntimeExport.cs            Versioned companion with unchanged website JSON and explicit initial state
-  RuntimeExportCommand.cs     Core-only runtime-export CLI and atomic companion writing
-  DialogueText.cs             Structural conditional and formatting checks for all text fields
-  VariableStore.cs            Discovery, typed references, safe variable rename/delete
-  ProjectSearch.cs            Literal authoring search, scoped previews and replacement
-  SceneNavigation.cs          Indexed destinations, connections and outline filtering
-  AuthoringOperations.cs      Detached scene copies, remapped paste and reusable templates
-  GraphGeometry.cs            Node dimensions shared by layout and drawing
-  ScriptExport.cs             Read-only Markdown generation and optional authoring details
-  SceneGroups.cs              Desktop group membership and safe identity rebinding
-  Templates.cs                Blank and lighthouse example stories
-UI/
-  MainWindow.axaml             Declarative shell; menus, outline, graph, editor, status
-  MainWindow.axaml.cs          Document orchestration, selection and editing commands
-  MainWindow.Editor.cs        Content, logic, notes and script views
-  MainWindow.Files.cs         OS storage dialogs, file/recovery lifecycle, preferences
-  MainWindow.Conflicts.cs     Compare/reload/save-a-copy conflict dialogs and orchestration
-  MainWindow.Welcome.cs       New-project, welcome and startup orchestration
-  WelcomeView.axaml / .cs     Welcome cards, recent projects and recovery presentation
-  ProjectFilePicker.cs        Native storage boundary, injectable for workflow checks
-  MainWindow.Variables.cs     Searchable variable drafts, reference lists and insertion picker
-  MainWindow.Search.cs        Find/replace dialog, match previews and editor navigation
-  MainWindow.Navigation.cs    Searchable destination picker, filters and connection jumps
-  MainWindow.Authoring.cs     Connected scenes, scene clipboard and template dialogs
-  GraphCanvas.cs              Graph selection sets, drawing and pointer/keyboard gestures
-  GraphMinimap.cs             Viewport overview and pointer/keyboard navigation
-  GraphImageExport.cs         Full-story raster bounds, allocation limits and atomic PNG writes
-  MainWindow.Exports.cs       Scaled, scrollable export options and storage orchestration
-  MainWindow.Groups.cs        Group manager and compact graph overlays
-  MainWindow.Scenarios.cs     Scenario drafts, recorder, asynchronous runs/results and transient coverage
-  PlaytestWindow.cs           Isolated simulation, variables, transcript export
-  RichDialogue.cs            Safe rendering of the supported formatting tags
-  Ui.cs                      Small common control builders and labelled fields
-App.axaml / App.axaml.cs      Shared styling and theme palette
-tests/                       Executable core and headless UI regression checks
-  Fixtures/                  Committed seeded scenario stories replayed locally and in Windows CI
-CLI/                         Console entry point referencing Core only (no Avalonia)
-Integration/WebsitePlayer/    Inspected website source and opt-in contract adapter; no Core reference
-Integration/Sample/           Runnable Blazor Server host with Event/Script/Shop effects
-build.ps1 / build.sh          Self-contained platform publishing
-Packaging/*.ps1              Release version checks, native startup checks and Windows ZIP
-Packaging/publish-release.sh  Draft/upload/publish lifecycle with immutable published releases
-.github/workflows/desktop.yml Windows CI and tag-triggered releases
+Core/                       Class library with no UI dependency
+  Models.cs                 Website schema plus desktop-only project fields
+  ProjectStore.cs           JSON import/export, atomic writes, undo history snapshots
+  ProjectFiles.cs           Disk fingerprints and conflict-checked saves/reloads
+  RecoveryStore.cs          Unsaved-work recovery files
+  WorkspaceStore.cs         Preferences, recent files, startup decisions
+  DialogueEngine.cs         Conditions, inline text, validation, rename, auto-layout
+  DialogueText.cs           Inline condition/formatting checks
+  Simulation.cs             Playtest runtime (seeded random lines, Back, trace)
+  VariableStore.cs          Variable discovery, references, rename/delete
+  ProjectSearch.cs          Find & replace
+  SceneNavigation.cs        Destination search, connection index, outline filters
+  AuthoringOperations.cs    Scene copy/paste and templates
+  SceneGroups.cs            Groups/chapters
+  ScriptExport.cs           Markdown script export
+  GraphGeometry.cs          Node sizes shared by layout and drawing
+  PlaytestScenarios.cs      Saved test scenario definitions
+  ScenarioReplay.cs         Scenario replay, assertions, coverage, dead-end analysis
+  StoryTestCommand.cs       CLI: validate / replay
+  Templates.cs              Blank and example stories
+UI/                         Avalonia views; MainWindow is split by area (Files, Editor, Search, ...)
+  GraphCanvas.cs            Graph drawing and mouse/keyboard interaction
+  GraphMinimap.cs           Minimap
+  GraphImageExport.cs       Full-story PNG export
+  PlaytestWindow.cs         Playtest player
+CLI/                        Console entry point; references Core only
+tests/                      Executable harness: Core checks plus headless UI checks and screenshots
+Packaging/, build.*         Self-contained publishing, Windows smoke test, release ZIP
 ```
 
-Core is a separate project and can be reused by a future UI, CLI, web frontend, or game integration. UI controls never need to enter the engine. The test harness references the application so the same real controls and engine are exercised together. No MVVM framework, browser bridge, database, or hosting service is needed for this local editor. Dynamic editor forms use explicit callbacks because the schema is small; if the editor grows substantially, move a pane into its own view/view-model while keeping its operations in Core.
+Core never references Avalonia. The UI uses code-built controls with explicit callbacks; no MVVM framework. When `MainWindow` code gets in the way, move a pane into its own view and keep its operations in Core.
 
-## Data compatibility
+## Rules that keep data safe
 
-Retain original PascalCase field names and website enum ordering: Hide=0, Disable=1, Always=2. Desktop JSON accepts both numeric and named enums; website exports deliberately use numeric enums. `JsonExtensionData` keeps unknown fields on root, scene, response, action, requirement and shop objects. Desktop additions live at the project root or in the existing Metadata dictionary.
+- **Website compatibility.** Keep the website's PascalCase field names and numeric visibility order (Hide=0, Disable=1, Always=2). Website exports use numeric enums and put the entry scene first, since the website starts at index 0. Desktop-only data (groups, templates, scenarios, starting values) lives at the project root or in `Metadata` and is left out of website exports.
+- **Unknown fields round-trip.** `JsonExtensionData` keeps unknown fields on every model object. Don't drop them.
+- **Format version.** Only desktop format 1 exists. Files without a version are treated as format 1; other versions are rejected before replacing the open document. New desktop features should be additive fields so no migration is needed.
+- **IDs are identity.** Scene IDs are graph links; titles are just metadata. Rename through `DialogueEngine.Rename` so every link follows. `[EXIT]` means "end conversation".
+- **Open damaged files, block bad output.** Import only rejects files it cannot represent. Graph problems (missing targets, reserved IDs, bad conditions) show as diagnostics and block playtest/export until fixed.
+- **Never lose the user's work.** Parse an import completely before replacing the document. Writes go to a temp file followed by an atomic replace. Save checks that the file on disk is still the version that was opened and offers compare/reload/copy if not. Recovery files are separate and never overwrite the project.
 
-State IDs are graph identity; titles are editable metadata. Every rename goes through `DialogueEngine.Rename` so entry, choice and continue connections stay consistent. Export starts with the chosen entry because the website starts at index zero. An intentional ending is `[EXIT]`, never an invalid target. Import sanitation is separate from graph validation so damaged graphs can be opened and repaired without losing data.
+## Editing and history
 
-Only desktop format version 1 is currently supported. Files without a version use that default for website compatibility; explicitly unsupported versions are rejected before document replacement. Reserved scene IDs, unsupported scene types and invalid numeric visibility values remain openable for repair, but validation blocks playtest/export. Repairing an imported `[EXIT]` ID updates the entry without rewriting intentional ending targets.
+- All document changes go through `Mutate`, which records one undo entry, so a bulk operation is a single Undo step.
+- History stores complete JSON snapshots (up to 100; older ones Brotli-compressed). Text typing is grouped into one entry after 700 ms or on focus change; a graph drag commits once on release.
+- Selection, filters, pan/zoom and minimap visibility are UI state. They never enter the project or the history.
 
-Stage 4 adds a separate schema-1 companion (`dialogue-machine.website.v1`); desktop format 1 and ordinary website JSON are unchanged, so no project migration is needed. It carries the exact website export string/hash, entry, discovered active numeric values, text substitutions, seed and bounded operation limit. `RuntimeExport` reads the project without mutation. Unsupported contracts and malformed legacy runtime IDs produce repair guidance before target execution. Full unknown-field/history/recovery/conflict behavior remains in the existing project stores.
+## Playtest semantics
 
-## Changes, history and persistence
+Choosing a response checks its conditions, runs the response's actions, then the scene's exit actions, then enters the destination. Inventory never goes below zero and arithmetic saturates. Inline conditions resolve innermost-first; substitutions apply afterwards. Random lines use a seeded SplitMix64 stream, so the same seed and choices reproduce the same run, and Back restores it. Event/Script/Shop hooks are only logged; the website or game implements them.
 
-Text and picker changes update the document immediately. Text edits are grouped after 700 ms, on focus changes, and before operations such as selection, undo and save. Graph drags commit once on release. History retains complete JSON snapshots, bounded to 100 archived entries. Archived strings use lossless Brotli compression; the current snapshot stays uncompressed for saved-state comparison and guarded writes. Undo/Redo decompress and parse detached documents before changing the stacks. This preserves extension data and existing snapshot semantics. The Stage 2 measurements support compression and removing redundant work; they do not establish a need for reversible command history. See PERFORMANCE.md for results and remaining limits.
+Saved scenarios reference scenes by ID and responses by GUID. Each recorded step stores a fingerprint, so editing a response's text, logic or destination flags the recording as stale. Replay and dead-end analysis are bounded and never claim to check every path of a cyclic story. CLI exit codes: 0 pass, 1 validation errors, 2 bad input, 3 replay/assertion failure, 4 limit reached, 5 cancelled. See [STORY_TESTING.md](STORY_TESTING.md).
 
-UI editing callbacks mark pending work. Idle selection/tab/focus commits skip serialization. Status marks pending typing as unsaved until its exact commit comparison; explicit dirty queries and recovery still compare the live document exactly. Word counts update only the edited scene during typing and rebuild after committed bulk/history changes. Explicit mutation, Undo/Redo, save and replacement boundaries reconcile programmatic edits to the public mutable project model. Picker completion reconciles again before saving. Diagnostics/navigation refresh once per bulk operation rather than at both commit and full refresh. Outline rows are immutable navigation summaries in a virtualized ListBox; recycling handles null content, and document/history refreshes replace summaries and rebind transient selection. Script controls build on demand and are released when returning to Graph; the visible script still materializes the full story.
+## Adding things
 
-Graph selection is transient UI state: a scene set plus one active scene for the editor. The outline shares that set; filtering keeps hidden selected scenes until the user changes the outline selection. Modifier-click toggles nodes, Shift-drag adds intersecting nodes, and keyboard focus can travel independently of selection. Selection never changes project JSON or history. History replacement rebinds the set by ID and duplicate-ID occurrence, preserving distinct repairable imported scenes. New/open/Home clears the previous document's selection.
+- New logic: add it to `Models`/`DialogueEngine` first, then validation, editor fields and checks. Exported fields must stay website-compatible.
+- New UI: add colours as palette tokens in `App.axaml`, check all three themes and interface sizes, and give every input a keyboard path and an automation name.
+- Dependencies: versions are pinned and `packages.lock.json` files are committed; CI restores in locked mode. Update the Avalonia packages together. `RuntimeFrameworkVersion` pins the bundled .NET runtime.
+- Tests: add checks to the harness under `tests/`. Prefer Core checks; use the headless UI only for real interaction or layout.
 
-Graph movement snapshots the selected positions at gesture start and applies the same world-space delta to every member. Pending typing commits before a gesture. Pointer release, capture loss, keyboard release after repeats, or focus loss finishes the gesture once; Escape restores its starting positions without a history entry. Other document commands finish an active gesture before committing. Connection dragging operates on one output, even with a selected set. Rendering indexes destination IDs once and draws selected outgoing/internal and incoming connections after ordinary links, with thicker strokes and separate theme colors; continue links retain their dashed style.
+## Limits
 
-Never replace the current document until an import has parsed successfully and the user has resolved unsaved edits. Save updates the saved snapshot only after the atomic write succeeds. Recovery has its own file and never writes over the project. Restoring keeps the source recovery ID so a later successful Save or explicit Discard removes that active recovery.
-
-`ProjectFiles` keeps the original disk version separate from the normalized history/dirty snapshot. Opening captures SHA-256 over exact bytes and parses that same captured content, then rechecks after any unsaved-changes prompt. Windows additionally captures the volume/file ID from the read handle, detecting same-byte atomic replacements. Content rewrites, including whitespace/BOM changes with unchanged timestamps and length, and missing files are conflicts. Timestamp-only touches are harmless. Other platforms use content fingerprints; native Mac/Linux identity and workflow verification remain follow-up work.
-
-Ordinary Save (including Save as to the current path) checks the loaded/last-written version before staging and immediately after flushing the temporary file, before atomic replacement. A named per-path mutex coordinates saves by editor instances. New destinations use non-overwriting moves so files created during a picker/write cannot be overwritten. The returned baseline belongs to the staged file actually written, rather than a potentially newer post-save path read. These are optimistic checks: unrelated writers do not participate in the mutex, and a writer can still race the final check/OS rename; this is not a filesystem transaction or a portable atomic compare-and-replace primitive.
-
-Conflict choices preserve the local project while comparing detached read-only JSON, reloading, saving to a new copy, or cancelling. Every Compare/Reload decision rechecks the version shown; comparison return re-reads it, and Reload parses/sanitizes, runs graph diagnostics, and rechecks before replacement. Repairable graph errors retain the ordinary import policy. Malformed, unsupported, oversized, unreadable or deleted files never replace the document. Successful Reload records the external document in existing history, so Undo restores local edits and Redo returns to the clean external baseline. A Reload inside save-before-leaving retains the document and its history. Cancel, Escape, window close, stale decisions and failed writes leave file identity, saved baseline, recents and active recovery intact. Successful Save/copy and Reload update these only after completion. Conflict dialogs scale with the interface, keep actions outside scrollable content, and label both comparison panes.
-
-New recovery records carry the saved disk baseline; restoring it allows ordinary Save only when that disk version still matches. Older records with no trustworthy baseline require explicit conflict resolution. Recovery discovery compares normalized saved/recovery content instead of timestamps, so newer external rewrites or malformed files cannot hide different unsaved work. Matching content suppresses an obsolete recovery; damaged recovery records remain independently skipped and retained.
-
-Recovery discovery validates each record separately and skips both JSON syntax failures and semantic `InvalidDataException` failures. Keep damaged files for investigation and continue offering valid records.
-
-Variable management clones the full project into a draft. Apply replaces it through `Mutate`, preserving scene selection and recording one undo entry; Cancel and Escape discard the draft. `VariableStore` counts runtime references in typed actions/requirements, dialogue and response substitutions, and inline conditions. Renames preserve the numeric type and starting value, reject collisions before mutation, and rewrite only actual references. Unprefixed conditions resolve direct known keys, then inventory, then affinity; renames qualify those aliases to preserve the binding. Text substitutions take precedence over numeric placeholders with the same legacy ID. Notes, ordinary prose, Event/Script IDs and unknown extension fields remain untouched. Deletion is limited to unused definitions. Discovery includes inline-only numeric variables, but excludes numeric-looking prose.
-
-Logic fields suggest IDs of the selected numeric type while allowing new IDs. The Content picker inserts a known substitution at the caret. Variable dialogs pass the interface scale to the shared dialog builder, which scales both content and window dimensions; other callers retain its default scale.
-
-Project search is a Core service over dialogue, response labels, displayed titles and writer's notes. It uses literal ordinal matching, optional case/whole-word rules, field selection and an optional scene index. Scene indices distinguish repairable duplicate IDs. Preview results retain original text and offsets, with at most 200 materialized matches but a complete count. Replace all scans the full scope once, applies nonoverlapping matches without re-searching inserted text, and only writes changed fields. Single replacement rejects a stale preview before writing. A fallback title is replaced by adding title metadata, preserving the scene ID. IDs, connections, logic, other metadata, starting values and extension data are untouched.
-
-The find/replace window commits pending typing before searching. Replacements apply immediately through `Mutate`, each with one history entry; Close/Escape discards only unapplied previews. The modal owner prevents concurrent editor changes. Go to match closes the window, clears a hiding outline filter, opens Content or Notes, and focuses/selects the matching text. Dialogs honor interface scale; the bounded match list keeps large result sets out of the visual tree.
-
-Scene navigation snapshots titles, IDs, speakers, comma-separated tags, search text and diagnostic flags when diagnostics refresh after a commit or document replacement. Incoming/outgoing indices use the same null/blank choice fallback as the runtime. Filtering and destination search use this snapshot without validation, serialization or document mutation on each keystroke. Destination summaries and jumps resolve IDs through a dictionary; opening the picker builds its options once and materializes at most 200 results with a complete count. Missing current targets stay visible, while unset/fallback and `[EXIT]` remain explicit choices. Choosing a destination applies through `Mutate` with one undo entry; typing, Cancel and Escape do not change connections.
-
-Outline text, speaker, tag and diagnostic filters intersect. Filter options refresh after edits and undo/redo; opening another project clears them. A scene jump clears filters only when they hide its destination. Notes lists indexed outgoing links and deduplicated incoming sources, including inherited choice targets; endings, unset and missing links have labels instead of jump buttons. The outline header scrolls in compact windows while retaining a scene list and a visible clear-filter command.
-
-Authoring operations live in Core. `SceneBundle` stores an immutable JSON snapshot of a selected scene set. Paste validates capacity and positions before mutation, assigns unique scene IDs and fresh choice IDs, remaps internal choice/continue/self/cycle links, and preserves relative positions. External, missing, ending and blank targets remain explicit; existing scenes, entry points and unknown fields stay intact. The editor's scene clipboard lasts for the window's app session, including project changes; it is separate from the OS text clipboard. Duplication uses the same service. Creating a connected scene records the new scene and chosen response destination together through `Mutate`.
-
-Copy selected scenes and graph/outline Ctrl/Cmd+C snapshot that transient set through the existing Core service. The copy dialog starts with the same selection and can choose another bundle without changing graph selection. Paste selects all inserted scenes and records the complete insertion in one history entry. Ctrl/Cmd+C/V are handled as scene commands only while the graph or outline has keyboard focus; text inputs retain native clipboard behavior.
-
-Scene and choice templates are additive desktop root collections in format version 1, saved with the project and included in recovery/history. Website exports omit these collections. A scene template captures content, metadata, shop data, delivery and logic; self-links and endings survive, while external destinations become unset. Choice templates capture responses, visibility, conditions and actions, and insert with fresh identity and a continue fallback. Template insertion and deletion each form one history entry; previewing, searching and closing do not mutate the document. Variable reference counts, deletion guards and renames include template content. Alias resolution considers each template in its prospective insertion context, while inactive template variables never enter runtime discovery. Templates and copied scenes retain variable IDs but do not transfer root starting values or text substitutions to another project.
-
-The window starts without a document. Welcome is a separate view; project controls and menu commands are enabled only when a project is open. Creating a project uses a local form, then resolves existing edits before replacing the document. The example is explicitly requested and never added to recents until saved. Startup planning is UI-independent: an explicit launch path wins, then recovery presentation, then optional reopening of an existing last file, otherwise Welcome. Preferences migrate the previous recent-file list and keep at most eight titled entries. Inject `IProjectFilePicker` and an isolated data directory to test storage workflows without invoking OS dialogs or touching a user's settings.
-
-## Scene groups and minimap
-
-Scene groups/chapters are an additive desktop root collection (`SceneGroups`) in format version 1. A group has a stable ID, a display name and member references by scene ID plus duplicate-ID occurrence. Memberships may overlap. Core owns create/rename/delete/assign/remove and resolves sets in project order; each UI mutation uses the existing snapshot history once. Names must be non-empty and unique ignoring case for authoring operations. Group/member extension data round-trips. Import rejects malformed group identities/references, normalizes null collections and removes duplicate/stale memberships so they cannot bind to a future inserted scene. Group deletion never changes scene data or connections. Scene rename and deletion capture memberships by object identity before rebinding shifted occurrences, preserving repairable duplicate-ID scenes.
-
-Navigation snapshots include group IDs, so group/ungrouped outline filters intersect existing filters without document work on each keystroke. The group filter follows a rename by ID and falls back to Any group when its group disappears. Group selection retains a member active scene or activates the first member in project order; empty groups clear selection. History preserves an explicitly empty selection. Group operations leave the editor's scene set intact. Scene bundles, duplication and templates contain scene data only: all new copies are ungrouped within and across projects. Groups never enter website exports or scene Metadata.
-
-The minimap is a UI control using shared node geometry and the graph's world viewport. Graph redraw notifications refresh it for selection, movement, zoom, pan and replacement. It shows connections, selected nodes and the viewport with theme resources. Its aspect-preserving transform fits the union of story bounds and viewport; pointer navigation freezes that transform until release/capture loss. Click/drag centers the graph, arrow keys pan, Shift pans farther, Enter/Home fits and Escape focuses the graph. Alt+arrows offers graph viewport panning when the map is hidden. The map resizes and extra gesture guidance hides in compact windows. `ShowMinimap` is a workspace preference, defaulting to false; navigation/visibility never change project history. Script view hides it while retaining the preference.
-
-## Authoring exports
-
-`ScriptExport.Markdown` in Core reads the complete project without simulation or path traversal. It emits the first matching entry scene followed by the remaining scenes in project order, retaining unreachable and repairable duplicate-ID scenes. Dialogue pages/random candidates and choices retain their authored order. Conditions/visibility, response actions, scene exit actions and notes are independent options; notes default off. Inline conditional markers and both branches always remain literal, even when requirement/visibility details are omitted. Formatting tags become plain text; substitutions are not resolved. Markdown punctuation and HTML in authored fields are escaped, multiline structural labels are flattened, and output uses deterministic LF newlines. Destinations distinguish inherited continue, explicit ending, unset and missing targets. Action lists describe runtime response-before-scene ordering without executing hooks.
-
-Graph PNG export belongs to UI. `GraphImageExport.Plan` unions all node rectangles, shared Bezier path bounds and arrow extents, then adds padding for ports/strokes. It indexes destinations once and includes inherited links, cycles, self-links and scenes hidden by outline filters. A separate arranged `GraphCanvas` shares the live node/link drawing code, using an export transform rather than the live viewport. It has no selection, focus, grid, drag/marquee overlay or minimap. Export never switches view, changes the live canvas transform or edits the project/history.
-
-Live graph drawing skips node rectangles outside an inflated world viewport. Link culling uses conservative cubic control-point bounds including arrow/stroke extents, independently of endpoint visibility; curves crossing the viewport and backward/self links remain eligible. Export passes no viewport and draws every node/link. Destination indexing and link/node visibility scans remain proportional to story size; no spatial/topology cache has been introduced. Each canvas owns an LRU of at most 1,024 text layouts and 262,144 source characters. Oversized individual text bypasses the cache. Keys include content, font size/weight, colour brush, wrapping dimensions and trimming; replacement, detach, edits, palette and interface-scale changes release layouts, and eviction disposes native resources. Export releases its detached canvas cache explicitly. Position, selection and viewport changes reuse content without stale geometry because geometry is computed from the live model.
-
-Standard/detailed output uses 1×/2× world resolution with 96-DPI pixels, independent of interface scale. Bitmap allocation is limited to 16,384 pixels per side and 32 million pixels (about 128 MB of raw RGBA data, excluding renderer/encoder overhead). Oversized output requires explicit fitting; fitting preserves aspect ratio and cannot reduce below 0.25×. Unreadable/extreme spans, empty stories and invalid geometry receive actionable errors before allocation. PNG output uses a sibling temporary file and atomic replacement, retaining an existing export on failure. Export dialogs keep Cancel/file actions outside the scrollable options area, honor interface scale, and do not commit document edits. Injected export pickers exercise success, cancellation and failure; package smoke checks also render/export the native example.
-
-## Simulation semantics
-
-Simulation clones the document and indexes scene identities once. Entering a scene does not fire exit actions. Choosing a response verifies its conditions, validates its destination, snapshots the runtime, runs response actions, then scene exit actions, and enters the target. Page advances and live numeric/text edits also snapshot runtime. Back restores scene, pages, candidate index, numeric/text variables, random state, ending and the corresponding transcript/event/structured trace/replay-step lengths. Append-only evidence uses saved lengths rather than copying the entire accumulated trace for each snapshot. Inventory is nonnegative and arithmetic saturates at integer limits. Graph cycles are allowed; interactive transitions remain user-driven. Script, Event and Shop remain logged integration hooks.
-
-The independent website assembly compiles the actual unchanged xLostProHome component/Razor/models/service at revision `58ebc2a8`, with source hashes checked in regressions. `RuntimePlayer` subclasses that component, uses its real transition/page/requirement/action methods and adapts detached delivery/state boundaries to the versioned contract. It references neither desktop Core nor Avalonia. Its ordered synchronous Event/Script/Shop host callbacks receive immutable state snapshots; callback failure faults the session because host effects are not reversible. Operation limits and cancellation retain partial evidence. Desktop Simulation and its logged-only hooks are unchanged. The Blazor Server sample demonstrates actual achievements, quest and shop effects; deployed website/WebAssembly support is not claimed. See [RUNTIME_HANDOFF.md](RUNTIME_HANDOFF.md) for differences, setup, semantics and practical limits.
-
-Inline condition processing resolves innermost tags first, with a bounded pass count. Rich formatting uses typed text runs rather than HTML or script execution. Text substitutions are evaluated after conditions.
-
-Structural validation checks dialogue and response labels without evaluating their branches. It rejects malformed conditions and nesting beyond the runtime's 64-pass limit; formatting and unknown-substitution diagnostics are advisory. Ending reachability traverses reverse edges from `[EXIT]`, avoiding repeated whole-graph scans.
-
-Use `Simulation.SetVariable` and `SetTextVariable` for live test edits. Structured trace rows record scene visits, delivered pages, responses, before/after numeric changes, text changes, preview refreshes, integration hooks, rerolls and endings. Transitions validate before any action/evidence/history mutation. Random delivery uses portable SplitMix64 arithmetic with explicit 64-bit state and rejection sampling; the signed 32-bit seed initializes that state. A visit retains its candidate index, clamped temporarily if resolved text has fewer lines. Refresh preserves a selected candidate without a new random draw; reroll selects again when candidates exist. If a visit initially resolves no candidates, its first available candidate selection consumes the initial seeded draw. Back restores the stream and selected line, so repeating an operation repeats delivery. Restart resets the seed, overrides, history, trace and results to the initial visit. Automatic layout uses the canvas node height and a vertical gap, with a minimum 300-unit row pitch for smaller nodes.
-
-## Saved scenarios, replay and CLI
-
-`PlaytestScenarios` is an additive root collection in desktop format 1. Definitions contain stable IDs/names, explicit starting scene, seed, numeric/text overrides, bounded replay operations, ending policy and typed final assertions. Scenario/step/assertion extension data round-trips through the ordinary snapshot, file, recovery and conflict machinery. Missing collections normalize to empty; null rows/duplicate scenario identities are rejected before replacement. Stale references and unsupported operation/assertion kinds remain openable for repair and fail during replay. Website exports omit every definition and result. Scenarios do not introduce inactive variable IDs into runtime discovery, but variable reference/deletion/rename services include their overrides, recorded live edits and assertions.
-
-Replay references resolve by scene ID plus response GUID, never by index or label. A versioned semantic SHA-256 signature covers dialogue/delivery/speaker/shop, effective fallback destination, requirements, response actions and scene exit actions. Reordering responses or changing layout/title/notes leaves the path valid. Missing/ambiguous identities, changed signatures, unexpected scenes and unavailable operations return structured, actionable diagnostics with step locations. Safe scene/variable renames rebind only previously valid signatures alongside their references; stale recordings are not healed. Live edits after an ending use the explicit `[EXIT]` runtime reference and `v1:ended` signature. Require-ending and final numeric/text/ending/event assertions evaluate coherent runtime state and emitted hooks, including exact event counts/absence.
-
-`ScenarioReplay` and `ScenarioAnalysis` are shared Core services for UI and CLI. Replay bounds operations to a saved limit (maximum 10,000), retains partial failure/cancellation evidence and honors cancellation between operations. Configuration analysis starts from scenario overrides, explores usable branches with the same simulator, deduplicates full scene/variable/text/random configurations and bounds admitted configurations/queued branches to 1,000 in UI (CLI maximum 10,000), with a separate transition-work budget of four times that configuration limit. Analysis forks share the isolated story/index and copy only runtime state; they accumulate no history or traces. Configured dead ends include variable values and unmet requirements. Structural reachability remains separate, as does observed replay coverage. Neither service promises exhaustive cyclic-story verification; limits explicitly report unexplored work. Analysis does not apply manual edits recorded later in a replay.
-
-The scenario manager edits detached drafts; Save/Duplicate/Delete use `Mutate` once and preserve selection. Interactive recording starts from the draft configuration and transfers its current replay operations only on acceptance. Worker runs use a captured story/definition snapshot and publish results only to the still-visible manager on the same document. Closing cancels. Results/analysis/coverage are transient and never dirty the document or clear Redo. Authored changes and history/file replacement invalidate evidence. Graph coverage uses hashed identity sets and the existing culled drawing path, adds no hit targets and never replaces selection styling. Full-story exports exclude the decorations; result/path lists remain virtualized and forms/results scroll at every theme/interface size.
-
-`CLI/DialogueMachine.Cli.csproj` references Core only. `StoryTestCommand` owns validation/replay argument handling, deterministic schema-versioned JSON reports, atomic separate trace output and exit codes (0 pass, 1 validation error, 2 input/write error, 3 replay/assertion/configuration failure, 4 bounded limit, 5 cancelled). The thin console entry point translates Ctrl+C to cancellation. Committed fixture definitions run through both the regression harness and actual CLI in Windows CI. See [STORY_TESTING.md](STORY_TESTING.md) for commands, schema/reference semantics, limits and authoring instructions. Runtime integration/distribution/version/release publishing are outside Stage 3.
-
-## Adding features
-
-- Add a logic type in Models/DialogueEngine first, then add its editor fields, validation and tests. Keep existing exported fields stable.
-- Extend template content in Templates and regenerate sample JSON from that source.
-- Add export formats in a dedicated Core service when an export becomes more complex than a short formatting function.
-- Add UI palette tokens in App; check all three themes and interface sizes. Keep a keyboard path and automation name for every input.
-- Keep dependency versions pinned; committed package lock files pin platform-neutral library dependencies. Publishing writes runtime-specific lock files under each project's ignored `obj` directory so cross-publishing does not rewrite the source locks. `RuntimeFrameworkVersion` pins the packaged .NET runtime to 10.0.12; check runtime updates alongside library updates. Update Avalonia packages together, intentionally refresh the source locks, run the test harness and review screenshots, then smoke-test native builds on each OS.
-
-## Release checklist
-
-Build and run regression checks; inspect rendered screens; verify new/open/save-as/cancel/recovery with the native storage dialogs; test Narrator/VoiceOver and the Linux accessibility backend on target systems; package using the supplied scripts; add signing/notarization if distributing publicly. Windows CI restores locked library dependencies, runs regression and native startup checks, then packages the complete app folder with a checksum. A matching version tag publishes those verified assets using a separate job with release permissions. Linux/Mac packages still need native launch checks before distribution.
-
-Current boundaries: Windows is the only locally tested OS; native accessibility tools have not been exercised; game scripts/events/shops are integration hooks; there is no installer, auto-updater, collaborative editing or cloud sync.
+Windows is the only platform tested natively. Screen readers haven't been tested. About 1,000 scenes is comfortable for everyday editing, and imports are capped at 10,000. There is no installer, auto-update or cloud sync.

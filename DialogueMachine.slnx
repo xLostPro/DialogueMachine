@@ -3,6 +3,4 @@
   <Project Path="Core/DialogueMachine.Core.csproj" />
   <Project Path="tests/DialogueMachine.Tests.csproj" />
   <Project Path="CLI/DialogueMachine.Cli.csproj" />
-  <Project Path="Integration/WebsitePlayer/WebsitePlayer.csproj" />
-  <Project Path="Integration/Sample/Sample.csproj" />
 </Solution>
