@@ -1,25 +1,31 @@
 # Roadmap
 
-Dialogue Machine is an offline editor for writers who export branching dialogue to the website or a game. Keep it focused on that: writing, connecting, checking and playtesting stories, then exporting them.
+**Goal:** an offline editor where writers write, connect, check and playtest branching dialogue, then export it as JSON for the website or a game. Every task should make that loop better or simpler. Don't add infrastructure for its own sake.
 
-## Done
+## Now
 
-- **1.1.1:** recovery, validation, arrangement and playtest reliability fixes.
-- **Unreleased (on `master`):** variable management, project-wide find & replace, destination search and navigation, reusable scenes/templates, multi-selection, groups/chapters, minimap, PNG and Markdown exports, conflict-safe saving, large-story performance work and saved test scenarios.
+1. **Release 1.2.0.** `master` holds everything since 1.1.1 (see `RELEASE_NOTES.md` → Unreleased).
+   - Done when: the version is 1.2.0 everywhere (`DialogueMachine.csproj`, `Packaging/Info.plist`, About text), the release notes are short and user-facing, CI is green and the `v1.2.0` tag has published a GitHub Release.
+2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
+   - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
+3. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
+   - Split `tests/Program.cs` (136 KB) into area files like the existing `tests/*Checks.cs`.
+   - Move `MainWindow` panes into their own views as they're touched.
+   - Decide whether saved test scenarios earn their size (~120 KB of code and tests). Keep them if real use relies on them; otherwise remove them.
 
-## Next
+## Later, only when a real story needs it
 
-1. **Ship it.** Cut a release from the current `master` so writers get the unreleased features.
-2. **Use it on a real story.** Write or import a full story and fix the friction that turns up. Let real use, not speculation, decide the next features.
-3. **Simplify where it hurts.** Split `MainWindow` and the large test files when changing them, and remove features that turn out to be unused.
-
-## Later, only if needed
-
-- **Character roster:** if multi-speaker stories become common (speakers are plain text today).
-- **Richer logic:** flags, OR conditions or set/toggle actions, when a story needs them. Any change to the exported JSON must stay compatible with the website.
-- **Mac/Linux releases:** the build scripts already produce them; they need a native smoke test before being published.
-- **Localization or voice references:** only after deciding how the website/game would consume them.
+- Character roster (speakers are plain text today).
+- Richer logic: flags, OR conditions, set/toggle actions. The exported JSON must stay website-compatible.
+- Mac/Linux releases: the builds exist but need a native smoke test first.
+- Localization or voice references, once the website/game side is defined.
 
 ## Out of scope
 
-Accounts, cloud sync, collaboration, auto-updaters, and engine-specific runtime adapters. The website JSON export is the integration point; the website and games own playback.
+Accounts, cloud sync, collaboration, auto-update, and engine-specific runtime adapters. The website JSON export is the integration point.
+
+## Done
+
+- **1.1.1:** recovery, validation, arrangement and playtest reliability.
+- **Unreleased:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
+- **Cleanup (PR #14):** removed the unused runtime handoff and benchmark tooling, shortened the docs, cut CI artifact storage.
