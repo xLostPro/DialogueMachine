@@ -59,7 +59,9 @@ jobs:
         run: ./Packaging/Test-WindowsPackage.ps1
       - name: Create release ZIP and checksum
         run: ./Packaging/New-WindowsRelease.ps1
+      # Every run builds the ZIP; only release tags store it, for the release job.
       - name: Upload Windows package
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-package
@@ -68,8 +70,9 @@ jobs:
           compression-level: 0
           retention-days: 7
           overwrite: true
+      # Screenshots and logs are only kept to diagnose failed runs.
       - name: Upload verification results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-verification
@@ -79,7 +82,7 @@ jobs:
             artifacts/native/**/*.json
             artifacts/native/**/*.txt
             artifacts/ci-scenario-*.json
-          retention-days: 14
+          retention-days: 3
           overwrite: true
 
   release:

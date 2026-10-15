@@ -87,7 +87,7 @@ $env:AVALONIA_TELEMETRY_OPTOUT = '1'
 dotnet run --project tests/DialogueMachine.Tests.csproj -c Release -- artifacts
 ```
 
-GitHub Actions runs the harness on pull requests and pushes to `master`, builds the Windows package, smoke-tests native startup and uploads a ZIP with a SHA-256 checksum.
+GitHub Actions runs the harness on pull requests and pushes to `master`, builds the Windows package and smoke-tests native startup. To save Actions storage, the ZIP is only stored for release tags, and screenshots/logs only for failed runs (kept 3 days).
 
 **Releasing:** bump `Version` in `DialogueMachine.csproj`, `Packaging/Info.plist` and `RELEASE_NOTES.md`, merge after CI passes, then push a matching tag (`git tag -a v1.2.0 -m "Dialogue Machine 1.2.0" && git push origin v1.2.0`). The tag workflow publishes the GitHub Release; prerelease versions such as `v1.2.0-beta.1` are marked as prereleases.
 
