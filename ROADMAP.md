@@ -4,11 +4,9 @@
 
 ## Now
 
-1. **Release 1.2.0.** `master` holds everything since 1.1.1 (see `RELEASE_NOTES.md` → Unreleased).
-   - Done when: the version is 1.2.0 everywhere (`DialogueMachine.csproj`, `Packaging/Info.plist`, About text), the release notes are short and user-facing, CI is green and the `v1.2.0` tag has published a GitHub Release.
-2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
+1. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
-3. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
+2. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
    - Split `tests/Program.cs` (136 KB) into area files like the existing `tests/*Checks.cs`.
    - Move `MainWindow` panes into their own views as they're touched.
    - Decide whether saved test scenarios earn their size (~120 KB of code and tests). Keep them if real use relies on them; otherwise remove them.
@@ -27,5 +25,5 @@ Accounts, cloud sync, collaboration, auto-update, and engine-specific runtime ad
 ## Done
 
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.
-- **Unreleased:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
+- **1.2.0:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
 - **Cleanup (PR #14):** removed the unused runtime handoff and benchmark tooling, shortened the docs, cut CI artifact storage.
