@@ -979,6 +979,51 @@ Press(recoveryWelcome.FindControl<StackPanel>("RecoveryCards")!.GetVisualDescend
 Check(recoverWindow.Project.ProjectName == "Recovered work" && recoverWindow.HasUnsavedChanges && restoreStore.FindUnsaved().Count == 1 && ProjectStore.Load(savedFile).ProjectName == "Saved on Home", "restoring opens unsaved work without overwriting or removing its recovery");
 picker.SavePaths.Enqueue(Path.Combine(workflowRoot, "recovered.dialogue.json")); Pump(recoverWindow.SaveProjectAsync());
 Check(restoreStore.FindUnsaved().Count == 0 && !recoverWindow.HasUnsavedChanges, "successful saving clears the restored source recovery"); recoverWindow.Close();
+
+var runtimePicker = new TestFilePicker();
+var runtimeWindow = new MainWindow(null, true, settingsRoot, runtimePicker);
+runtimeWindow.Show();
+Pump(runtimeWindow.LoadExampleAsync());
+var fileMenu = runtimeWindow.FindControl<Menu>("AppMenu")!.Items.OfType<MenuItem>().First(m => (string?)m.Header == "_File");
+Check(fileMenu.ItemsSource!.OfType<MenuItem>().Any(m => (string?)m.Header == "Export runtime companion…"), "File menu includes Export runtime companion action");
+
+var exportTask = runtimeWindow.ExportRuntimeCompanionAsync();
+var exportDialog = Modal(runtimeWindow);
+var seedInput = NamedControl<NumericUpDown>(exportDialog, "ExportRuntimeSeed");
+var maxOpsInput = NamedControl<NumericUpDown>(exportDialog, "ExportRuntimeMaxOps");
+var exportSummary = NamedControl<TextBlock>(exportDialog, "ExportRuntimeSummary");
+var confirmBtn = NamedControl<Button>(exportDialog, "ConfirmExport");
+var cancelBtn = NamedControl<Button>(exportDialog, "CancelExport");
+
+Check(seedInput is not null && maxOpsInput is not null && exportSummary is not null && confirmBtn is not null && cancelBtn is not null, "runtime companion dialog controls exist");
+Check(AutomationProperties.GetName(seedInput!) == "Random seed" && AutomationProperties.GetName(maxOpsInput!) == "Maximum operations", "runtime companion controls have accessibility names");
+Check(confirmBtn!.IsEnabled && exportSummary!.Text!.Contains(runtimeWindow.Project.Entry), "runtime companion dialog shows starting scene and enables export");
+Capture(exportDialog, "export-runtime-companion");
+
+seedInput!.Value = 42;
+var runtimeOut = Path.Combine(workflowRoot, "harbour.runtime.json");
+runtimePicker.SavePaths.Enqueue(runtimeOut);
+Press(confirmBtn!);
+Pump(exportTask);
+
+Check(File.Exists(runtimeOut), "runtime companion export creates file on disk");
+var parsedCompanion = JsonSerializer.Deserialize<RuntimeHandoff>(File.ReadAllText(runtimeOut), ProjectStore.Options)!;
+Check(parsedCompanion.Seed == 42 && parsedCompanion.Contract == RuntimeExport.Contract && parsedCompanion.StartingScene == runtimeWindow.Project.Entry, "exported runtime companion contains seed 42 and valid contract");
+
+var beforeState = ProjectStore.Serialize(runtimeWindow.Project);
+runtimeWindow.Project.InitialVariables["bad_var"] = 5;
+var invalidTask = runtimeWindow.ExportRuntimeCompanionAsync();
+var invalidDialog = Modal(runtimeWindow);
+var invalidSummary = NamedControl<TextBlock>(invalidDialog, "ExportRuntimeSummary");
+var invalidConfirm = NamedControl<Button>(invalidDialog, "ConfirmExport");
+
+Check(invalidConfirm is not null && !invalidConfirm.IsEnabled && invalidSummary.Text?.Contains("bad_var") == true, "invalid runtime variable ID disables ConfirmExport and shows repair guidance");
+invalidDialog.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, "");
+Dispatcher.UIThread.RunJobs();
+Pump(invalidTask);
+runtimeWindow.Project.InitialVariables.Remove("bad_var");
+Check(ProjectStore.Serialize(runtimeWindow.Project) == beforeState && !runtimeWindow.HasUnsavedChanges, "malformed runtime variable check does not mutate history or crash");
+runtimeWindow.Close();
 Console.WriteLine($"SUCCESS: {passed} checks. Screenshots: {output}");
 }
 catch (Exception ex)

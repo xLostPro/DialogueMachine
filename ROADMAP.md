@@ -27,3 +27,4 @@ Accounts, cloud sync, collaboration, auto-update, and engine-specific runtime ad
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.
 - **1.2.0:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
 - **Cleanup (PR #14):** removed the unused runtime handoff and benchmark tooling, shortened the docs, cut CI artifact storage.
+- **Runtime companion export:** added File → Export runtime companion… with seed and limit configuration.

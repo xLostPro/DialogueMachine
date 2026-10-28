@@ -11,6 +11,7 @@ public sealed partial class MainWindow
 {
     private Task ExportScript() => ExportScriptAsync();
     private Task ExportGraph() => ExportGraphAsync();
+    private Task ExportRuntimeCompanion() => ExportRuntimeCompanionAsync();
 
     private Window ExportDialog(string title, Control options, Button cancel, Button export)
     {
@@ -88,5 +89,89 @@ public sealed partial class MainWindow
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or OutOfMemoryException)
         { await Ui.Ask(this, "Could not export graph", ex is OutOfMemoryException ? "There is not enough memory for this image. Try Standard resolution or export a readable script." : ex.Message, "Close"); return false; }
+    }
+
+    public async Task<bool> ExportRuntimeCompanionAsync()
+    {
+        if (!hasProject) return false;
+        Commit();
+        var seedInput = new NumericUpDown
+        {
+            Name = "ExportRuntimeSeed",
+            Minimum = int.MinValue,
+            Maximum = int.MaxValue,
+            Value = 0,
+            Increment = 1,
+            FormatString = "0"
+        };
+        AutomationProperties.SetName(seedInput, "Random seed");
+
+        var maxOpsInput = new NumericUpDown
+        {
+            Name = "ExportRuntimeMaxOps",
+            Minimum = 1,
+            Maximum = 10000,
+            Value = 1000,
+            Increment = 100,
+            FormatString = "0"
+        };
+        AutomationProperties.SetName(maxOpsInput, "Maximum operations");
+
+        var summary = Ui.Text("", 13, true);
+        summary.Name = "ExportRuntimeSummary";
+        AutomationProperties.SetLiveSetting(summary, AutomationLiveSetting.Polite);
+
+        Window? dialog = null;
+        var cancel = Ui.Button("Cancel", () => dialog!.Close(false));
+        cancel.Name = "CancelExport";
+        var export = Ui.Button("Choose file…", () => dialog!.Close(true), "primary");
+        export.Name = "ConfirmExport";
+
+        void Update()
+        {
+            try
+            {
+                var seed = (int)(seedInput.Value ?? 0);
+                var maxOps = (int)(maxOpsInput.Value ?? 1000);
+                var companion = RuntimeExport.Create(project, seed, maxOps);
+                summary.Text = $"Starting scene: {project.Entry} · {companion.NumericValues.Count} active numeric variables · {companion.TextValues.Count} text substitutions\nRuntime contract: {companion.Contract} (schema v{companion.SchemaVersion})";
+                export.IsEnabled = true;
+            }
+            catch (Exception ex) when (ex is InvalidDataException or ArgumentException or InvalidOperationException)
+            {
+                summary.Text = ex.Message;
+                export.IsEnabled = false;
+            }
+        }
+
+        seedInput.ValueChanged += (_, _) => Update();
+        maxOpsInput.ValueChanged += (_, _) => Update();
+        Update();
+
+        dialog = ExportDialog("Export runtime companion", Ui.Stack(
+            Ui.Text("Creates a self-contained companion payload (dialogue-machine.website.v1) containing the game story, initial seed, starting numeric variables, and text substitutions.", 13, true),
+            Ui.Row(Ui.Field("Random seed", seedInput), Ui.Field("Maximum operations", maxOpsInput)),
+            summary,
+            Ui.Text("The companion contract decouples website and headless runners from editor format changes.", 13, true)),
+            cancel, export);
+        dialog.Opened += (_, _) => seedInput.Focus();
+        if (!await dialog.ShowDialog<bool>(this)) return false;
+
+        try
+        {
+            var seed = (int)(seedInput.Value ?? 0);
+            var maxOps = (int)(maxOpsInput.Value ?? 1000);
+            var companion = RuntimeExport.Create(project, seed, maxOps);
+            var path = await PickExport("Export runtime companion", "story.runtime.json", "json");
+            if (path is null) return false;
+            ProjectStore.AtomicWrite(path, RuntimeExport.Serialize(companion));
+            Status("Exported runtime companion to " + path);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or InvalidDataException)
+        {
+            await Ui.Ask(this, "Could not export runtime companion", ex.Message, "Close");
+            return false;
+        }
     }
 }
