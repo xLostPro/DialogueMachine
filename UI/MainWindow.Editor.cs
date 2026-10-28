@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
 using DialogueMachine.Core;
@@ -163,18 +164,44 @@ public sealed partial class MainWindow
         AddSceneConnections(Editor, s);
     }
     private bool scriptDirty = true;
+    internal sealed record ScriptRow(int Index, string State, string Title, string Speaker, bool IsEntry, string Dialogue, IReadOnlyList<string> Choices, string ContinueTarget);
+
     private void RefreshScript()
     {
-        var panel = C<StackPanel>("ScriptPanel");
-        if (!C<ScrollViewer>("ScriptScroll").IsVisible) { if (scriptDirty) panel.Children.Clear(); return; }
-        if (!scriptDirty) return;
-        scriptDirty = false; panel.Children.Clear();
-        panel.Children.Add(Ui.Text(project.ProjectName, 28)); panel.Children.Add(Ui.Text("A readable view of your story. Select any scene to edit it.", 13, true));
-        foreach (var s in project.ListOfCharacterStates)
+        var scroll = C<Control>("ScriptScroll");
+        var list = C<ListBox>("ScriptList");
+        if (!scroll.IsVisible)
         {
-            var stack = Ui.Stack(Ui.Button((s.State == project.Entry ? "◆  " : "") + s.Title, () => SelectScene(s, true), "subtle"), Ui.Text(s.Speaker + "  ·  " + s.State, 12, true), Ui.Text(DialogueEngine.PlainText(s.Text), 15));
-            foreach (var c in s.Choices) stack.Children.Add(Ui.Text("↳  " + DialogueEngine.PlainText(c.ButtonText) + "  →  " + (c.NextStateId ?? s.DefaultNextId ?? "(unset)"), 12, true));
-            stack.Children.Add(Ui.Text("Continue → " + (s.DefaultNextId ?? "(unset)"), 11, true)); panel.Children.Add(Ui.Card(stack, 20));
+            if (scriptDirty) list.ItemsSource = null;
+            return;
         }
+        if (!scriptDirty) return;
+        scriptDirty = false;
+        C<TextBlock>("ScriptTitle").Text = project.ProjectName;
+        list.ItemTemplate ??= new FuncDataTemplate<ScriptRow>((row, _) =>
+        {
+            if (row is null) return null;
+            var stack = Ui.Stack(
+                Ui.Button((row.IsEntry ? "◆  " : "") + row.Title, () => SelectScene(project.ListOfCharacterStates[row.Index], true), "subtle"),
+                Ui.Text(row.Speaker + "  ·  " + row.State, 12, true),
+                Ui.Text(row.Dialogue, 15)
+            );
+            foreach (var choice in row.Choices)
+                stack.Children.Add(Ui.Text(choice, 12, true));
+            stack.Children.Add(Ui.Text("Continue → " + row.ContinueTarget, 11, true));
+            var card = Ui.Card(stack, 20);
+            card.Margin = new Thickness(0, 0, 0, 16);
+            return card;
+        });
+        list.ItemsSource = project.ListOfCharacterStates.Select((s, i) => new ScriptRow(
+            i,
+            s.State,
+            s.Title,
+            s.Speaker,
+            s.State == project.Entry,
+            DialogueEngine.PlainText(s.Text),
+            s.Choices.Select(c => "↳  " + DialogueEngine.PlainText(c.ButtonText) + "  →  " + (c.NextStateId ?? s.DefaultNextId ?? "(unset)")).ToList(),
+            s.DefaultNextId ?? "(unset)"
+        )).ToList();
     }
 }

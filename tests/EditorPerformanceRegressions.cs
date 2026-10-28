@@ -103,7 +103,7 @@ internal static class EditorPerformanceRegressions
         void Press(string name) { Dispatcher.UIThread.RunJobs(DispatcherPriority.Normal); C<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
         var list = C<ListBox>("SceneList"); var graph = C<GraphCanvas>("Graph");
         check(list.Items.Count == 1000 && list.GetVisualDescendants().OfType<ListBoxItem>().Count() < 100, "outline retains every scene while materializing only visible rows");
-        check(C<StackPanel>("ScriptPanel").Children.Count == 0, "hidden script content does not retain a whole-story control tree");
+        check(C<ListBox>("ScriptList").ItemsSource is null, "hidden script content does not retain a whole-story control tree");
         list.SelectedItem = list.Items.Cast<NavigationScene>().Single(s => s.Index == 950); Dispatcher.UIThread.RunJobs();
         check(graph.Selected == window.Project.ListOfCharacterStates[950], "virtualized outline can select an unrealized scene and open its editor");
         list.ScrollIntoView(list.SelectedItem); Dispatcher.UIThread.RunJobs();
@@ -118,9 +118,11 @@ internal static class EditorPerformanceRegressions
         check(list.Items.Cast<NavigationScene>().Single(s => s.Index == 950).Title == "Renamed visible title", "outline snapshots refresh edited labels after commit");
         Press("UndoButton"); check(list.Items.Cast<NavigationScene>().Single(s => s.Index == 950).Title != "Renamed visible title" && !window.HasUnsavedChanges, "Undo refreshes virtualized labels, statistics and saved equality");
         Press("RedoButton"); Press("ScriptButton");
-        check(C<StackPanel>("ScriptPanel").Children.Count == 1002, "script view lazily includes every scene after history changes");
+        check(C<ListBox>("ScriptList").Items.Count == 1000 && C<ListBox>("ScriptList").GetVisualDescendants().OfType<ListBoxItem>().Count() < 100, "script view lazily includes every scene after history changes while virtualizing item containers");
         Press("GraphButton"); Dialogue().Text = "New script text"; Press("ContentTab"); Press("ScriptButton");
-        check(C<StackPanel>("ScriptPanel").GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "New script text"), "opening script after editing refreshes deferred content");
+        var scriptList = C<ListBox>("ScriptList");
+        scriptList.ScrollIntoView(scriptList.Items.Cast<MainWindow.ScriptRow>().Single(r => r.Index == 950)); Dispatcher.UIThread.RunJobs();
+        check(scriptList.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "New script text"), "opening script after editing refreshes deferred content");
         Press("GraphButton"); window.SaveProjectAsync().GetAwaiter().GetResult();
         check(!window.HasUnsavedChanges && C<Button>("UndoButton").IsEnabled && ProjectFiles.Read(path).Parse().ListOfCharacterStates[950].Text == "New script text", "cached committed snapshots save current edits without discarding history");
         void PickerStep(ComboBox picker, string value, string label)

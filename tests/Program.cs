@@ -415,7 +415,16 @@ from = graph.TranslatePoint(graph.WorldToViewport(new Point(scene.VisualX + 270,
 var to = graph.TranslatePoint(graph.WorldToViewport(new Point(target.VisualX + 30, target.VisualY + 40)), main)!.Value;
 main.MouseDown(from, MouseButton.Left); main.MouseMove(to); main.MouseUp(to, MouseButton.Left);
 Check(main.Project.ListOfCharacterStates[0].Choices[0].NextStateId == target.State, "dragging an output port creates a choice connection"); Click("UndoButton"); Check(main.Project.ListOfCharacterStates[0].Choices[0].NextStateId == "keeper", "graph connection changes are undoable");
-Click("LogicTab"); Capture(main,"workspace-logic"); Click("ContentTab"); Click("ScriptButton"); Capture(main,"workspace-script"); Click("GraphButton");
+Click("LogicTab"); Capture(main,"workspace-logic"); Click("ContentTab"); Click("ScriptButton");
+var scriptList = main.FindControl<ListBox>("ScriptList")!;
+Check(scriptList.ItemsSource is not null && scriptList.Items.Count == main.Project.ListOfCharacterStates.Count, "script view populates virtualized list with project scenes");
+Check(scriptList.ItemTemplate!.Build(null) is null, "script template returns null safely on null data during container recycling");
+var secondScene = main.Project.ListOfCharacterStates[1];
+var secondButton = scriptList.GetVisualDescendants().OfType<Button>().First(b => Equals(b.Content, secondScene.Title));
+secondButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
+Check(main.FindControl<GraphCanvas>("Graph")!.Selected == secondScene, "clicking a scene card button in the script view selects that scene in the editor");
+Capture(main,"workspace-script"); Click("GraphButton");
+Check(scriptList.ItemsSource is null, "switching back to graph view releases script list items");
 main.ChangeAppearance("Light"); Capture(main,"workspace-light"); main.ChangeAppearance("High contrast"); Capture(main,"workspace-high-contrast"); main.ChangeAppearance("Dark");
 main.Width = 1000; main.Height = 680; Capture(main,"workspace-compact");
 Check(Find<StackPanel>("EditorPanel").Bounds.Width > 260 && Find<GraphCanvas>("Graph").Bounds.Width > 250, "minimum window size keeps editor and canvas usable");
