@@ -31,3 +31,4 @@ Accounts, cloud sync, collaboration, auto-update, and engine-specific runtime ad
 - **Speaker roster, autocomplete & rename:** added project speaker discovery, autocomplete in scene content editor, and project-wide speaker rename with references in Variables dialog.
 - **Virtualized script view:** converted the readable Script view to a virtualized ListBox with lightweight ScriptRow projection, eliminating eager whole-story control trees for large projects.
 - **Translation CSV export & import:** added RFC 4180 translation table export/import with structural tag validation and single-step undo.
+- **Cross-platform CI verification:** added Linux (x64) and macOS (ARM64) CI jobs running locked restore, headless regression suite, CLI validation/replay, and self-contained binary packaging.

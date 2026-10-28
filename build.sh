@@ -24,6 +24,7 @@ if [[ "$runtime" == osx-* ]]; then
   find "$output" -maxdepth 1 -type f -exec cp {} "$bundle/Contents/MacOS/" \;
   if [ -d "$output/Examples" ]; then cp -R "$output/Examples" "$bundle/Contents/MacOS/"; fi
   cp "$project_root/Packaging/Info.plist" "$bundle/Contents/Info.plist"
+  chmod +x "$bundle/Contents/MacOS/DialogueMachine"
   echo "App bundle ready: $bundle"
 else
   echo "Build ready: $output/DialogueMachine"
