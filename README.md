@@ -27,7 +27,7 @@ Pass a project's JSON path as the first argument to open it at launch.
 - **Diagnostics:** missing targets, invalid IDs or conditions, unreachable scenes and dead ends are listed and can be filtered in the outline.
 - **Playtest:** F5 plays from the start, Shift+F5 from the selected scene. Edit variables live, step Back, reroll random lines and export the transcript. Event/Script/Shop hooks are logged; your game implements them.
 - **Test scenarios:** **Story → Test scenarios…** saves a recorded playthrough with a seed, starting values and expected results, then replays it after you edit the story. See [STORY_TESTING.md](STORY_TESTING.md).
-- **Export:** website/game JSON, a runtime companion payload (dialogue-machine.website.v1), a full-story PNG of the graph, or a readable Markdown script.
+- **Export & translation:** website/game JSON, a runtime companion payload (dialogue-machine.website.v1), a full-story PNG of the graph, a readable Markdown script, or an RFC 4180 CSV translation table (with validated re-import).
 
 Every edit can be undone (Ctrl/Cmd+Z / Shift+Z), and bulk operations undo as one step.
 
