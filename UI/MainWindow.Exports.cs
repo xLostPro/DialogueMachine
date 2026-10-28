@@ -174,4 +174,43 @@ public sealed partial class MainWindow
             return false;
         }
     }
+
+    public async Task<bool> ExportLocalizationAsync(string? explicitPath = null)
+    {
+        if (!hasProject) return false;
+        try
+        {
+            var path = explicitPath ?? await PickExport("Export translation CSV", "story-strings.csv", "csv");
+            if (path is null) return false;
+            ProjectStore.AtomicWrite(path, LocalizationStore.ExportCsv(project));
+            Status("Exported translation CSV to " + path);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException)
+        {
+            await Ui.Ask(this, "Could not export translation CSV", ex.Message, "Close");
+            return false;
+        }
+    }
+
+    public async Task<bool> ImportLocalizationAsync(string? explicitPath = null)
+    {
+        if (!hasProject) return false;
+        var path = explicitPath ?? await projectFilePicker.OpenAsync(this);
+        if (path is null) return false;
+        try
+        {
+            var csvText = await File.ReadAllTextAsync(path);
+            var draft = ProjectStore.Clone(project);
+            LocalizationStore.ImportCsv(draft, csvText);
+            Mutate(() => LocalizationStore.ImportCsv(project, csvText));
+            Status("Imported translations from " + Path.GetFileName(path));
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException)
+        {
+            await Ui.Ask(this, "Could not import translations", ex.Message, "Close");
+            return false;
+        }
+    }
 }

@@ -8,6 +8,16 @@ internal static class DialogueText
     private static readonly Regex ConditionHeader = new(@"^\[if\s+([\w:.\-]+)\s*(==|!=|>=|<=|>|<)\s*(-?\d+)\]$", RegexOptions.IgnoreCase);
 
     // Check every branch without evaluating it against today's starting variables.
+    public static List<Diagnostic> Validate(string text, string stateId, string fieldLabel)
+    {
+        var diagnostics = new List<Diagnostic>();
+        if (!ValidConditions(text))
+            diagnostics.Add(new(stateId, "Error", $"{fieldLabel}: inline conditional tags are malformed. Use [if aff:trust >= 1]…[else]…[/if], with at most one else per block and up to 64 nested blocks."));
+        if (!ValidFormatting(text))
+            diagnostics.Add(new(stateId, "Warning", $"{fieldLabel}: formatting tags are unclosed, mismatched or malformed. Check [b], [i], [u] and [colour=…] tags."));
+        return diagnostics;
+    }
+
     public static bool ValidConditions(string text)
     {
         var blocks = new Stack<bool>();
