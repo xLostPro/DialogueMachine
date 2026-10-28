@@ -94,6 +94,24 @@ VariableStore.Rename(aliasStory, "inv:coin", "inv:courage");
 Check(aliasStory.ListOfCharacterStates[0].Text.StartsWith("[if aff:courage") && new Simulation(aliasStory).Pages[0] == "Brave", "renaming another variable cannot redirect existing bare condition aliases");
 var legacyVariableStory = Templates.Blank(); legacyVariableStory.InitialVariables["aff:old:id"] = 1;
 Throws(() => VariableStore.Rename(legacyVariableStory, "aff:old:id", "inv:tokens"), "repairing a legacy malformed numeric ID preserves its original type");
+var speakerStory = Templates.Blank();
+speakerStory.ListOfCharacterStates[0].Metadata["speaker"] = "Mara";
+speakerStory.ListOfCharacterStates.Add(new() { State = "s2", Metadata = new() { ["speaker"] = "Guard" } });
+speakerStory.ListOfCharacterStates.Add(new() { State = "s3", Metadata = new() { ["speaker"] = "Mara" } });
+speakerStory.ListOfCharacterStates.Add(new() { State = "s4", Metadata = new() { ["speaker"] = "  " } });
+speakerStory.ListOfCharacterStates.Add(new() { State = "s5" });
+Check(VariableStore.DiscoverSpeakers(speakerStory).SequenceEqual(new[] { "Character", "Guard", "Mara" }), "speaker discovery returns distinct sorted speakers and excludes whitespace-only values");
+speakerStory.SceneTemplates.Add(new() { Name = "Intro", Scene = Templates.Scene("t1", "Template Title", "Mara", "Text", 0, 0) });
+var maraRefs = VariableStore.SpeakerReferences(speakerStory, "Mara");
+Check(maraRefs.Count == 3 && maraRefs.Count(r => r.IsTemplate) == 1 && maraRefs.Count(r => !r.IsTemplate) == 2, "speaker references identify scenes and templates");
+Throws(() => VariableStore.RenameSpeaker(speakerStory, "Mara", ""), "speaker rename rejects empty new name");
+Throws(() => VariableStore.RenameSpeaker(speakerStory, "", "Captain"), "speaker rename rejects empty old name");
+Throws(() => VariableStore.RenameSpeaker(speakerStory, "Nonexistent", "New"), "speaker rename throws on nonexistent speaker");
+VariableStore.RenameSpeaker(speakerStory, "Mara", "Mara");
+VariableStore.RenameSpeaker(speakerStory, "Mara", "Captain Mara");
+Check(speakerStory.ListOfCharacterStates.Where(s => s.State is "start" or "s3").All(s => s.Speaker == "Captain Mara"), "speaker rename updates scenes");
+Check(speakerStory.SceneTemplates[0].Scene.Speaker == "Captain Mara", "speaker rename updates scene templates");
+Check(!VariableStore.DiscoverSpeakers(speakerStory).Contains("Mara") && VariableStore.DiscoverSpeakers(speakerStory).Contains("Captain Mara"), "discovered speakers reflect project-wide speaker rename");
 
 var searchStory = ProjectStore.Parse("""
 {"ProjectName":"cat","EntryStateId":"cat","FutureRoot":"cat","ListOfCharacterStates":[
@@ -495,6 +513,10 @@ manager.GetVisualDescendants().OfType<NumericUpDown>().Single(n => AutomationPro
 AddInManager(manager, "＋ Add text substitution", "town_name");
 manager.GetVisualDescendants().OfType<TextBox>().Single(t => AutomationProperties.GetName(t) == "{town_name}").Text = "Harbour";
 Press(NamedButton(manager, "Delete aff:unused"));
+Press(NamedButton(manager, "References for Mara")); var speakerDialog = manager.OwnedWindows.Single(w => w.IsVisible);
+Check(speakerDialog.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text?.Contains("arrival") == true), "speaker references dialog identifies matching scenes");
+PressAnswer(speakerDialog, "Close");
+RenameInManager(manager, "Mara", "Captain Mara");
 Press(NamedButton(manager, "References for aff:rapport")); var referenceDialog = manager.OwnedWindows.Single(w => w.IsVisible);
 Check(referenceDialog.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text?.Contains("arrival") == true), "reference details identify actual scene locations");
 PressAnswer(referenceDialog, "Close"); NamedControl<TextBox>(manager, "VariableSearch").Text = "rapport"; Dispatcher.UIThread.RunJobs();
@@ -504,6 +526,7 @@ Check(manager.GetVisualDescendants().Where(c => c.TemplatedParent is null && c i
 PressAnswer(manager, "Apply changes");
 Check(variableWorkspace.Project.InitialVariables.ContainsKey("aff:rapport") && !variableWorkspace.Project.InitialVariables.ContainsKey("aff:unused") && VariableStore.References(variableWorkspace.Project, "aff:trust").Count == 0 && variableWorkspace.Project.ListOfCharacterStates[0].Text.Contains("{hero_name}"), "Apply updates numeric/text references and deletions together");
 Check(variableWorkspace.Project.InitialVariables["inv:tokens"] == 2 && variableWorkspace.Project.TextVariables["town_name"] == "Harbour", "new numeric and text variables retain their edited values on Apply");
+Check(variableWorkspace.Project.ListOfCharacterStates.All(s => s.Speaker == "Captain Mara"), "Apply renames scene speakers project-wide");
 UndoWorkspace(); Check(ProjectStore.Serialize(variableWorkspace.Project) == beforeManager, "one Undo restores every applied manager operation and its references");
 foreach (var theme in new[] { "Light", "High contrast" }) { variableWorkspace.ChangeAppearance(theme); OpenManager(); manager = Modal(variableWorkspace); Capture(manager, "variables-" + theme.ToLowerInvariant().Replace(' ', '-')); PressAnswer(manager, "Cancel"); }
 variableWorkspace.ChangeAppearance("Dark", 1.3); OpenManager(); manager = Modal(variableWorkspace);
@@ -515,6 +538,12 @@ var insertNarrative = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.
 Press(NamedButton(variableWorkspace, "Variable…")); var insertion = Modal(variableWorkspace); NamedControl<TextBox>(insertion, "InsertVariableSearch").Text = "coin"; Dispatcher.UIThread.RunJobs();
 Check(NamedControl<ListBox>(insertion, "InsertVariableList").Items.Count == 1, "inline variable picker searches available IDs"); Capture(insertion, "variable-insertion"); PressAnswer(insertion, "Insert");
 Check(variableWorkspace.Project.ListOfCharacterStates[0].Text.StartsWith("{inv:coin}Hello"), "inline picker inserts the selected substitution at the cursor"); UndoWorkspace();
+var speakerInput = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.GetVisualDescendants().OfType<AutoCompleteBox>().Single(b => AutomationProperties.GetName(b) == "Speaker");
+Check(speakerInput.ItemsSource!.Cast<string>().Contains("Mara"), "speaker autocomplete includes project speakers");
+speakerInput.Text = "Navigator"; Dispatcher.UIThread.RunJobs();
+Check(variableWorkspace.Project.ListOfCharacterStates[0].Speaker == "Navigator", "speaker input updates selected scene speaker");
+UndoWorkspace();
+Check(variableWorkspace.Project.ListOfCharacterStates[0].Speaker == "Mara", "speaker edits are undoable");
 Press(variableWorkspace.FindControl<Button>("LogicTab")!); var beforePickerEdit = ProjectStore.Serialize(variableWorkspace.Project);
 var variablePicker = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.GetVisualDescendants().OfType<AutoCompleteBox>().First();
 Check(variablePicker.ItemsSource!.Cast<string>().Contains("coin") && !variablePicker.ItemsSource!.Cast<string>().Contains("trust") && AutomationProperties.GetName(variablePicker) == "Variable ID", "logic variable picker offers IDs for the selected numeric type and has a label");
