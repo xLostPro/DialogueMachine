@@ -112,7 +112,7 @@ internal static class ExportChecks
         Press(Control<Button>("ScriptButton"));
         var before = ProjectStore.Serialize(window.Project); var viewport = graph.ViewportWorld; var zoom = graph.Zoom; var selected = graph.Selected; var set = graph.SelectedScenes.ToArray();
         bool Unchanged() => ProjectStore.Serialize(window.Project) == before && graph.ViewportWorld == viewport && graph.Zoom == zoom && graph.Selected == selected
-            && graph.SelectedScenes.SequenceEqual(set) && Control<ScrollViewer>("ScriptScroll").IsVisible && !graph.IsVisible && Control<TextBox>("SearchBox").Text == "Unreachable" && !window.HasUnsavedChanges && !Control<Button>("UndoButton").IsEnabled;
+            && graph.SelectedScenes.SequenceEqual(set) && Control<Control>("ScriptScroll").IsVisible && !graph.IsVisible && Control<TextBox>("SearchBox").Text == "Unreachable" && !window.HasUnsavedChanges && !Control<Button>("UndoButton").IsEnabled;
         Window Dialog() { Dispatcher.UIThread.RunJobs(); return window.OwnedWindows.Single(w => w.IsVisible); }
         var task = window.ExportGraphAsync(); Press(Named<Button>(Dialog(), "CancelExport")); check(!Pump(task) && Unchanged(), "graph options cancellation preserves script view, filters, selection, pan/zoom, positions and history");
         task = window.ExportGraphAsync(); Key(Dialog(), Avalonia.Input.Key.Escape); check(!Pump(task) && Unchanged(), "graph options Escape leaves the complete editor state unchanged");

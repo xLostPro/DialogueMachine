@@ -164,7 +164,7 @@ public sealed partial class MainWindow : Window
     }
     private void SetView(bool script)
     {
-        C<ScrollViewer>("ScriptScroll").IsVisible = script; Graph.IsVisible = !script;
+        C<Control>("ScriptScroll").IsVisible = script; Graph.IsVisible = !script;
         foreach (var name in new[] { "GraphHint", "ZoomBar", "GraphLegend" }) C<Border>(name).IsVisible = !script;
         UpdateGraphOverlays();
         C<Button>("GraphButton").Background = Ui.Brush(script ? "Base" : "Selection"); C<Button>("ScriptButton").Background = Ui.Brush(script ? "Selection" : "Base");
