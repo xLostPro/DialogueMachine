@@ -26,9 +26,4 @@ Accounts, cloud sync, collaboration, auto-update, and engine-specific runtime ad
 
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.
 - **1.2.0:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
-- **Cleanup (PR #14):** removed the unused runtime handoff and benchmark tooling, shortened the docs, cut CI artifact storage.
-- **Runtime companion export:** added File → Export runtime companion… with seed and limit configuration.
-- **Speaker roster, autocomplete & rename:** added project speaker discovery, autocomplete in scene content editor, and project-wide speaker rename with references in Variables dialog.
-- **Virtualized script view:** converted the readable Script view to a virtualized ListBox with lightweight ScriptRow projection, eliminating eager whole-story control trees for large projects.
-- **Translation CSV export & import:** added RFC 4180 translation table export/import with structural tag validation and single-step undo.
-- **Cross-platform CI verification:** added Linux (x64) and macOS (ARM64) CI jobs running locked restore, headless regression suite, CLI validation/replay, and self-contained binary packaging.
+- **1.3.0:** runtime companion export, speaker roster and project-wide rename, virtualized script view, RFC 4180 translation CSV export/import, and continuous cross-platform CI verification.

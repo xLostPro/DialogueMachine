@@ -89,6 +89,6 @@ dotnet run --project tests/DialogueMachine.Tests.csproj -c Release -- artifacts
 
 GitHub Actions runs the harness across Windows, Linux (x64) and macOS (ARM64) on pull requests and pushes to `master`, packages binaries for all platforms, and smoke-tests native Windows startup. To save Actions storage, the ZIP is only stored for release tags, and screenshots/logs only for failed runs (kept 3 days).
 
-**Releasing:** bump `Version` in `DialogueMachine.csproj`, `Packaging/Info.plist` and `RELEASE_NOTES.md`, merge after CI passes, then push a matching tag (`git tag -a v1.2.0 -m "Dialogue Machine 1.2.0" && git push origin v1.2.0`). The tag workflow publishes the GitHub Release; prerelease versions such as `v1.2.0-beta.1` are marked as prereleases.
+**Releasing:** bump `Version` in `DialogueMachine.csproj`, `Packaging/Info.plist` and `RELEASE_NOTES.md`, merge after CI passes, then push a matching tag (`git tag -a v1.3.0 -m "Dialogue Machine 1.3.0" && git push origin v1.3.0`). The tag workflow publishes the GitHub Release; prerelease versions such as `v1.3.0-beta.1` are marked as prereleases.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the code is organized and [ROADMAP.md](ROADMAP.md) for what's next.

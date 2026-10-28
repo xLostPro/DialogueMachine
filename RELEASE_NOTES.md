@@ -1,5 +1,50 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## 1.3.0
+
+Dialogue Machine 1.3.0 brings together all major features and performance improvements in a single release:
+
+### Characters, Writing & Templates
+
+- **Speaker roster & autocomplete**: Project-wide speaker discovery with autocomplete in the scene content editor.
+- **Project-wide speaker rename**: Variables & characters dialog includes a Scene speakers roster with reference inspection showing where each speaker appears, and renames speakers across all scenes and templates in a single undo step while rebinding playtest scenario signatures.
+- **Find & replace**: Project-wide search and replace across dialogue, responses, titles, and writer's notes with Ctrl/Cmd+H.
+- **Scene & choice templates**: Save scenes and choices as templates and reuse them anywhere in the project.
+- **Centralized variables & characters**: Search variables, see where each is referenced, rename everywhere, and delete unused ones with draft staging and single-step undo.
+- **Safe condition parsing**: Inline variable conditions parse strictly so ordinary dialogue prose never creates stray variable references.
+
+### Translation & Localization
+
+- **CSV translation table export**: Export project strings to standard RFC 4180 CSV tables (`Key,SceneId,ChoiceId,Speaker,Field,SourceText,TranslatedText`) with preserved newlines and quoting.
+- **Validated CSV import**: Import translated CSV files with structural validation checking conditional tags and syntax on all edited lines before applying changes.
+- **Atomic safety**: Invalid or broken translations are rejected with actionable diagnostics naming the offending row without modifying the open project.
+- **Single-step undo**: Applied translation imports undo completely in a single step.
+
+### Organizing & Graph Navigation
+
+- **Destination search & jump**: Pick link destinations by searching scene titles or IDs, and jump directly along connections.
+- **Outline filtering**: Filter the outline by speaker, tag, or diagnostic issue, combined with text search.
+- **Multi-scene selection**: Select several scenes with Ctrl/Cmd-click, Shift-click, Shift-drag, or Ctrl/Cmd+A, then move them together with one Undo step.
+- **Copy & paste scenes**: Copy and paste selected scene clusters with Ctrl/Cmd+C / Ctrl/Cmd+V; internal links between pasted scenes are remapped automatically.
+- **Groups & chapters**: Organize scenes into named groups or chapters, and filter the outline by group.
+- **Minimap**: Toggle an interactive minimap with Ctrl/Cmd+Shift+M, and pan the graph with Alt+arrows.
+- **Connection emphasis**: Selected scenes' connections are highlighted and colored so you can follow paths effortlessly.
+
+### Testing, Simulation & Exports
+
+- **Virtualized script view**: Converted the readable Script view to a virtualized `ListBox` with lightweight row projection, making switching instantaneous on 1,000–10,000 scene stories and releasing memory when returning to the graph.
+- **Runtime companion export**: File → Export runtime companion… creates a self-contained runtime payload (`dialogue-machine.website.v1`) with seed and maximum operation limits for website and headless integrations.
+- **Saved test scenarios**: Save named test scenarios with starting values, seed, path recordings, and expected ending/event assertions.
+- **Scenario coverage & dead-end analysis**: Replay scenarios and view visited scenes and choices highlighted directly on the graph, and detect condition combinations that leave the player stranded.
+- **Image & Markdown exports**: Export full-story PNG graphics with custom scaling, or readable Markdown scripts with optional logic and writer's notes.
+
+### Safety & Platform Distribution
+
+- **Conflict-safe saving**: Warns before Save overwrites changes made outside the app, offering compare, reload, save a copy, or cancel.
+- **Crash & unsaved recovery**: Automatically creates recovery baselines every 10 seconds and restores unsaved work on launch.
+- **Portable Windows release**: Download the self-contained win-x64 ZIP, extract all files, and run `DialogueMachine.exe`. The .NET runtime is bundled; no install or browser required.
+- **Cross-platform continuous verification**: Headless regression suites and self-contained builds continuously verified in CI for Windows (x64), Linux (x64), and macOS (ARM64).
+
 ## 1.2.0
 
 ### Writing
