@@ -69,6 +69,37 @@ public sealed partial class MainWindow
             var actions = new WrapPanel(); foreach (var button in new[] { show, rename, delete }) actions.Children.Add(button);
             rows.Children.Add(Ui.Card(Ui.Stack(Ui.Field(textVariable ? "{" + key + "}" : key, input), actions), 12));
         }
+        async Task RenameSpeaker(string speaker)
+        {
+            var next = await Ui.Prompt(window!, "Rename speaker", $"Rename speaker ‘{speaker}’. All matching scenes and templates will update when you apply changes.", speaker, preferences.Scale);
+            if (next is null) return;
+            try { VariableStore.RenameSpeaker(draft, speaker, next); Populate(); }
+            catch (ArgumentException ex) { await Ui.Ask(window!, "Cannot rename speaker", ex.Message, "Close"); }
+        }
+        async Task ShowSpeakerReferences(string speaker)
+        {
+            var references = VariableStore.SpeakerReferences(draft, speaker);
+            var list = Ui.Stack(Ui.Text(speaker, 22), Ui.Text($"{references.Count} {(references.Count == 1 ? "scene" : "scenes")}. Changes apply together when you choose Apply changes.", 12, true));
+            foreach (var reference in references)
+            {
+                var scene = reference.IsTemplate ? null : draft.ListOfCharacterStates.FirstOrDefault(s => s.State == reference.StateId);
+                list.Children.Add(Ui.Text((scene is null ? reference.StateId : (scene.Title ?? scene.State) + " [" + reference.StateId + "]") + " · " + reference.Field, 13));
+            }
+            Window? details = null; list.Children.Add(Ui.Button("Close", () => details!.Close())); list.Margin = new Thickness(24);
+            details = Ui.Dialog(window!, "Speaker references", new ScrollViewer { Content = list }, 580, 450, preferences.Scale);
+            await details.ShowDialog(window!);
+        }
+        void SpeakerCard(string speaker)
+        {
+            var references = VariableStore.SpeakerReferences(draft, speaker);
+            var rename = Ui.AsyncButton("Rename…", () => RenameSpeaker(speaker), "subtle");
+            AutomationProperties.SetName(rename, "Rename " + speaker);
+            var show = Ui.AsyncButton($"{references.Count} {(references.Count == 1 ? "scene" : "scenes")}", () => ShowSpeakerReferences(speaker), "subtle");
+            AutomationProperties.SetName(show, "References for " + speaker);
+            show.IsEnabled = references.Count > 0;
+            var actions = new WrapPanel(); foreach (var button in new[] { show, rename }) actions.Children.Add(button);
+            rows.Children.Add(Ui.Card(Ui.Stack(Ui.Text(speaker, 16, true), actions), 12));
+        }
         void Populate()
         {
             rows.Children.Clear(); var filter = search.Text ?? "";
@@ -91,6 +122,10 @@ public sealed partial class MainWindow
                 if (!VariableStore.ValidTextId(id) || draft.TextVariables.ContainsKey(id) || draft.InitialVariables.ContainsKey(id)) { await Ui.Ask(window!, "Choose another text ID", "Use a unique text ID made of letters, digits, dots, underscores or hyphens.", "Close"); return; }
                 draft.TextVariables[id] = ""; search.Text = ""; Populate();
             }));
+            rows.Children.Add(Ui.Text("Scene speakers", 19));
+            rows.Children.Add(Ui.Text("Rename a speaker across all scenes and templates in this project.", 12, true));
+            foreach (var speaker in VariableStore.DiscoverSpeakers(draft).Where(sp => sp.Contains(filter, StringComparison.OrdinalIgnoreCase)))
+                SpeakerCard(speaker);
         }
         search.TextChanged += (_, _) => Populate(); Populate();
         var content = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"), Margin = new Thickness(24) };

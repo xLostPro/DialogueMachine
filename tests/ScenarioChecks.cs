@@ -120,6 +120,8 @@ internal static class ScenarioChecks
         check(rename.PlaytestScenarios.All(s => ScenarioReplay.Run(rename, s).Passed) && rename.PlaytestScenarios[0].StartStateId == "new_arrival", "safe scene renames rebind scenario starts, valid steps, destinations and ending assertions");
         VariableStore.Rename(rename, "aff:trust", "aff:rapport"); VariableStore.Rename(rename, "player_name", "hero_name", true);
         check(rename.PlaytestScenarios.All(s => ScenarioReplay.Run(rename, s).Passed) && rename.PlaytestScenarios[0].NumericOverrides.ContainsKey("aff:rapport") && rename.PlaytestScenarios[0].TextOverrides.ContainsKey("hero_name"), "safe variable renames preserve scenarios and semantic reference signatures");
+        VariableStore.RenameSpeaker(rename, "Keeper", "Lighthouse Keeper");
+        check(rename.PlaytestScenarios.All(s => ScenarioReplay.Run(rename, s).Passed) && rename.ListOfCharacterStates.Count(s => s.Speaker == "Lighthouse Keeper") == 3, "safe speaker renames preserve playtest scenarios and semantic reference signatures");
         throws(() => VariableStore.Delete(rename, "aff:rapport"), "scenario overrides and assertions protect variable definitions from deletion");
         var staleRename = ProjectStore.Clone(project); staleRename.ListOfCharacterStates[0].Text = "Already changed"; DialogueEngine.Rename(staleRename, staleRename.ListOfCharacterStates[0], "new_arrival");
         check(ScenarioReplay.Run(staleRename, staleRename.PlaytestScenarios[0]).Diagnostics.Any(d => d.Code == "ChangedStep"), "safe renames do not accidentally heal already-stale recordings");

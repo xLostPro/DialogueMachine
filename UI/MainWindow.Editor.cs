@@ -31,10 +31,28 @@ public sealed partial class MainWindow
         input.TextChanged += (_, _) => { var current = input.Text ?? ""; if (current != previous) { previous = current; apply(current); Edited(); } };
         input.LostFocus += (_, _) => Commit(); return input;
     }
+    private AutoCompleteBox SpeakerInput(string current, Action<string> apply)
+    {
+        var input = new AutoCompleteBox
+        {
+            Text = current,
+            ItemsSource = VariableStore.DiscoverSpeakers(project),
+            MinimumPrefixLength = 0,
+            FilterMode = AutoCompleteFilterMode.Contains,
+            IsTextCompletionEnabled = false,
+            PlaceholderText = "Character name",
+            PlaceholderForeground = Ui.Brush("Muted")
+        };
+        AutomationProperties.SetName(input, "Speaker");
+        var previous = current;
+        input.TextChanged += (_, _) => { var val = input.Text ?? ""; if (val != previous) { previous = val; apply(val); Edited(); } };
+        input.LostFocus += (_, _) => Commit();
+        return input;
+    }
     private void BuildContentEditor(DialogueState s)
     {
         Editor.Children.Add(Ui.Field("Scene title", EditText(s.Title, v => s.Metadata["title"] = v)));
-        Editor.Children.Add(Ui.Field("Speaker", EditText(s.Speaker, v => s.Metadata["speaker"] = v)));
+        Editor.Children.Add(Ui.Field("Speaker", SpeakerInput(s.Speaker, v => s.Metadata["speaker"] = v)));
         var narrative = EditText(s.Text, v => s.Text = v, true); narrative.MinHeight = 175;
         Avalonia.Automation.AutomationProperties.SetName(narrative, "Dialogue text");
         AutomationProperties.SetHelpText(narrative, "One dialogue page per line. Supports bold, italic, underline, colour and inline conditions.");

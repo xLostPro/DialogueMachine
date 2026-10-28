@@ -148,4 +148,38 @@ public static class VariableStore
         if (References(p, key, textVariable).Count > 0) throw new ArgumentException("Remove this variable's references before deleting it, or rename it to update them together.");
         if (textVariable) p.TextVariables.Remove(key); else p.InitialVariables.Remove(key);
     }
+
+    public static IReadOnlyList<string> DiscoverSpeakers(DialogueProject p)
+        => p.ListOfCharacterStates
+            .Select(s => s.Speaker)
+            .Where(sp => !string.IsNullOrWhiteSpace(sp))
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToList();
+
+    public static List<VariableReference> SpeakerReferences(DialogueProject p, string speaker)
+    {
+        var references = new List<VariableReference>();
+        foreach (var s in p.ListOfCharacterStates)
+            if (s.Speaker == speaker) references.Add(new(s.State, "Speaker"));
+        foreach (var t in p.SceneTemplates)
+            if (t.Scene.Speaker == speaker) references.Add(new("Scene template: " + t.Name, "Speaker", true));
+        return references;
+    }
+
+    public static void RenameSpeaker(DialogueProject p, string oldSpeaker, string newSpeaker)
+    {
+        if (string.IsNullOrWhiteSpace(oldSpeaker)) throw new ArgumentException("Existing speaker name cannot be blank.");
+        var trimmed = newSpeaker?.Trim() ?? "";
+        if (string.IsNullOrWhiteSpace(trimmed)) throw new ArgumentException("Speaker name cannot be blank.");
+        var references = SpeakerReferences(p, oldSpeaker);
+        if (references.Count == 0) throw new ArgumentException($"Speaker ‘{oldSpeaker}’ is not used in this project.");
+        if (oldSpeaker == trimmed) return;
+        var rebind = ScenarioStore.CaptureValidReferences(p);
+        foreach (var s in p.ListOfCharacterStates)
+            if (s.Speaker == oldSpeaker) s.Metadata["speaker"] = trimmed;
+        foreach (var t in p.SceneTemplates)
+            if (t.Scene.Speaker == oldSpeaker) t.Scene.Metadata["speaker"] = trimmed;
+        rebind();
+    }
 }
