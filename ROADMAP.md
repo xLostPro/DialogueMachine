@@ -4,9 +4,17 @@
 
 ## Now
 
-1. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
+1. **Engine integration (Unity → Unreal → Godot).** See [Engines/CONTRACT.md](Engines/CONTRACT.md).
+   - Phase 1: Shared C# runtime + conformance fixtures. Done when: the harness passes, fixtures are checked in, desktop playtest behaviour is unchanged, and `Engines/Conformance/` has ≥ 14 cases.
+   - Phase 2: Data pipeline in Dialogue Machine. Done when: a writer can press Save and see the engine-side file update without any further steps.
+   - Phase 3: Live link (localhost WebSocket bridge). Done when: a scripted client sees story updates on save, and a scripted runner's progress is tracked live on the graph with the trail and variables shown.
+   - Phase 4: Unity (priority 1). Done when: the harness and conformance pass, the package compiles in Unity 2022.3, and a manual check works.
+   - Phase 5: Unreal (priority 2). Done when: all fixtures pass in the UE automation test, and the manual checklist is done.
+   - Phase 6: Godot (priority 3). Done when: the Godot CI job is green, and the manual live-link checklist is in the PR.
+   - Phase 7: Release wiring for all engines. Done when: release packaging and version synchronization checks pass.
+2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
-2. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
+3. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
    - Split `tests/Program.cs` (136 KB) into area files like the existing `tests/*Checks.cs`.
    - Move `MainWindow` panes into their own views as they're touched.
    - Decide whether saved test scenarios earn their size (~120 KB of code and tests). Keep them if real use relies on them; otherwise remove them.
@@ -20,7 +28,7 @@
 
 ## Out of scope
 
-Accounts, cloud sync, collaboration, auto-update, and engine-specific runtime adapters. The website JSON export is the integration point.
+Accounts, cloud sync, collaboration, and auto-update. The website JSON export is the integration point.
 
 ## Done
 
