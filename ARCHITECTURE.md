@@ -23,11 +23,14 @@ Core/                       Class library with no UI dependency
   ScenarioReplay.cs         Scenario replay, assertions, coverage, dead-end analysis
   StoryTestCommand.cs       CLI: validate / replay
   Templates.cs              Blank and example stories
+  LiveLink/                 Localhost WebSocket bridge server
 UI/                         Avalonia views; MainWindow is split by area (Files, Editor, Search, ...)
   GraphCanvas.cs            Graph drawing and mouse/keyboard interaction
   GraphMinimap.cs           Minimap
   GraphImageExport.cs       Full-story PNG export
   PlaytestWindow.cs         Playtest player
+Runtime/                    Shared C# dialogue runner library (netstandard2.1, C# 9)
+Engines/                    Engine packages (Unity, Unreal, Godot), conformance fixtures and contract
 CLI/                        Console entry point; references Core only
 tests/                      Executable harness: Core checks plus headless UI checks and screenshots
 Packaging/, build.*         Self-contained publishing, Windows smoke test, release ZIP
