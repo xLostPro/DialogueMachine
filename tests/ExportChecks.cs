@@ -96,6 +96,69 @@ internal static class ExportChecks
         throws(() => GraphImageExport.Plan(bad), "nonfinite scene geometry is rejected without editor mutation");
         var ending = Templates.Blank(); ending.ListOfCharacterStates.Add(Templates.Scene("[EXIT]", "Reserved scene", "Guide", "", 1000, 0));
         check(GraphImageExport.Plan(ending).WorldBounds.Right == 1000 + GraphGeometry.NodeWidth + GraphImageExport.Padding, "intentional endings do not draw connections to repairable reserved-ID scenes");
+
+        // Runtime export slug helper
+        check(RuntimeExport.Slug("Lighthouse Keeper") == "lighthouse-keeper", "slug converts spaces to hyphens and lowercases");
+        check(RuntimeExport.Slug("My_Story-123!") == "my_story-123", "slug preserves underscores, hyphens and alphanumeric characters");
+        check(RuntimeExport.Slug("   ") == "story", "empty or whitespace name defaults to story slug");
+
+        // Workspace preferences engine export folder
+        var prefs = new WorkspacePreferences();
+        var projPath = Path.Combine(output, "my-story.dialogue.json");
+        var engFolder = Path.Combine(output, "Assets", "Dialogues");
+        WorkspaceStore.SetEngineExportFolder(prefs, projPath, engFolder);
+        check(WorkspaceStore.GetEngineExportFolder(prefs, projPath) == Path.GetFullPath(engFolder), "engine export folder is recorded and retrieved by full path");
+        WorkspaceStore.SetEngineExportFolder(prefs, projPath, null);
+        check(WorkspaceStore.GetEngineExportFolder(prefs, projPath) is null, "clearing engine export folder removes entry");
+        WorkspaceStore.SetEngineExportFolder(prefs, projPath, engFolder);
+        WorkspaceStore.Forget(prefs, projPath);
+        check(WorkspaceStore.GetEngineExportFolder(prefs, projPath) is null, "forgetting project removes its engine export folder");
+
+        // CLI export-runtime
+        var cliStory = Templates.Blank();
+        cliStory.ProjectName = "CLI Handoff";
+        var cliProjPath = Path.Combine(output, "cli-valid.dialogue.json");
+        ProjectStore.AtomicWrite(cliProjPath, ProjectStore.Serialize(cliStory));
+        var cliOutPath = Path.Combine(output, "cli-out.runtime.json");
+        if (File.Exists(cliOutPath)) File.Delete(cliOutPath);
+
+        (int Exit, string Json) Cli(params string[] args)
+        {
+            using var writer = new StringWriter(System.Globalization.CultureInfo.InvariantCulture);
+            var exit = StoryTestCommand.Run(args, writer);
+            var text = writer.ToString();
+            using var parsed = JsonDocument.Parse(text);
+            check(parsed.RootElement.GetProperty("ExitCode").GetInt32() == exit, "CLI export-runtime exit code matches JSON output");
+            return (exit, text);
+        }
+
+        var (validExit, validJson) = Cli("export-runtime", cliProjPath, cliOutPath);
+        check(validExit == 0 && File.Exists(cliOutPath), "CLI export-runtime returns exit code 0 and creates file");
+        var expectedHandoff = RuntimeExport.Create(ProjectStore.Load(cliProjPath), 0, 1000);
+        check(File.ReadAllText(cliOutPath) == RuntimeExport.Serialize(expectedHandoff), "CLI export equals RuntimeExport.Serialize");
+
+        // Options: seed and max-operations
+        var (optExit, _) = Cli("export-runtime", cliProjPath, cliOutPath, "--seed", "42", "--max-operations", "500");
+        check(optExit == 0, "CLI export-runtime accepts --seed and --max-operations");
+        var optHandoff = RuntimeExport.Create(ProjectStore.Load(cliProjPath), 42, 500);
+        check(File.ReadAllText(cliOutPath) == RuntimeExport.Serialize(optHandoff), "CLI export with options equals RuntimeExport.Serialize with matching options");
+
+        // Invalid story leaves existing file intact and returns exit code 1
+        var invalidStory = Templates.Blank();
+        invalidStory.ListOfCharacterStates[0].DefaultNextId = "non_existent_scene";
+        var invalidProjPath = Path.Combine(output, "cli-invalid.dialogue.json");
+        ProjectStore.AtomicWrite(invalidProjPath, ProjectStore.Serialize(invalidStory));
+        var sentinelContent = File.ReadAllText(cliOutPath);
+        var (invalidExit, invalidJsonReport) = Cli("export-runtime", invalidProjPath, cliOutPath);
+        check(invalidExit == 1 && invalidJsonReport.Contains("non_existent_scene"), "CLI export-runtime reports validation errors with exit code 1");
+        check(File.ReadAllText(cliOutPath) == sentinelContent, "an invalid story leaves the old file intact");
+
+        // Bad input: missing arguments or same paths return exit code 2
+        var (badExit1, _) = Cli("export-runtime", cliProjPath);
+        var (badExit2, _) = Cli("export-runtime", cliProjPath, cliProjPath);
+        var (badExit3, _) = Cli("export-runtime", Path.Combine(output, "missing.json"), cliOutPath);
+        check(badExit1 == 2 && badExit2 == 2 && badExit3 == 2, "CLI export-runtime returns exit code 2 on bad arguments or missing files");
+
         check(ProjectStore.Serialize(story) == before, "both export services preserve complete project JSON, groups and unknown-field/history inputs");
     }
 
@@ -186,6 +249,7 @@ internal static class ExportChecks
         public Task<string?> OpenAsync(Window owner) => Task.FromResult<string?>(null);
         public Task<string?> SaveAsync(Window owner, string suggestedName) => Task.FromResult<string?>(null);
         public Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension) => Task.FromResult(Paths.Count > 0 ? Paths.Dequeue() : null);
+        public Task<string?> PickFolderAsync(Window owner, string title) => Task.FromResult<string?>(null);
     }
     private static T Named<T>(Window window, string name) where T : Control => window.GetVisualDescendants().OfType<T>().Single(c => c.Name == name);
     private static void Press(Button button) { button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
