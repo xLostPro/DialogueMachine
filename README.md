@@ -66,6 +66,20 @@ Dark, Light and High contrast themes and 100/115/130% interface sizes are under 
 - Unsaved work is copied to a recovery file every 10 seconds and offered on the next start.
 - Settings, recent files and recovery copies live in `%LOCALAPPDATA%/DialogueMachine` on Windows (the .NET `LocalApplicationData` folder elsewhere). The app makes no network calls.
 
+## Unity
+
+Dialogue Machine includes an official package for Unity (2022.3 LTS and Unity 6):
+
+- **Install via UPM:** In Unity's Package Manager, choose **Add package from git URL...** and enter:
+  ```text
+  https://github.com/xLostPro/DialogueMachine.git?path=/Engines/Unity/com.xlostpro.dialoguemachine#v1.3.0
+  ```
+- **Importing:** Point Dialogue Machine's auto-export folder inside your Unity project's `Assets/` directory. Unity's `ScriptedImporter` automatically creates a `DialogueAsset` for each `*.runtime.json` file on change.
+- **Runner:** Add `DialogueRunnerBehaviour` to a GameObject and assign the `DialogueAsset`. It exposes C# and Unity events (`OnLine`, `OnChoices`, `OnAction`, `OnEnded`) and supports custom `IDialogueVariables` providers.
+- **Presentation:** Add `DefaultDialogueView` to build a clean UI Toolkit conversation panel entirely in code with typewriter effects and keyboard/gamepad focus navigation. Or implement `IDialogueView` for custom UI.
+- **Events & Hooks:** Attach `DialogueEventRouter` to route dialogue `Event` and `Script` actions to `UnityEvent` listeners, and handle `Shop` scenes with `onShop`.
+- **Live Link:** Open **Window → Dialogue Machine → Live Link**. When the bridge is active in Dialogue Machine, edits push instantly to your asset and live runners, and running gameplay is tracked on the graph in DM's **Follow** pane.
+
 ## Build packages
 
 ```powershell

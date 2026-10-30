@@ -148,6 +148,27 @@ jobs:
           retention-days: 3
           overwrite: true
 
+  unity:
+    name: Unity EditMode tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+    if: ${{ env.UNITY_LICENSE != '' || secrets.UNITY_LICENSE != '' }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run Unity EditMode tests
+        uses: game-ci/unity-test-runner@32e57712352b500e17974b245a6dce9e11a73213 # v4.4.0
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: '2022.3.40f1'
+          testMode: EditMode
+          projectPath: .
+
   release:
     name: Publish GitHub Release
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')

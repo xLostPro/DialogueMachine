@@ -18,6 +18,7 @@ internal static class RuntimeChecks
         foreach (var (name, json) in files) { Replay(name, json, check); check(true, $"shared runner matches conformance fixture {name}"); }
         MiniJsonChecks(check, throws);
         RunnerChecks(check, throws);
+        UnityPackageChecks(check, throws);
     }
 
     private static void Replay(string name, string json, Action<bool, string> check)
@@ -132,5 +133,26 @@ internal static class RuntimeChecks
         saved.Start(); saved.RestoreState(endedSave);
         check(saved.IsEnded && saved.CurrentSceneId is null, "an ended conversation restores as ended");
         throws(() => saved.RestoreState("""{"sceneId":"missing"}"""), "restoring into a missing scene is refused");
+    }
+
+    private static void UnityPackageChecks(Action<bool, string> check, Action<Action, string> throws)
+    {
+        var pkgPath = "Engines/Unity/com.xlostpro.dialoguemachine/package.json";
+        check(File.Exists(pkgPath), "Unity package.json exists");
+        var pkg = JsonNode.Parse(File.ReadAllText(pkgPath))!.AsObject();
+        check(pkg["name"]?.GetValue<string>() == "com.xlostpro.dialoguemachine", "Unity package name is com.xlostpro.dialoguemachine");
+        check(pkg["unity"]?.GetValue<string>() == "2022.3", "Unity package targets Unity 2022.3");
+        var csproj = File.ReadAllText("DialogueMachine.csproj");
+        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>([^<]+)</Version>");
+        var expectedVersion = match.Success ? match.Groups[1].Value : "1.3.0";
+        check(pkg["version"]?.GetValue<string>() == expectedVersion, "Unity package version matches DialogueMachine.csproj");
+
+        // RichText checks
+        check(DialogueMachine.Runtime.Unity.RichText.ToUnity(null) == "", "RichText converts null to empty");
+        check(DialogueMachine.Runtime.Unity.RichText.ToUnity("[b]bold[/b] [i]italic[/i] [u]underline[/u]") == "<b>bold</b> <i>italic</i> <u>underline</u>", "RichText converts basic tags");
+        check(DialogueMachine.Runtime.Unity.RichText.ToUnity("[colour=#79DFC8]colored[/colour]") == "<color=#79DFC8>colored</color>", "RichText converts colour tag");
+        check(DialogueMachine.Runtime.Unity.RichText.ToUnity("[color]stay[/color]") == "[color]stay[/color]", "RichText leaves [color] unchanged");
+        check(DialogueMachine.Runtime.Unity.RichText.ToUnity("x < 5 and y > 3") == "x <\u200B 5 and y > 3", "RichText escapes raw < without altering >");
+        check(DialogueMachine.Runtime.Unity.RichText.ToUnity("<b>already html</b>") == "<\u200Bb>already html<\u200B/b>", "RichText escapes existing html tags so only bracket markup becomes tags");
     }
 }

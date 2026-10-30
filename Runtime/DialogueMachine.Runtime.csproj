@@ -7,5 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Shared/**/*.cs" />
+    <Compile Include="../Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/RichText.cs" />
   </ItemGroup>
 </Project>

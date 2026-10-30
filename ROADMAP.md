@@ -8,7 +8,7 @@
    - Phase 1: Shared C# runtime + conformance fixtures. Done.
    - Phase 2: Data pipeline in Dialogue Machine. Done.
    - Phase 3: Live link (localhost WebSocket bridge). Done.
-   - Phase 4: Unity (priority 1). Done when: the harness and conformance pass, the package compiles in Unity 2022.3, and a manual check works.
+   - Phase 4: Unity (priority 1). Done.
    - Phase 5: Unreal (priority 2). Done when: all fixtures pass in the UE automation test, and the manual checklist is done.
    - Phase 6: Godot (priority 3). Done when: the Godot CI job is green, and the manual live-link checklist is in the PR.
    - Phase 7: Release wiring for all engines. Done when: release packaging and version synchronization checks pass.
