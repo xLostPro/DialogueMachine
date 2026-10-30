@@ -12,6 +12,20 @@ namespace DialogueMachine.Editor.Tests
     {
         private static string FindConformanceFolder()
         {
+            try
+            {
+                var pkgInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(ConformanceTests).Assembly);
+                if (pkgInfo != null && !string.IsNullOrEmpty(pkgInfo.resolvedPath))
+                {
+                    var relativePath = Path.GetFullPath(Path.Combine(pkgInfo.resolvedPath, "../../Conformance"));
+                    if (Directory.Exists(relativePath) && Directory.GetFiles(relativePath, "*.json").Length > 0)
+                    {
+                        return relativePath;
+                    }
+                }
+            }
+            catch { }
+
             var candidates = new[]
             {
                 Path.GetFullPath("Engines/Conformance"),

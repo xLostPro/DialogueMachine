@@ -244,6 +244,16 @@ namespace DialogueMachine.Runtime.Unity
 #endif
         }
 
+        public static string GetObjectId(UnityEngine.Object obj)
+        {
+            if (obj == null) return string.Empty;
+#if UNITY_6000_6_OR_NEWER
+            return obj.GetEntityId().ToString();
+#else
+            return obj.GetInstanceID().ToString();
+#endif
+        }
+
         public Dictionary<string, int> GetCurrentNumericVariables()
         {
             var result = new Dictionary<string, int>(StringComparer.Ordinal);
@@ -292,7 +302,7 @@ namespace DialogueMachine.Runtime.Unity
 
                     var payload = new Dictionary<string, object>
                     {
-                        ["runnerId"] = runner.GetInstanceID().ToString(),
+                        ["runnerId"] = GetObjectId(runner),
                         ["runnerName"] = runner.gameObject.name,
                         ["projectName"] = runner.Story != null ? runner.Story.ProjectName : "",
                         ["storySha256"] = runner.Story != null ? runner.Story.Sha : "",

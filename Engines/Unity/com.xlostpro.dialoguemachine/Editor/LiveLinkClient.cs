@@ -299,10 +299,16 @@ namespace DialogueMachine.Editor
                         mainThreadQueue.Enqueue(() =>
                         {
                             if (string.IsNullOrEmpty(key)) return;
+#if UNITY_6000_6_OR_NEWER
+                            var runners = UnityEngine.Object.FindObjectsByType<DialogueRunnerBehaviour>();
+#elif UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
                             var runners = UnityEngine.Object.FindObjectsByType<DialogueRunnerBehaviour>(FindObjectsSortMode.None);
+#else
+                            var runners = UnityEngine.Object.FindObjectsOfType<DialogueRunnerBehaviour>();
+#endif
                             foreach (var runner in runners)
                             {
-                                if (runnerId == null || runner.GetInstanceID().ToString() == runnerId)
+                                if (runnerId == null || DialogueRunnerBehaviour.GetObjectId(runner) == runnerId)
                                 {
                                     if (number.HasValue) runner.Variables?.SetNumber(key, number.Value);
                                     if (textVal != null) runner.Variables?.SetText(key, textVal);
@@ -361,7 +367,7 @@ namespace DialogueMachine.Editor
 
             var payload = new Dictionary<string, object>
             {
-                ["runnerId"] = runner.GetInstanceID().ToString(),
+                ["runnerId"] = DialogueRunnerBehaviour.GetObjectId(runner),
                 ["runnerName"] = runner.gameObject.name,
                 ["projectName"] = runner.Story != null ? runner.Story.ProjectName : (ServerProjectName ?? ""),
                 ["storySha256"] = runner.Story != null ? runner.Story.Sha : "",
@@ -382,7 +388,7 @@ namespace DialogueMachine.Editor
 
             var payload = new Dictionary<string, object>
             {
-                ["runnerId"] = runner.GetInstanceID().ToString(),
+                ["runnerId"] = DialogueRunnerBehaviour.GetObjectId(runner),
                 ["type"] = type,
                 ["targetId"] = targetId,
                 ["parameter"] = parameter
