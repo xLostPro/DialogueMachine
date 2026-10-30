@@ -112,6 +112,11 @@ internal static class RuntimeChecks
         runner.Start("second");
         check(runner.CurrentSceneId == "second" && runner.Variables.GetNumber("inv:coin") == 2 && !runner.IsEnded, "starting again resets the runner's own variables at the chosen scene");
         throws(() => runner.Start("missing"), "starting at a missing scene is refused");
+        var startLines = new List<string>(); runner.LineShown += startLines.Add;
+        runner.Start("second", null, new Dictionary<string, int> { ["inv:coin"] = 5, ["aff:trust"] = -3 }, null);
+        check(runner.Variables.GetNumber("inv:coin") == 5 && runner.Variables.GetNumber("aff:trust") == -3 && startLines.Count == 1, "start overrides apply before the first scene resolves");
+        runner.Start("second", null, new Dictionary<string, int> { ["inv:coin"] = -4 }, null);
+        check(runner.Variables.GetNumber("inv:coin") == 0, "start overrides clamp inventory");
 
         var store = new DictionaryVariables(); store.SetNumber("inv:coin", 7);
         var gameOwned = new DialogueRunner(store); gameOwned.Load(Parse(project)); gameOwned.Start();

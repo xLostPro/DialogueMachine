@@ -138,7 +138,7 @@ Each engine adapter implements the same core runner concepts using engine-idioma
 | Member | Unity (C#) | Unreal (C++) | Godot (GDScript) | Description |
 |---|---|---|---|---|
 | Load story | `Load(string handoffJson)` / `Load(Handoff)` | `Load(const FString& HandoffJson)` / `Load(const FDialogueHandoff& Handoff)` | `load_story(handoff_json: String)` / `load_story(handoff: DialogueStory)` | Parses handoff, validates schema version, and retains story. |
-| Start story | `Start(string sceneId = null, int? seed = null)` | `StartDialogue(const FString& SceneId = TEXT(""), int32 Seed = 0)` | `start(scene_id: String = "", seed: Variant = null)` | Resets variables and enters the initial scene. |
+| Start story | `Start(string sceneId = null, int? seed = null, numeric = null, text = null)` | `StartDialogue(const FString& SceneId = TEXT(""), int32 Seed = 0)` | `start(scene_id: String = "", seed: Variant = null)` | Resets variables and enters the initial scene. Optional starting `numeric` / `text` overrides are applied before the first scene resolves (used by `play.from`). |
 | Current scene ID | `CurrentSceneId` (`string`) | `GetCurrentSceneId()` (`FString`) | `current_scene_id` (`String`) | Active scene identifier. |
 | Speaker | `Speaker` (`string`) | `GetSpeaker()` (`FString`) | `speaker` (`String`) | Speaker name of active scene. |
 | Title | `Title` (`string`) | `GetTitle()` (`FString`) | `title` (`String`) | Title of active scene. |

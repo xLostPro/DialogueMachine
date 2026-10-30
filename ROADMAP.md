@@ -14,6 +14,7 @@
    - Phase 7: Release wiring for all engines. Done when: release packaging and version synchronization checks pass.
 2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
+   - Unity headless pass on `Examples/salt-ledger.dialogue.json` (69 scenes) and a scripted live-link session are done; fixed: play-from overrides now apply before the first scene resolves, and the follow pane/Unity window match projects by name slug. Still to do by hand: Engine Export Folder into a Unity project, `DefaultDialogueView`, and the Live Link window with the real app.
 3. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
    - Split `tests/Program.cs` (136 KB) into area files like the existing `tests/*Checks.cs`.
    - Move `MainWindow` panes into their own views as they're touched.

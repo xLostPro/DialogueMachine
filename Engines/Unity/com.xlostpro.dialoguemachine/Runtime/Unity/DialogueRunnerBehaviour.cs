@@ -142,7 +142,7 @@ namespace DialogueMachine.Runtime.Unity
             }
         }
 
-        public void StartDialogue(string sceneId = null, int? dialogueSeed = null)
+        public void StartDialogue(string sceneId = null, int? dialogueSeed = null, IReadOnlyDictionary<string, int> numeric = null, IReadOnlyDictionary<string, string> text = null)
         {
             if (runner == null) InitializeRunner();
             if (story != null && !string.IsNullOrEmpty(story.HandoffJson))
@@ -151,7 +151,7 @@ namespace DialogueMachine.Runtime.Unity
             }
 
             lastChosenChoiceId = null;
-            runner.Start(sceneId, dialogueSeed ?? (seed != 0 ? (int?)seed : null));
+            runner.Start(sceneId, dialogueSeed ?? (seed != 0 ? (int?)seed : null), numeric, text);
             ReportState("started", null);
         }
 

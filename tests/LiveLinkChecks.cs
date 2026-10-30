@@ -214,6 +214,7 @@ internal static class LiveLinkChecks
 
         check(follow.Check(project, "sha") == new LiveFollowStatus(true, null, false), "a matching game gets a highlight and no notice");
         check(follow.Check(project, "newer") is { Highlight: true, Outdated: true, Notice: "Game is on an older version." }, "a different story hash offers Push update");
+        check(follow.Check(new DialogueProject { ProjectName = "STORY" }, "sha") is { Highlight: true, Notice: null }, "a game named after its file still matches the project");
         check(follow.Check(new DialogueProject { ProjectName = "Other" }, "sha") is { Highlight: false, Notice: "Game is running Story" }, "a different project shows what the game runs and highlights nothing");
         follow.Apply(State("step", "not_here"));
         check(follow.Check(project, "sha") is { Highlight: false, Outdated: false } status && status.Notice!.Contains("not_here"), "an unknown scene shows a notice instead of a highlight");

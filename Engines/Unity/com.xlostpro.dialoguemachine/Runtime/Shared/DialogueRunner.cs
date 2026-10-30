@@ -81,11 +81,14 @@ namespace DialogueMachine.Runtime
             handoff = story ?? throw new ArgumentNullException(nameof(story));
         }
 
-        public void Start(string sceneId = null, int? seed = null)
+        public void Start(string sceneId = null, int? seed = null, IReadOnlyDictionary<string, int> numeric = null, IReadOnlyDictionary<string, string> text = null)
         {
             if (handoff == null) throw new InvalidOperationException("Load a story before starting it.");
             if (ownsVariables) store = new DictionaryVariables();
             AddMissingVariables();
+            // Overrides apply before the first scene resolves, like a scenario's starting values.
+            if (numeric != null) foreach (var kv in numeric) store.SetNumber(kv.Key, kv.Key.StartsWith("inv:", StringComparison.Ordinal) ? Math.Max(0, kv.Value) : kv.Value);
+            if (text != null) foreach (var kv in text) store.SetText(kv.Key, kv.Value);
             randomState = DialogueRules.SeedState(seed ?? handoff.Seed);
             scene = null;
             IsEnded = false;
