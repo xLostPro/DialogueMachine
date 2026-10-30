@@ -404,6 +404,7 @@ GraphOrganizationChecks.Core(Check, Throws, output);
 ScenarioChecks.Core(Check, Throws, output);
 ExportChecks.Core(Check, Throws, output);
 ConflictChecks.Core(Check, Throws, output);
+RuntimeChecks.Core(Check, Throws);
 ProjectStore.AtomicWrite(Path.Combine(output,"lighthouse.dialogue.json"), ProjectStore.Serialize(Templates.Harbour()));
 void Capture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using var frame = window.CaptureRenderedFrame() ?? throw new Exception("No rendered frame"); frame.Save(Path.Combine(output,name + ".png"), PngBitmapEncoderOptions.Default); }
 GraphOrganizationChecks.UI(Check, output, Capture);

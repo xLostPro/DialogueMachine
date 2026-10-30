@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>DialogueMachine.Runtime</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Shared/**/*.cs" />
+  </ItemGroup>
+</Project>

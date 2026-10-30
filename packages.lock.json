@@ -198,6 +198,12 @@
         "contentHash": "11YMr7FnAbL83bQmVxlhbIKHvSLxjO81D12Ej0QMSGXMDTxNA9MTOa4MQxx43nv5el/efuPHwzyrj6a5ha2gug=="
       },
       "dialoguemachine.core": {
+        "type": "Project",
+        "dependencies": {
+          "DialogueMachine.Runtime": "[1.0.0, )"
+        }
+      },
+      "dialoguemachine.runtime": {
         "type": "Project"
       }
     }

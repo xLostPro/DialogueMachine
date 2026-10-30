@@ -1,47 +1,22 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
+using DialogueMachine.Runtime;
 
 namespace DialogueMachine.Core;
 
 public static class DialogueEngine
 {
     private static readonly string[] Operators = ["==", "!=", ">", "<", ">=", "<="];
-    public static bool Compare(int actual, string op, int target) => op switch
-    { "==" => actual == target, "!=" => actual != target, ">" => actual > target, "<" => actual < target, ">=" => actual >= target, "<=" => actual <= target, _ => false };
-    public static string Key(string type, string id) => (type == "Inventory" ? "inv:" : "aff:") + id;
+    public static bool Compare(int actual, string op, int target) => DialogueRules.Compare(actual, op, target);
+    public static string Key(string type, string id) => DialogueRules.Key(type, id);
     public static bool RequirementsMet(Choice c, IReadOnlyDictionary<string, int> vars, out string reason)
     {
         foreach (var r in c.Requirements)
-        {
-            if (r.Type is not ("Affinity" or "Inventory") || string.IsNullOrWhiteSpace(r.TargetId) || !int.TryParse(r.Value, out var target))
-            { reason = "This condition is incomplete or invalid."; return false; }
-            var key = Key(r.Type, r.TargetId);
-            var actual = vars.GetValueOrDefault(key);
-            if (!Compare(actual, r.Operator, target)) { reason = $"Requires {key} {r.Operator} {target} · current {actual}"; return false; }
-        }
+            if (!DialogueRules.RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out reason)) return false;
         reason = ""; return true;
     }
     public static IEnumerable<string> DiscoverVariables(DialogueProject p) => VariableStore.DiscoverNumeric(p);
-    public static string ResolveText(string text, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars)
-    {
-        // Match the innermost block first, allowing nested conditions and signed thresholds.
-        var pattern = @"\[if\s+([\w:.\-]+)\s*(==|!=|>=|<=|>|<)\s*(-?\d+)\]((?:(?!\[if\s|\[/if\])[\s\S])*)\[/if\]";
-        for (var pass = 0; pass < 64; pass++)
-        {
-            var changed = false;
-            text = Regex.Replace(text, pattern, m =>
-            {
-                changed = true;
-                var key = m.Groups[1].Value;
-                var value = vars.GetValueOrDefault(key, vars.GetValueOrDefault("inv:" + key, vars.GetValueOrDefault("aff:" + key)));
-                var parts = Regex.Split(m.Groups[4].Value, @"\[else\]", RegexOptions.IgnoreCase);
-                return int.TryParse(m.Groups[3].Value, out var target) && Compare(value, m.Groups[2].Value, target) ? parts[0] : parts.ElementAtOrDefault(1) ?? "";
-            }, RegexOptions.IgnoreCase);
-            if (!changed) break;
-        }
-        return Regex.Replace(text, @"\{([\w:.\-]+)\}", m => textVars.TryGetValue(m.Groups[1].Value, out var value) ? value : vars.TryGetValue(m.Groups[1].Value, out var number) ? number.ToString(CultureInfo.InvariantCulture) : m.Value);
-    }
-    public static string PlainText(string text) => Regex.Replace(text, @"\[/?(?:b|i|u|colour(?:=[^\]]*)?)\]", "", RegexOptions.IgnoreCase);
+    public static string ResolveText(string text, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars) => DialogueRules.ResolveText(text, vars, textVars);
+    public static string PlainText(string text) => DialogueRules.PlainText(text);
     public static List<Diagnostic> Validate(DialogueProject p)
     {
         var issues = new List<Diagnostic>();

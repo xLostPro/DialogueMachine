@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="DialogueMachine.csproj" />
   <Project Path="Core/DialogueMachine.Core.csproj" />
+  <Project Path="Runtime/DialogueMachine.Runtime.csproj" />
   <Project Path="tests/DialogueMachine.Tests.csproj" />
   <Project Path="CLI/DialogueMachine.Cli.csproj" />
 </Solution>

@@ -31,15 +31,14 @@ Every engine parser must preserve website compatibility and **ignore unknown fie
 
 - **Scenes:**
   - `State` (`string`): Unique scene identifier. `[EXIT]` is reserved for ending conversations.
-  - `Speaker` (`string`): Speaker label.
   - `Text` (`string`): Authored scene text (supports inline conditionals, variable substitutions, and rich text tags).
   - `SayItAll` (`bool`): If `true`, splits lines into sequential pages. If `false`, chooses one random line.
-  - `Type` (`string`): Scene kind (`"Normal"`, `"Shop"`, etc.).
+  - `Type` (`string`): Scene kind (`"Dialogue"` or `"Shop"`).
   - `ShopData` (`object`): Object with `ShopId` (`string`), used when `Type == "Shop"`.
   - `Choices` (`array`): Response choices.
   - `DefaultNextId` (`string`): Fallback destination scene ID.
   - `DefaultAfterActions` (`array`): Scene exit actions executed when transitioning out.
-  - `Metadata` (`Dictionary<string, string>`): Authoring and game metadata (e.g., portrait, audio, animation tags).
+  - `Metadata` (`Dictionary<string, string>`): Authoring and game metadata (e.g., portrait, audio, animation tags). The speaker is `Metadata["speaker"]` (default `"Character"`) and the title is `Metadata["title"]` (default: the scene ID).
 - **Choices:**
   - `InternalId` (`Guid` / `string`): Stable unique choice identifier.
   - `ButtonText` (`string`): Authored response text (resolves substitutions and conditionals).
@@ -48,12 +47,12 @@ Every engine parser must preserve website compatibility and **ignore unknown fie
   - `Requirements` (`array`): Conditions required to enable the choice.
   - `AfterChoiceActions` (`array`): Actions executed immediately upon selecting this choice.
 - **Requirements:**
-  - `VariableType` (`string`): `"Affinity"` or `"Inventory"`.
+  - `Type` (`string`): `"Affinity"` or `"Inventory"`.
   - `TargetId` (`string`): Variable name (without `aff:` / `inv:` prefix).
   - `Operator` (`string`): `"=="`, `"!="`, `"<"`, `"<="`, `">"`, `">="`.
-  - `Value` (`int`): Threshold value to compare against.
+  - `Value` (`string`): Integer threshold, written as a string. A requirement with any other type, an empty target or a non-integer value is unmet.
 - **Actions:**
-  - `Type` (`string`): `"Affinity"`, `"Inventory"`, `"Event"`, or `"Script"`.
+  - `Type` (`string`): `"Affinity"`, `"Inventory"`, `"Event"`, or `"Script"`. Runners ignore any other type, because newer exports may add them. Core's validation rejects them, so they only reach a runner from a newer exporter.
   - `TargetId` (`string`): Target variable name, event name, or script function identifier.
   - `Amount` (`int`): Value to add (for numeric variables).
   - `Parameter` (`string`): Argument string (for events and scripts).
@@ -82,7 +81,7 @@ Engine runners must mirror Core semantics without deviation:
    - If neither exists, leave `{key}` intact.
 
 ### Pages & Lines
-- Split resolved scene text on `\r` and `\n`, discarding empty or whitespace-only lines.
+- Split resolved scene text on `\r` and `\n`, discarding empty lines. A whitespace-only line is kept as a page.
 - If no lines remain, display `"(No dialogue)"`.
 - If `SayItAll` is `false`:
   - Select one line using SplitMix64 seeded with `(ulong)(long)Seed`.
@@ -110,7 +109,9 @@ Engine runners must mirror Core semantics without deviation:
 
 ### Flow & Navigation
 - `CanContinue`: `true` if `PageIndex < PageCount - 1` (more pages remain), OR if there are zero enabled choices and `DefaultNextId` is non-empty.
-- `Continue()`: advances `PageIndex` if more pages remain; otherwise transitions to `DefaultNextId`.
+- `Continue()`: advances `PageIndex` if more pages remain; otherwise transitions to `DefaultNextId` (running the scene's `DefaultAfterActions`), even when choices are available.
+- `Choices` lists visible choices while pages remain, but `Choose` is refused until the last page. Choice text is resolved rich text, like `CurrentPage`.
+- A destination that names a missing scene is refused before any action runs.
 - `Choose(choiceId)`:
   - Destination is `NextStateId` if non-empty, otherwise `DefaultNextId`.
   - Transition order:
@@ -125,8 +126,8 @@ Engine runners must mirror Core semantics without deviation:
 - `Shop`: Entering a scene with `Type == "Shop"` raises `ShopOpened(ShopId)` using `ShopData.ShopId`.
 
 ### Rich Text Formatting
-- Supported markup tags: `[b]`, `[/b]`, `[i]`, `[/i]`, `[u]`, `[/u]`, `[colour=X]` (or `[color=X]`), `[/colour]`, `[/color]`.
-- `PlainText` strips all bracketed formatting tags case-insensitively.
+- Supported markup tags: `[b]`, `[/b]`, `[i]`, `[/i]`, `[u]`, `[/u]`, `[colour=X]`, `[/colour]`. The spelling `[color]` is not a tag and stays in the text.
+- `PlainText` strips these tags case-insensitively.
 
 ---
 
@@ -152,8 +153,8 @@ Each engine adapter implements the same core runner concepts using engine-idioma
 | Choose response | `Choose(string choiceId)` / `Choose(Guid)` | `Choose(const FGuid& ChoiceId)` | `choose(choice_id: String)` | Selects a choice. Throws if disabled or unknown. |
 | Variables | `Variables` (`IDialogueVariables`) | `GetVariables()` (`IDialogueVariablesInterface*`) | `variables` (`DialogueVariables`) | Access to numeric and text variable store. |
 | Scene metadata | `CurrentMetadata` (`IReadOnlyDictionary<string, string>`) | `GetCurrentMetadata()` (`TMap<FString, FString>`) | `current_metadata` (`Dictionary`) | Read-only scene metadata (portrait, voice, anim). |
-| Hot reload | `ReplaceStory(Handoff)` | `ReplaceStory(const FDialogueHandoff&)` | `replace_story(handoff: DialogueStory)` | Replaces story in place; retains variable state. |
-| State hooks | Events (`LineShown`, `ChoicesShown`, `ActionRaised`, `ShopOpened`, `VariableChanged`, `Ended`) | Delegates (`OnLine`, `OnChoices`, `OnAction`, `OnShop`, `OnVariableChanged`, `OnEnded`) | Signals (`line_shown`, `choices_shown`, `action_raised`, `shop_opened`, `variable_changed`, `ended`) | Callbacks for presentation and game hooks. |
+| Hot reload | `ReplaceStory(Handoff)` | `ReplaceStory(const FDialogueHandoff&)` | `replace_story(handoff: DialogueStory)` | Replaces story in place; retains variable state and re-enters the scene at the clamped page. If the scene is gone, raises a warning and ends. |
+| State hooks | Events (`LineShown`, `ChoicesShown`, `ActionRaised`, `ShopOpened`, `VariableChanged`, `Ended`, `Warning`) | Delegates (`OnLine`, `OnChoices`, `OnAction`, `OnShop`, `OnVariableChanged`, `OnEnded`, `OnWarning`) | Signals (`line_shown`, `choices_shown`, `action_raised`, `shop_opened`, `variable_changed`, `ended`, `warning`) | Callbacks for presentation and game hooks. |
 | Save / Restore | `SaveState()`, `RestoreState(string json)` | `SaveState()`, `RestoreState(const FString& Json)` | `save_state()`, `restore_state(json: String)` | Serializes / deserializes dialogue progress. |
 
 ---
@@ -166,8 +167,8 @@ Save states capture complete mid-dialogue progress as a JSON string:
 {
   "sceneId": "scene_lighthouse_entry",
   "pageIndex": 0,
-  "randomState": 11400714819323198485,
-  "randomLine": "Welcome back.",
+  "randomState": "11400714819323198485",
+  "randomLine": 2,
   "numeric": {
     "aff:trust": 3,
     "inv:lantern": 1
@@ -182,11 +183,21 @@ Save states capture complete mid-dialogue progress as a JSON string:
 Fields:
 - `sceneId` (`string`, nullable): Current scene ID (`null` if conversation ended).
 - `pageIndex` (`int`): Current page index.
-- `randomState` (`uint64` / string numeric): Internal SplitMix64 RNG state.
-- `randomLine` (`string`, nullable): Resolved random line when `SayItAll = false`.
+- `randomState` (`string`): Internal SplitMix64 RNG state as a decimal `uint64`. It's a string because JSON numbers can't hold 64 bits in every engine.
+- `randomLine` (`int`): Index of the line picked for this scene visit, or `-1` if none was picked. Restoring re-resolves the text and keeps this index.
 - `numeric` (`map<string, int>`): Current numeric variables.
 - `text` (`map<string, string>`): Current text variables.
 - `storySha256` (`string`): Hash of the story version when saved.
+
+---
+
+## Conformance Fixtures
+
+`Engines/Conformance/*.json` holds one case per file: `{ name, handoff, inputs, expected }`. `expected[i]` is the snapshot after `inputs[i]`, and its `events` are the ones raised by that input. Core's `Simulation` produces every snapshot, and the harness fails if the files are stale. Regenerate them with:
+
+```powershell
+dotnet run --project CLI/DialogueMachine.Cli.csproj -c Release -- conformance Engines/Conformance
+```
 
 ---
 
