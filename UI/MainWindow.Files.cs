@@ -75,6 +75,7 @@ public sealed partial class MainWindow
         Welcome.IsVisible = false; C<Grid>("WorkspacePanel").IsVisible = true;
         C<Border>("DiagnosticsBorder").IsVisible = false;
         Refresh(); ClearOutlineFilters(); BuildMenu(); UpdateLayout(); Graph.Fit();
+        PublishLiveStory(false); RequestFollowRefresh();
     }
     private async Task<bool> Save(bool saveAs = false)
         => await SaveProjectAsync(saveAs);
@@ -113,7 +114,7 @@ public sealed partial class MainWindow
         var version = copy ? ProjectFiles.SaveCopy(path, snapshot) : ProjectFiles.Save(path, snapshot, expected);
         filePath = path; diskVersion = version; isExample = false; savedSnapshot = snapshot;
         ClearCurrentRecovery(); Remember(path); UpdateStatus(); Status("Saved " + path);
-        TryAutoExportEngineRuntime();
+        TryAutoExportEngineRuntime(); PublishLiveStory();
     }
     private async Task<bool> ConfirmReplace()
     {
@@ -208,7 +209,7 @@ public sealed partial class MainWindow
     public void ChangeAppearance(string theme, double scale = 1)
     {
         preferences.Theme = theme; preferences.Scale = Math.Clamp(scale, 1, 1.3);
-        ApplyAppearance(); WritePreferences(); Refresh(); RefreshWelcome();
+        ApplyAppearance(); WritePreferences(); Refresh(); RefreshWelcome(); RefreshFollow();
     }
     private void WritePreferences()
     {
@@ -241,6 +242,8 @@ public sealed partial class MainWindow
         text = text.Replace("\n\nFiles and recovery", fileSafetyGuide + "\n\nFiles and recovery");
         var scenarioGuide = "\n\nRepeatable story tests\nStory → Test scenarios saves named starting scenes, numeric/text overrides and random seeds. Record path opens the player; Use recorded path transfers the current route to the draft. Back restores random state, values, text, events and trace; Restart resets the seed and overrides. Save scenario applies one undoable definition change; save the project to persist it. Duplicate/Delete are undoable after closing. Add assertions for final numeric/text values, ending scenes and emitted Event/Script/Shop hooks (which stay logged only). Run draft or Run all saved keeps results separate from the story; Cancel run or closing cancels. View/Export results explains failures and configured dead ends. Visited scene marks and response dots show observed coverage without changing selection or exports. Authored edits invalidate results. References use scene IDs and choice identities, detecting changes instead of guessing by label/index; review failures and re-record changed paths. Configuration analysis starts at supplied values, has a 1,000-configuration budget and remains distinct from structural reachability. Neither replay nor analysis proves every cyclic path. Core CLI commands and exit codes are documented in STORY_TESTING.md.";
         text = text.Replace("\n\nFiles and recovery", scenarioGuide + "\n\nFiles and recovery");
+        var liveLinkGuide = "\n\nLive link\nThe Live link button lets engine plugins on this computer connect. It stays off until you turn it on, and websites and other computers can't reach it. Saving sends the story to connected engines; Story → Live edits also sends each valid edit. Stories with errors are never sent, so the game keeps its last good version. Play in engine sends the open story and plays from the selected scene. When a game runs dialogue, the Follow pane shows its line, variables and events, and the graph outlines the current scene with a faded trail behind it. Variable edits there only change the running game. Following never changes your story or Undo history.";
+        text = text.Replace("\n\nFiles and recovery", liveLinkGuide + "\n\nFiles and recovery");
         var panel = Ui.Stack(Ui.Text("Your guide to Dialogue Machine", 26), Ui.Text(text, 14)); panel.Margin = new Thickness(28);
         await Ui.Dialog(this, "Guide & shortcuts", new ScrollViewer { Content = panel }, 690, 740).ShowDialog(this);
     }

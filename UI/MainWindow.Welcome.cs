@@ -37,6 +37,7 @@ public sealed partial class MainWindow
         editTimer.Stop(); hasProject = false; isExample = false;
         ClearScenarioResults();
         project = new(); pendingEdits = false; selected = null; filePath = null; diskVersion = null; history.Reset(project); savedSnapshot = history.CurrentSnapshot;
+        PublishLiveStory(false); RequestFollowRefresh();
         C<Grid>("WorkspacePanel").IsVisible = false; Welcome.IsVisible = true; Welcome.ShowNotice(null);
         Refresh(); BuildMenu(); RefreshWelcome();
         Welcome.FindControl<Button>("NewProjectButton")!.Focus(); return true;

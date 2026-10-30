@@ -25,6 +25,17 @@ public sealed class GraphCanvas : Control
         if (coverage is not null) { visitedScenes.UnionWith(coverage.Scenes); visitedChoices.UnionWith(coverage.Choices); }
         RefreshVisual();
     }
+    private readonly HashSet<string> liveTrail = new(StringComparer.Ordinal);
+    private readonly HashSet<ChoiceCoverage> liveChoices = [];
+    private readonly HashSet<(string From, string To)> liveLinks = [];
+    public string? LiveScene { get; private set; }
+    public IReadOnlySet<string> LiveTrail => liveTrail;
+    public void SetLiveFollow(string? scene, IEnumerable<string> trail, IEnumerable<ChoiceCoverage> choices, IEnumerable<(string From, string To)> links)
+    {
+        LiveScene = scene;
+        liveTrail.Clear(); liveTrail.UnionWith(trail); liveChoices.Clear(); liveChoices.UnionWith(choices); liveLinks.Clear(); liveLinks.UnionWith(links);
+        RefreshVisual();
+    }
     private readonly HashSet<DialogueState> selection = [];
     public IReadOnlyList<DialogueState> SelectedScenes => Project.ListOfCharacterStates.Where(selection.Contains).ToList();
     private DialogueState? keyboardScene;
@@ -141,7 +152,7 @@ public sealed class GraphCanvas : Control
     private void DrawLink(DrawingContext dc, DialogueState source, string? targetId, Point start, bool fallback, Dictionary<string, DialogueState> destinations, bool highlighted, Rect? viewport)
     {
         if (targetId is null || !destinations.TryGetValue(targetId, out var target)) return;
-        var highlight = ConnectionHighlight(source, target);
+        var highlight = ConnectionHighlight(source, target) ?? (liveLinks.Contains((source.State, target.State)) ? "GraphLiveTrail" : null);
         if ((highlight is not null) != highlighted) return;
         var end = new Point(target.VisualX, target.VisualY + 35);
         if (viewport is not null && !ConnectionHull(start, end).Intersects(viewport.Value)) return;
@@ -181,6 +192,8 @@ public sealed class GraphCanvas : Control
             dc.DrawRectangle(Ui.Brush("MintInk"), null, new Rect(rect.X + 6, rect.Y + 70, 3, rect.Height - 80));
             DrawText(dc, "✓", new(rect.Right - 24, rect.Y + 12), 12, "MintInk", 18, 18);
         }
+        if (liveTrail.Contains(s.State) && s.State != LiveScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphLiveTrail"), 2), rect.Inflate(3), 13, 13);
+        if (s.State == LiveScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphLive"), 3.5), rect.Inflate(4), 14, 14);
         if (IsFocused && s == keyboardScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphIncoming"), 1.5 / Zoom, new DashStyle([3, 3], 0)), rect.Inflate(5), 13, 13);
         DrawText(dc, (isEntry ? "◆  START  /  " : "●  ") + s.Speaker.ToUpperInvariant(), new(rect.X + 16, rect.Y + 12), 10, isEntry ? "MintInk" : "Muted", 236, 16);
         DrawText(dc, s.Title, new(rect.X + 16, rect.Y + 31), 15, "Ink", 236, 24, true);
@@ -191,6 +204,8 @@ public sealed class GraphCanvas : Control
         {
             if (ExportPlan is null && visitedChoices.Contains(new(s.State, s.Choices[i].InternalId)))
                 dc.DrawEllipse(Ui.Brush("MintInk"), null, new(rect.X + 8, rect.Y + 135 + i * 34), 3, 3);
+            if (liveChoices.Contains(new(s.State, s.Choices[i].InternalId)))
+                dc.DrawEllipse(Ui.Brush("GraphLiveTrail"), null, new(rect.X + 12, rect.Y + 135 + i * 34), 3, 3);
             var y = rect.Y + 120 + i * 34;
             dc.DrawLine(new Pen(Ui.Brush("Line"), 1), new(rect.X + 12, y), new(rect.Right - 12, y));
             var c = s.Choices[i]; var prefix = c.Requirements.Count > 0 ? "◇  " : "↳  ";

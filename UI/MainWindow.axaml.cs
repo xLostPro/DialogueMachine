@@ -51,7 +51,7 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         ReadPreferences();
         history.Reset(project); savedSnapshot = ProjectStore.Serialize(project);
-        WireActions(); WireWelcome(); BuildMenu(); Refresh(); RefreshWelcome();
+        WireActions(); WireWelcome(); WireLiveLink(); BuildMenu(); Refresh(); RefreshWelcome();
         editTimer.Tick += (_, _) => { editTimer.Stop(); Commit(); };
         recoveryTimer.Tick += (_, _) => WriteRecovery(); if (!IsTestMode) recoveryTimer.Start();
         if (args?.Contains("--smoke-test") == true) { WindowStartupLocation = WindowStartupLocation.Manual; Position = new PixelPoint(-5000, -5000); ShowInTaskbar = false; }
@@ -157,7 +157,9 @@ public sealed partial class MainWindow : Window
         var copySelected = Item("Copy selected scenes", CopySelectedScenes); copySelected.IsEnabled = selectedScenes.Count > 0;
         var edit = new MenuItem { Header = "_Edit", ItemsSource = new object[] { Item("_Undo", Undo, "Ctrl+Z"), Item("_Redo", Redo, "Ctrl+Shift+Z"), Item("_Find & replace…", () => _ = ShowFindReplace(), "Ctrl+H"), new Separator(), copySelected, Item("Copy scenes…", () => _ = CopyScenes()), paste, Item("Scene & choice templates…", () => _ = ShowTemplates()), new Separator(), Item("Add scene…", () => _ = AddScene()), Item("_Duplicate scene", DuplicateScene, "Ctrl+D"), Item("Rename scene ID…", () => _ = RenameScene()), Item("Delete scene…", () => _ = DeleteScene()), Item("Set scene as start", SetStart) } };
         var view = new MenuItem { Header = "_View", ItemsSource = new object[] { ProjectItem("Story graph", () => SetView(false)), ProjectItem("Script", () => SetView(true)), ProjectItem("Fit story", Graph.Fit, "Ctrl+0"), ProjectItem(preferences.ShowMinimap ? "Hide minimap" : "Show minimap", ToggleMinimap, "Ctrl+Shift+M"), ProjectItem("Groups & chapters…", () => _ = ShowGroups(), "Ctrl+Shift+G"), ProjectItem("Diagnostics", ToggleProblems), new Separator(), Item("Appearance & accessibility…", () => _ = ShowSettings()) } };
-        var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Test scenarios…", () => _ = ShowScenariosAsync()), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems) } };
+        MenuItem Toggle(string label, bool on, bool enabled, Action action) { var item = Item(label, action); item.ToggleType = MenuItemToggleType.CheckBox; item.IsChecked = on; item.IsEnabled = enabled; return item; }
+        var playEngine = Item("Play in engine", PlayInEngine); playEngine.IsEnabled = liveLink is not null;
+        var story = new MenuItem { Header = "_Story", ItemsSource = new object[] { Item("Play from start", () => _ = Play(), "F5"), Item("Play from selected scene", () => _ = Play(true), "Shift+F5"), Item("Test scenarios…", () => _ = ShowScenariosAsync()), Item("Variables & characters…", () => _ = ShowVariables()), Item("Validate story", ToggleProblems), new Separator(), Toggle("Live link", liveLink is not null, true, () => SetLiveLink(liveLink is null)), Toggle("Live edits", liveEdits, liveLink is not null, () => LiveEdits = !liveEdits), playEngine, Toggle("Follow pane", followPane.IsVisible, liveLink is not null, () => { followPane.IsVisible = !followPane.IsVisible; followHidden = !followPane.IsVisible; RefreshFollow(); BuildMenu(); }) } };
         edit.IsEnabled = hasProject; story.IsEnabled = hasProject;
         var help = new MenuItem { Header = "_Help", ItemsSource = new object[] { Item("Guide & shortcuts", () => _ = ShowHelp(), "F1"), Item("About Dialogue Machine", () => _ = Ui.Ask(this, "Dialogue Machine", "Desktop edition 1.3.0 · Built with C# and Avalonia.\nAn offline workspace for branching stories. Your projects stay on your computer.", "Close")) } };
         C<Menu>("AppMenu").ItemsSource = new object[] { file, edit, view, story, help };
@@ -194,7 +196,7 @@ public sealed partial class MainWindow : Window
         {
             var words = CountWords(selected.Text); wordCount += words - sceneWords.GetValueOrDefault(selected); sceneWords[selected] = words;
         }
-        editTimer.Stop(); editTimer.Start(); UpdateStatus(); Graph.ClearTextLayouts(); Graph.InvalidateVisual(); scriptDirty = true;
+        editTimer.Stop(); editTimer.Start(); UpdateStatus(); Graph.ClearTextLayouts(); Graph.InvalidateVisual(); scriptDirty = true; LiveStoryEdited();
     }
     private void Commit() => Commit(true);
     private void Commit(bool diagnostics, bool force = false)
@@ -208,7 +210,7 @@ public sealed partial class MainWindow : Window
         if (changed)
         {
             ClearScenarioResults();
-            RebuildStatistics(); scriptDirty = true;
+            RebuildStatistics(); scriptDirty = true; LiveStoryEdited();
             if (diagnostics) RefreshDiagnostics();
         }
         UpdateStatus();
@@ -250,7 +252,7 @@ public sealed partial class MainWindow : Window
             if (active == key) selected = scene;
         }
         if (keys.Count > 0) selected ??= project.ListOfCharacterStates.FirstOrDefault(selectedScenes.Contains) ?? project.ListOfCharacterStates.FirstOrDefault();
-        Refresh();
+        Refresh(); LiveStoryEdited();
     }
     private void Refresh()
     {
