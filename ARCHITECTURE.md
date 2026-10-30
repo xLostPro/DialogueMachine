@@ -23,12 +23,13 @@ Core/                       Class library with no UI dependency
   ScenarioReplay.cs         Scenario replay, assertions, coverage, dead-end analysis
   StoryTestCommand.cs       CLI: validate / replay / conformance
   Templates.cs              Blank and example stories
-  LiveLink/                 Localhost WebSocket bridge server
+  LiveLink/                 Localhost WebSocket bridge server and live follow state
 UI/                         Avalonia views; MainWindow is split by area (Files, Editor, Search, ...)
   GraphCanvas.cs            Graph drawing and mouse/keyboard interaction
   GraphMinimap.cs           Minimap
   GraphImageExport.cs       Full-story PNG export
   PlaytestWindow.cs         Playtest player
+  FollowPane.cs             Live follow pane for a running game
 Runtime/                    Project for the shared C# rules and runner (netstandard2.1, C# 9); sources live in the Unity package
 Engines/                    Engine packages (Unity, Unreal, Godot), conformance fixtures and contract
 CLI/                        Console entry point; references Core only
@@ -51,7 +52,7 @@ Core never references Avalonia. The UI uses code-built controls with explicit ca
 
 - All document changes go through `Mutate`, which records one undo entry, so a bulk operation is a single Undo step.
 - History stores complete JSON snapshots (up to 100; older ones Brotli-compressed). Text typing is grouped into one entry after 700 ms or on focus change; a graph drag commits once on release.
-- Selection, filters, pan/zoom and minimap visibility are UI state. They never enter the project or the history.
+- Selection, filters, pan/zoom, minimap visibility and live follow are UI state. They never enter the project or the history.
 
 ## Playtest semantics
 

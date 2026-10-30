@@ -7,12 +7,14 @@
           <Border Width="38" Height="38" Background="{DynamicResource Accent}" CornerRadius="11"><TextBlock Text="D" FontWeight="Bold" FontSize="23" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
           <StackPanel Spacing="3"><TextBlock Text="Dialogue Machine" FontWeight="SemiBold" FontSize="17"/><TextBlock Text="NARRATIVE WORKSPACE" Classes="eyebrow" FontSize="9"/></StackPanel>
         </StackPanel>
-        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4" Margin="12,0"><TextBlock x:Name="ProjectTitle" FontWeight="SemiBold" FontSize="17"/><TextBlock x:Name="ProjectSubtitle" Classes="muted" FontSize="12"/></StackPanel>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4" Margin="12,0"><TextBlock x:Name="ProjectTitle" FontWeight="SemiBold" FontSize="17" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="ProjectSubtitle" Classes="muted" FontSize="12" TextTrimming="CharacterEllipsis"/></StackPanel>
         <StackPanel Grid.Column="2" x:Name="ProjectActions" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
           <Button x:Name="HomeButton" Content="Home" Classes="subtle" ToolTip.Tip="Return to the project welcome screen"/>
           <Button x:Name="UndoButton" Content="↶" FontSize="21" ToolTip.Tip="Undo · Ctrl/Cmd+Z" AutomationProperties.Name="Undo"/>
           <Button x:Name="RedoButton" Content="↷" FontSize="21" ToolTip.Tip="Redo · Ctrl/Cmd+Shift+Z" AutomationProperties.Name="Redo"/>
           <Button x:Name="SaveButton" Content="Save project" ToolTip.Tip="Save · Ctrl/Cmd+S"/>
+          <ToggleButton x:Name="LiveLinkButton" Content="Live link" AutomationProperties.Name="Live link" ToolTip.Tip="Let Unity, Unreal or Godot on this computer connect for live updates"/>
+          <Button x:Name="PlayEngineButton" Content="Play in engine" IsVisible="False" ToolTip.Tip="Send the story to connected engines and play from the selected scene"/>
           <Button x:Name="PlayButton" Content="▶  Playtest" Classes="play" FontWeight="SemiBold" ToolTip.Tip="Play from story start · F5"/>
         </StackPanel>
       </Grid>
@@ -75,13 +77,13 @@
       </Grid>
       <GridSplitter Grid.Column="3" ResizeDirection="Columns" Background="Transparent"/>
       <Border Grid.Column="4" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="1,0,0,0">
-        <Grid RowDefinitions="Auto,Auto,*">
+        <Grid x:Name="EditorColumn" RowDefinitions="Auto,Auto,*">
           <StackPanel Margin="22,22,22,16" Spacing="8"><TextBlock Text="SCENE EDITOR" Classes="eyebrow"/><TextBlock x:Name="EditorTitle" FontSize="21" FontWeight="SemiBold" TextWrapping="Wrap"/><TextBlock x:Name="EditorSubtitle" Classes="muted" FontSize="12"/></StackPanel>
           <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="16,0,16,12" Spacing="3"><Button x:Name="ContentTab" Content="Content" Classes="subtle"/><Button x:Name="LogicTab" Content="Logic" Classes="subtle"/><Button x:Name="NotesTab" Content="Notes" Classes="subtle"/></StackPanel>
           <ScrollViewer Grid.Row="2" x:Name="EditorScroll" HorizontalScrollBarVisibility="Disabled"><StackPanel x:Name="EditorPanel" Margin="22,0,22,24" Spacing="12"/></ScrollViewer>
         </Grid>
       </Border>
     </Grid>
-    <Border Grid.Row="3" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="18,6"><Grid ColumnDefinitions="*,Auto,Auto"><TextBlock x:Name="StatusText" FontSize="11" Classes="muted" AutomationProperties.LiveSetting="Polite"/><TextBlock x:Name="StatsText" Grid.Column="1" FontSize="11" Classes="muted" Margin="16,0"/><TextBlock Grid.Column="2" Text="F1  Help" FontSize="11" Classes="muted"/></Grid></Border>
+    <Border Grid.Row="3" Background="{DynamicResource Panel}" BorderBrush="{DynamicResource Line}" BorderThickness="0,1,0,0" Padding="18,6"><Grid ColumnDefinitions="*,Auto,Auto,Auto"><TextBlock x:Name="StatusText" FontSize="11" Classes="muted" AutomationProperties.LiveSetting="Polite"/><TextBlock x:Name="LiveLinkStatus" Grid.Column="1" FontSize="11" Foreground="{DynamicResource GraphLive}" Margin="16,0,0,0" IsVisible="False" AutomationProperties.LiveSetting="Polite"/><TextBlock x:Name="StatsText" Grid.Column="2" FontSize="11" Classes="muted" Margin="16,0"/><TextBlock Grid.Column="3" Text="F1  Help" FontSize="11" Classes="muted"/></Grid></Border>
   </Grid>
 </Window>

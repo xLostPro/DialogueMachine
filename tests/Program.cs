@@ -405,6 +405,7 @@ ScenarioChecks.Core(Check, Throws, output);
 ExportChecks.Core(Check, Throws, output);
 ConflictChecks.Core(Check, Throws, output);
 RuntimeChecks.Core(Check, Throws);
+LiveLinkChecks.Core(Check, Throws, output);
 ProjectStore.AtomicWrite(Path.Combine(output,"lighthouse.dialogue.json"), ProjectStore.Serialize(Templates.Harbour()));
 void Capture(Window window, string name) { Dispatcher.UIThread.RunJobs(); using var frame = window.CaptureRenderedFrame() ?? throw new Exception("No rendered frame"); frame.Save(Path.Combine(output,name + ".png"), PngBitmapEncoderOptions.Default); }
 GraphOrganizationChecks.UI(Check, output, Capture);
@@ -412,6 +413,7 @@ ExportChecks.UI(Check, output, Capture);
 ConflictChecks.UI(Check, output, Capture);
 EditorPerformanceRegressions.Run(Check, output, Capture);
 ScenarioChecks.UI(Check, output, Capture);
+LiveLinkChecks.UI(Check, output, Capture);
 T Find<T>(string name) where T : Control => main.FindControl<T>(name)!;
 void Click(string name) { Find<Button>(name).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
 Check(!main.HasProject && Find<WelcomeView>("Welcome").IsVisible, "startup shows welcome without automatically loading a sample"); Capture(main,"welcome-dark");

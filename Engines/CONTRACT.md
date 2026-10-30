@@ -222,6 +222,7 @@ The live link is a local WebSocket bridge between Dialogue Machine (desktop serv
     - macOS: `~/Library/Application Support/DialogueMachine/livelink.json`
     - Linux: `~/.local/share/DialogueMachine/livelink.json`
   - Payload: `{ "port": 47615, "token": "...", "pid": 1234, "appVersion": "1.3.0", "protocol": 1 }`
+  - The token is a secret. On macOS and Linux only the current user can read the file. A file left by a crash just fails to connect, so treat that like Dialogue Machine not running.
 - **Non-blocking:** Gameplay never stalls on socket operations; sends are fire-and-forget.
 
 ### Message Frame
@@ -240,9 +241,9 @@ One JSON object per text WebSocket frame:
 | Direction | `type` | Payload Fields | Description |
 |---|---|---|---|
 | Engine → DM | `hello` | `token, engine, engineVersion, pluginVersion, protocol, schemaVersion` | Client handshake on connect. |
-| DM → Engine | `welcome` | `appVersion, protocol, schemaVersion, contract, projectName, updateUrl` | Server handshake response. |
-| DM → Engine | `story.updated` | Full `RuntimeHandoff` | Pushed on save / valid live edit. |
-| DM → Engine | `story.invalid` | `diagnostics[]` | Diagnostics when story validation fails. Engine preserves last good story. |
+| DM → Engine | `welcome` | `appVersion, protocol, schemaVersion, contract, projectName, updateUrl` | Server handshake response. `updateUrl` is `null` unless `pluginVersion` is older than `appVersion`. |
+| DM → Engine | `story.updated` | Full `RuntimeHandoff` plus `ProjectName` | Sent on connect, on save, on Push update, before `play.from`, and on each valid edit (500 ms debounce) when Live edits is on. |
+| DM → Engine | `story.invalid` | `diagnostics[]` of `{ stateId, severity, message }` | Diagnostics when story validation fails. Engine preserves last good story. |
 | Engine → DM | `story.request` | `{}` | Requests current story handoff from DM. |
 | DM → Engine | `play.from` | `sceneId, seed, numeric{}, text{}` | Command to start engine playback from a given scene. |
 | Engine → DM | `runtime.state` | `runnerId, runnerName, projectName, storySha256, status, sceneId, pageIndex, choiceId, numeric{}, text{}` | Live follow tracking (`status`: `"started"`, `"step"`, `"ended"`). |
@@ -250,7 +251,9 @@ One JSON object per text WebSocket frame:
 | Engine → DM | `runtime.event` | `runnerId, type, targetId, parameter` | Event/script raised during dialogue execution. |
 | Engine → DM | `editor.reveal` | `sceneId` | Request DM editor to centre and select a scene. |
 | Both | `ping` / `pong` | `{}` | Heartbeat sent every 10 s. Connection closed after 30 s silence. |
-| Both | `error` | `code, message` | Error reporting. |
+| Both | `error` | `code, message` | Error reporting. Server codes: `unauthorized`, `incompatible`, `too-large`. The server closes the connection after sending one. |
+
+`runnerId` is a string, unique within one connection. `runtime.setVariable` sends either `number` or `text`. Every field except `runnerId` and `status` in `runtime.state` is optional. `runtime.state` carries positions, not text, so Dialogue Machine shows the line from the open story.
 
 ---
 
