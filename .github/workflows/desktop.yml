@@ -154,16 +154,15 @@ jobs:
     timeout-minutes: 25
     env:
       UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-    if: ${{ env.UNITY_LICENSE != '' || secrets.UNITY_LICENSE != '' }}
     steps:
       - name: Check out source
+        if: env.UNITY_LICENSE != ''
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Run Unity EditMode tests
+        if: env.UNITY_LICENSE != ''
         uses: game-ci/unity-test-runner@32e57712352b500e17974b245a6dce9e11a73213 # v4.4.0
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         with:
           unityVersion: '2022.3.40f1'
           testMode: EditMode
