@@ -5,7 +5,7 @@ namespace DialogueMachine.Runtime.Unity
     [CreateAssetMenu(fileName = "Story", menuName = "Dialogue Machine/Dialogue Asset")]
     public class DialogueAsset : ScriptableObject
     {
-        [TextArea(3, 20)]
+        [HideInInspector]
         [SerializeField] private string handoffJson = "";
         [SerializeField] private string sha = "";
         [SerializeField] private string projectName = "";
