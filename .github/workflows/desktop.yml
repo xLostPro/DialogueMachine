@@ -91,6 +91,10 @@ jobs:
     name: Verify ${{ matrix.rid }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
+    # An explicit bash shell adds pipefail, so a command piped into tee can fail the step.
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
