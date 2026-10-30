@@ -247,7 +247,7 @@ namespace DialogueMachine.Runtime.Unity
         public static string GetObjectId(UnityEngine.Object obj)
         {
             if (obj == null) return string.Empty;
-#if UNITY_6000_6_OR_NEWER
+#if UNITY_6000_4_OR_NEWER
             return obj.GetEntityId().ToString();
 #else
             return obj.GetInstanceID().ToString();

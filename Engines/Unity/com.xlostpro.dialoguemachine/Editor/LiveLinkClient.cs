@@ -299,7 +299,7 @@ namespace DialogueMachine.Editor
                         mainThreadQueue.Enqueue(() =>
                         {
                             if (string.IsNullOrEmpty(key)) return;
-#if UNITY_6000_6_OR_NEWER
+#if UNITY_6000_4_OR_NEWER
                             var runners = UnityEngine.Object.FindObjectsByType<DialogueRunnerBehaviour>();
 #elif UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
                             var runners = UnityEngine.Object.FindObjectsByType<DialogueRunnerBehaviour>(FindObjectsSortMode.None);
