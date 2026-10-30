@@ -19,6 +19,7 @@ internal static class RuntimeChecks
         MiniJsonChecks(check, throws);
         RunnerChecks(check, throws);
         UnityPackageChecks(check, throws);
+        UnrealPluginChecks(check, throws);
     }
 
     private static void Replay(string name, string json, Action<bool, string> check)
@@ -159,5 +160,26 @@ internal static class RuntimeChecks
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity("[color]stay[/color]") == "[color]stay[/color]", "RichText leaves [color] unchanged");
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity("x < 5 and y > 3") == "x <\u200B 5 and y > 3", "RichText escapes raw < without altering >");
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity("<b>already html</b>") == "<\u200Bb>already html<\u200B/b>", "RichText escapes existing html tags so only bracket markup becomes tags");
+    }
+
+    private static void UnrealPluginChecks(Action<bool, string> check, Action<Action, string> throws)
+    {
+        var upluginPath = "Engines/Unreal/DialogueMachine/DialogueMachine.uplugin";
+        check(File.Exists(upluginPath), "Unreal DialogueMachine.uplugin exists");
+        var uplugin = JsonNode.Parse(File.ReadAllText(upluginPath))!.AsObject();
+        var csproj = File.ReadAllText("DialogueMachine.csproj");
+        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>([^<]+)</Version>");
+        var expectedVersion = match.Success ? match.Groups[1].Value : "1.3.0";
+        check(uplugin["VersionName"]?.GetValue<string>() == expectedVersion, "Unreal plugin VersionName matches DialogueMachine.csproj");
+
+        var ueConformance = "Engines/Unreal/DialogueMachine/Resources/Conformance";
+        check(Directory.Exists(ueConformance), "Unreal plugin Conformance directory exists");
+        var originalFiles = Directory.GetFiles(Path.GetFullPath(Folder), "*.json").ToDictionary(f => Path.GetFileName(f), f => File.ReadAllText(f).Replace("\r\n", "\n"));
+        var ueFiles = Directory.GetFiles(Path.GetFullPath(ueConformance), "*.json").ToDictionary(f => Path.GetFileName(f), f => File.ReadAllText(f).Replace("\r\n", "\n"));
+        check(ueFiles.Keys.Order().SequenceEqual(originalFiles.Keys.Order()), "Unreal plugin has the exact same conformance fixtures");
+        foreach (var (fileName, content) in originalFiles)
+        {
+            check(ueFiles.TryGetValue(fileName, out var ueContent) && ueContent == content, $"Unreal conformance fixture {fileName} matches Engines/Conformance");
+        }
     }
 }

@@ -1,0 +1,169 @@
+{
+  "name": "inventory_clamp_and_saturation",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022drain\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Coin {inv:coin}, big {inv:big}, high {aff:high}, low {aff:low}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022refill\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Inventory\u0022,\n          \u0022TargetId\u0022: \u0022coin\u0022,\n          \u0022Amount\u0022: -5,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Inventory\u0022,\n          \u0022TargetId\u0022: \u0022big\u0022,\n          \u0022Amount\u0022: 10,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Affinity\u0022,\n          \u0022TargetId\u0022: \u0022high\u0022,\n          \u0022Amount\u0022: 10,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Affinity\u0022,\n          \u0022TargetId\u0022: \u0022low\u0022,\n          \u0022Amount\u0022: -10,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022drain\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022refill\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Coin {inv:coin}, big {inv:big}, high {aff:high}, low {aff:low}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Inventory\u0022,\n          \u0022TargetId\u0022: \u0022coin\u0022,\n          \u0022Amount\u0022: 2,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Inventory\u0022,\n          \u0022TargetId\u0022: \u0022coin\u0022,\n          \u0022Amount\u0022: -1,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022refill\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "706e94fb51ed0f8ea1500c100dc48e607aeb27a0aaa39e6899c9160bd5c57909",
+    "StartingScene": "drain",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:high": 2147483646,
+      "aff:low": -2147483647,
+      "inv:big": 2147483646,
+      "inv:coin": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 3
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": -4
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 1
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "drain",
+      "ended": false,
+      "page": "Coin 0, big 2147483646, high 2147483646, low -2147483647.",
+      "plain": "Coin 0, big 2147483646, high 2147483646, low -2147483647.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:high": 2147483646,
+        "aff:low": -2147483647,
+        "inv:big": 2147483646,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "drain",
+      "ended": false,
+      "page": "Coin 3, big 2147483646, high 2147483646, low -2147483647.",
+      "plain": "Coin 3, big 2147483646, high 2147483646, low -2147483647.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:high": 2147483646,
+        "aff:low": -2147483647,
+        "inv:big": 2147483646,
+        "inv:coin": 3
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "drain",
+      "ended": false,
+      "page": "Coin 0, big 2147483646, high 2147483646, low -2147483647.",
+      "plain": "Coin 0, big 2147483646, high 2147483646, low -2147483647.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:high": 2147483646,
+        "aff:low": -2147483647,
+        "inv:big": 2147483646,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "drain",
+      "ended": false,
+      "page": "Coin 1, big 2147483646, high 2147483646, low -2147483647.",
+      "plain": "Coin 1, big 2147483646, high 2147483646, low -2147483647.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:high": 2147483646,
+        "aff:low": -2147483647,
+        "inv:big": 2147483646,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "refill",
+      "ended": false,
+      "page": "Coin 0, big 2147483647, high 2147483647, low -2147483648.",
+      "plain": "Coin 0, big 2147483647, high 2147483647, low -2147483648.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "inv:big": 2147483647,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:high": 2147483647,
+        "aff:low": -2147483648,
+        "inv:big": 2147483647,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}
