@@ -21,7 +21,7 @@ Core/                       Class library with no UI dependency
   GraphGeometry.cs          Node sizes shared by layout and drawing
   PlaytestScenarios.cs      Saved test scenario definitions
   ScenarioReplay.cs         Scenario replay, assertions, coverage, dead-end analysis
-  StoryTestCommand.cs       CLI: validate / replay
+  StoryTestCommand.cs       CLI: validate / replay / conformance
   Templates.cs              Blank and example stories
   LiveLink/                 Localhost WebSocket bridge server
 UI/                         Avalonia views; MainWindow is split by area (Files, Editor, Search, ...)
@@ -29,7 +29,7 @@ UI/                         Avalonia views; MainWindow is split by area (Files, 
   GraphMinimap.cs           Minimap
   GraphImageExport.cs       Full-story PNG export
   PlaytestWindow.cs         Playtest player
-Runtime/                    Shared C# dialogue runner library (netstandard2.1, C# 9)
+Runtime/                    Project for the shared C# rules and runner (netstandard2.1, C# 9); sources live in the Unity package
 Engines/                    Engine packages (Unity, Unreal, Godot), conformance fixtures and contract
 CLI/                        Console entry point; references Core only
 tests/                      Executable harness: Core checks plus headless UI checks and screenshots

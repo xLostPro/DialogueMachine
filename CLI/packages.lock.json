@@ -3,6 +3,12 @@
   "dependencies": {
     "net10.0": {
       "dialoguemachine.core": {
+        "type": "Project",
+        "dependencies": {
+          "DialogueMachine.Runtime": "[1.0.0, )"
+        }
+      },
+      "dialoguemachine.runtime": {
         "type": "Project"
       }
     }
