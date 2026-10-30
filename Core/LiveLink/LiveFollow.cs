@@ -77,7 +77,7 @@ public sealed class LiveFollow
     public LiveFollowStatus Check(DialogueProject? project, string? storySha256)
     {
         if (Followed is not { } runner) return new(false, null, false);
-        if (project is null || runner.ProjectName != project.ProjectName) return new(false, "Game is running " + runner.ProjectName, false);
+        if (project is null || RuntimeExport.Slug(runner.ProjectName) != RuntimeExport.Slug(project.ProjectName)) return new(false, "Game is running " + runner.ProjectName, false);
         if (CurrentSceneId is { } scene && project.ListOfCharacterStates.All(s => s.State != scene)) return new(false, $"Scene ‘{scene}’ isn't in this story.", false);
         var outdated = storySha256 is not null && runner.StorySha256 != storySha256;
         return new(true, outdated ? "Game is on an older version." : null, outdated);

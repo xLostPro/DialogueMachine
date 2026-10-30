@@ -86,7 +86,11 @@ namespace DialogueMachine.Runtime.Unity
 
             if (uiDocument.panelSettings == null)
             {
-                uiDocument.panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+                // A PanelSettings without a theme renders nothing, so give it an empty one;
+                // every element in this view is styled inline.
+                var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
+                panelSettings.themeStyleSheet = ScriptableObject.CreateInstance<ThemeStyleSheet>();
+                uiDocument.panelSettings = panelSettings;
             }
         }
 
@@ -94,6 +98,9 @@ namespace DialogueMachine.Runtime.Unity
         {
             var root = uiDocument.rootVisualElement;
             root.Clear();
+            // The default theme normally sizes the document root; without it the root collapses to zero height.
+            root.style.flexGrow = 1;
+            root.style.height = new Length(100, LengthUnit.Percent);
 
             // Screen container
             rootContainer = new VisualElement();
@@ -202,12 +209,32 @@ namespace DialogueMachine.Runtime.Unity
             continueButton.style.paddingBottom = 8;
             continueButton.style.fontSize = 14;
             continueButton.style.unityFontStyleAndWeight = FontStyle.Bold;
+            StyleButton(continueButton);
 
             footerBar.Add(continueButton);
             dialogBox.Add(footerBar);
 
             rootContainer.Add(dialogBox);
             root.Add(rootContainer);
+        }
+
+        private static void StyleButton(Button button)
+        {
+            var border = new StyleColor(new Color(0.28f, 0.32f, 0.40f));
+            button.style.backgroundColor = new StyleColor(new Color(0.2f, 0.24f, 0.31f));
+            button.style.color = new StyleColor(new Color(0.94f, 0.95f, 0.97f));
+            button.style.borderTopColor = border;
+            button.style.borderRightColor = border;
+            button.style.borderBottomColor = border;
+            button.style.borderLeftColor = border;
+            button.style.borderTopWidth = 1;
+            button.style.borderRightWidth = 1;
+            button.style.borderBottomWidth = 1;
+            button.style.borderLeftWidth = 1;
+            button.style.borderTopLeftRadius = 6;
+            button.style.borderTopRightRadius = 6;
+            button.style.borderBottomLeftRadius = 6;
+            button.style.borderBottomRightRadius = 6;
         }
 
         private void HandleLineShown(string line)
@@ -341,9 +368,15 @@ namespace DialogueMachine.Runtime.Unity
                 button.style.fontSize = 15;
                 button.style.unityTextAlign = TextAnchor.MiddleLeft;
 
-                if (!choice.Enabled && !string.IsNullOrEmpty(choice.DisabledReason))
+                StyleButton(button);
+                if (!choice.Enabled)
                 {
-                    button.tooltip = choice.DisabledReason;
+                    button.style.opacity = 0.5f;
+                    if (!string.IsNullOrEmpty(choice.DisabledReason))
+                    {
+                        button.tooltip = choice.DisabledReason;
+                        button.text += " (" + choice.DisabledReason + ")";
+                    }
                 }
 
                 var choiceId = choice.Id;

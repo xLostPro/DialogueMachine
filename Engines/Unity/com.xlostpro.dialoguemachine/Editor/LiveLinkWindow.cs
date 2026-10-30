@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DialogueMachine.Runtime;
 using DialogueMachine.Runtime.Unity;
 using UnityEditor;
@@ -91,15 +92,7 @@ namespace DialogueMachine.Editor
 #endif
             if (runner != null)
             {
-                runner.StartDialogue(req.sceneId, req.seed);
-                if (req.numeric != null)
-                {
-                    foreach (var kv in req.numeric) runner.Variables?.SetNumber(kv.Key, kv.Value);
-                }
-                if (req.text != null)
-                {
-                    foreach (var kv in req.text) runner.Variables?.SetText(kv.Key, kv.Value);
-                }
+                runner.StartDialogue(req.sceneId, req.seed, req.numeric, req.text);
             }
             else
             {
@@ -157,6 +150,13 @@ namespace DialogueMachine.Editor
             Repaint();
         }
 
+        // Assets are named after their file ("the-salt-ledger"), while Dialogue Machine sends the project name ("The Salt Ledger").
+        private static bool SameProject(string a, string b)
+        {
+            static string Key(string s) => new string((s ?? "").Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
+            return Key(a) == Key(b);
+        }
+
         private DialogueAsset FindAssetForProject(string projectName)
         {
             var guids = AssetDatabase.FindAssets("t:DialogueAsset");
@@ -164,7 +164,7 @@ namespace DialogueMachine.Editor
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var asset = AssetDatabase.LoadAssetAtPath<DialogueAsset>(path);
-                if (asset != null && string.Equals(asset.ProjectName, projectName, StringComparison.OrdinalIgnoreCase))
+                if (asset != null && SameProject(asset.ProjectName, projectName))
                 {
                     return asset;
                 }

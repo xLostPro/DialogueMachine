@@ -1,0 +1,3835 @@
+{
+  "FormatVersion": 1,
+  "ProjectName": "The Salt Ledger",
+  "CharacterId": "mara",
+  "EntryStateId": "start",
+  "ListOfCharacterStates": [
+    {
+      "State": "start",
+      "Type": "Dialogue",
+      "Text": "Welcome to Saltmere, {player_name}.\nA ledger was stolen last night. [b]Everyone[/b] is a suspect, even [i]you[/i].\n[colour=red]Shall we begin?[/colour]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "6513270e-269e-4d37-b2a7-4de452e6b438",
+          "ButtonText": "Begin.",
+          "NextStateId": "intro",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Start",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "bell"
+      },
+      "VisualX": 0,
+      "VisualY": 0
+    },
+    {
+      "State": "intro",
+      "Type": "Dialogue",
+      "Text": "Right, {player_name}. Check the quay, tavern, chandlery, lighthouse and archive.\n[if inv:coin >= 3]You carry enough coin to bribe someone.[else]Your purse is thin.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "d23f0824-128b-4f33-8c5c-7fd0a6a3a450",
+          "ButtonText": "To the map.",
+          "NextStateId": "map",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [
+        {
+          "Type": "Event",
+          "TargetId": "case_opened",
+          "Amount": 0,
+          "Parameter": "saltmere"
+        }
+      ],
+      "Metadata": {
+        "title": "Intro",
+        "speaker": "Mara",
+        "portrait": "mara.png"
+      },
+      "VisualX": 320,
+      "VisualY": 0
+    },
+    {
+      "State": "map",
+      "Type": "Dialogue",
+      "Text": "Day {aff:days}. Where next?\n[if aff:clues >= 8]You feel close to the truth.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "9531985d-5d9d-49f8-9818-e811892f902b",
+          "ButtonText": "The quay",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "36f675cc-81e7-4ef5-a8e2-5d940ed90475",
+          "ButtonText": "The tavern",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "6b0d549b-6f03-475a-9600-a35a099950d8",
+          "ButtonText": "The chandlery",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "8d116ece-1738-47d9-bd9c-172411e20b8f",
+          "ButtonText": "The lighthouse",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "90c192cf-d3ac-44af-8f21-ddb66cad4a26",
+          "ButtonText": "The archive",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "a170b338-3926-4059-b28c-105d1fb17c23",
+          "ButtonText": "The cellar (needs lantern)",
+          "NextStateId": "cellar",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "0fd630f1-f29d-4da9-953f-48f1a09f76b5",
+          "ButtonText": "Accuse someone",
+          "NextStateId": "accuse_gate",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Operator": ">=",
+              "Value": "6"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "0cb1e29c-658c-4a14-95e6-0af593bd04cf",
+          "ButtonText": "Rest (costs a day)",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "days",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "day_passed",
+              "Amount": 1,
+              "Parameter": "rest"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Map",
+        "speaker": "Mara",
+        "portrait": "mara.png"
+      },
+      "VisualX": 640,
+      "VisualY": 0
+    },
+    {
+      "State": "quay",
+      "Type": "Dialogue",
+      "Text": "You reach the quay. Wren nods. [if aff:quay_visits >= 1]You know this place.[else]It is unfamiliar.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "8e81973e-0bec-47b0-b898-d190f9ebdacc",
+          "ButtonText": "Dock crates",
+          "NextStateId": "quay_dock_crates",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "6b4cb242-4a23-4596-a217-beaddbc496cb",
+          "ButtonText": "Net loft",
+          "NextStateId": "quay_net_loft",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "92276658-1e27-41c0-8a6a-63ec24ede6a4",
+          "ButtonText": "Ferry",
+          "NextStateId": "quay_ferry",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "ae97ba94-d0ed-482f-8f6d-05584ef8aa38",
+          "ButtonText": "Gull row",
+          "NextStateId": "quay_gull_row",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "923a7369-94e3-4f91-9a61-dbe22e44158b",
+          "ButtonText": "Smuggler cove",
+          "NextStateId": "quay_smuggler_cove",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "18f135d2-5f55-4203-b018-50c5a38fd547",
+          "ButtonText": "Pier end",
+          "NextStateId": "quay_pier_end",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "907a70c3-1012-4037-b64c-e4228c38fb29",
+          "ButtonText": "Harbour master",
+          "NextStateId": "quay_harbour_master",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7f150524-34b9-45df-9e77-69b10f4205b4",
+          "ButtonText": "Drowned bell",
+          "NextStateId": "quay_drowned_bell",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "c6f87718-6d76-407e-881e-d162ae2eb154",
+          "ButtonText": "Back to the map.",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "ambient_quay"
+      },
+      "VisualX": 960,
+      "VisualY": 0
+    },
+    {
+      "State": "quay_dock_crates",
+      "Type": "Dialogue",
+      "Text": "Wren on dock crates.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "ec66a787-95e7-41d1-b731-af10506bf2ef",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay_dock_crates_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "3f98e277-4cbd-47ad-9c90-a9587403e430",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "c7a2ea20-b2f1-4c94-ae05-319acb5c7427",
+          "ButtonText": "Ask about the ledger.",
+          "NextStateId": "quay",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "play_sfx",
+              "Amount": 0,
+              "Parameter": "page_flip"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Dock Crates",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_0"
+      },
+      "VisualX": 1280,
+      "VisualY": 0
+    },
+    {
+      "State": "quay_dock_crates_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "4cdd2055-930d-4eaf-94f4-733f3e7d1bfb",
+          "ButtonText": "Note it.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Dock Crates More",
+        "speaker": "Wren",
+        "portrait": "wren.png"
+      },
+      "VisualX": 1600,
+      "VisualY": 0
+    },
+    {
+      "State": "quay_net_loft",
+      "Type": "Dialogue",
+      "Text": "Wren on net loft.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "57ee05cd-e009-42c7-bebf-f20686734721",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "9be4bcfc-49b6-4a08-b2e6-cc3ababced20",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Net Loft",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_1"
+      },
+      "VisualX": 1920,
+      "VisualY": 0
+    },
+    {
+      "State": "quay_ferry",
+      "Type": "Dialogue",
+      "Text": "Wren on ferry.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "830e07bc-1e39-4f10-92bd-4acefaecbd38",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "5790f82e-c1d3-4cff-aa3a-f4d46b0a18e8",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Ferry",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_2"
+      },
+      "VisualX": 2240,
+      "VisualY": 0
+    },
+    {
+      "State": "quay_gull_row",
+      "Type": "Dialogue",
+      "Text": "Wren on gull row.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "6bf46c69-7d2c-4f82-aeea-cbe226e87555",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "13deef86-ab10-41d0-b646-e1f40a097c97",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "ca02135e-92b1-43f2-8ede-0d7ac3baea9e",
+          "ButtonText": "Take the lantern.",
+          "NextStateId": "quay",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Operator": "==",
+              "Value": "0"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "item_gain",
+              "Amount": 1,
+              "Parameter": "lantern"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Gull Row",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_3"
+      },
+      "VisualX": 0,
+      "VisualY": 260
+    },
+    {
+      "State": "quay_smuggler_cove",
+      "Type": "Dialogue",
+      "Text": "Wren on smuggler cove.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "57124242-5051-41cc-917f-9acae01f5057",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay_smuggler_cove_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7f26144b-9828-4fcd-99a5-4a7bb1fee08f",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Smuggler Cove",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_4"
+      },
+      "VisualX": 320,
+      "VisualY": 260
+    },
+    {
+      "State": "quay_smuggler_cove_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "119a72d1-74c9-4f6a-8c01-1cdd9474031b",
+          "ButtonText": "Note it.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Smuggler Cove More",
+        "speaker": "Wren",
+        "portrait": "wren.png"
+      },
+      "VisualX": 640,
+      "VisualY": 260
+    },
+    {
+      "State": "quay_pier_end",
+      "Type": "Dialogue",
+      "Text": "Wren on pier end.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "451abd81-f1d6-4ed6-97f5-e837d70820fe",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "10a3d6b2-aa05-411a-b271-5945795e8229",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Pier End",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_5"
+      },
+      "VisualX": 960,
+      "VisualY": 260
+    },
+    {
+      "State": "quay_harbour_master",
+      "Type": "Dialogue",
+      "Text": "Wren on harbour master.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "4f426dcb-b394-4b36-bb2d-420f0f88080b",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "ae658f33-fe3b-490b-93f4-48b3a5aa3c81",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Harbour Master",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_6"
+      },
+      "VisualX": 1280,
+      "VisualY": 260
+    },
+    {
+      "State": "quay_drowned_bell",
+      "Type": "Dialogue",
+      "Text": "Wren on drowned bell.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "b774eb52-48db-40af-b215-8370d269a9a5",
+          "ButtonText": "Press for more.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "58d5563d-ab2c-431e-a315-128862c33a4f",
+          "ButtonText": "Leave.",
+          "NextStateId": "quay",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Quay Drowned Bell",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "sfx_7"
+      },
+      "VisualX": 1600,
+      "VisualY": 260
+    },
+    {
+      "State": "tavern",
+      "Type": "Dialogue",
+      "Text": "You reach the tavern. Hale nods. [if aff:tavern_visits >= 1]You know this place.[else]It is unfamiliar.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "5affb229-7631-4992-b0ce-583505c6af07",
+          "ButtonText": "Bar",
+          "NextStateId": "tavern_bar",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7e62aa0a-1df9-4d78-9c65-39382b0537e6",
+          "ButtonText": "Back room",
+          "NextStateId": "tavern_back_room",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "49952399-c4aa-4ac1-b7dc-76fb0f17a300",
+          "ButtonText": "Dice table",
+          "NextStateId": "tavern_dice_table",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "65dc9f50-3f63-4f83-bd05-61e6211c70cf",
+          "ButtonText": "Cook",
+          "NextStateId": "tavern_cook",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7f1b103c-df15-42b0-aab4-77d26415479c",
+          "ButtonText": "Singer",
+          "NextStateId": "tavern_singer",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "66d22876-72fd-4202-aa96-fb1a14a0f9e7",
+          "ButtonText": "Stairs",
+          "NextStateId": "tavern_stairs",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "230d977e-e225-4159-8720-771f8ca81811",
+          "ButtonText": "Cellar door",
+          "NextStateId": "tavern_cellar_door",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "8cdb305f-dd2e-4609-ae36-aab0d1bc52d9",
+          "ButtonText": "Regulars",
+          "NextStateId": "tavern_regulars",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "fc891b4a-6a50-4f4d-b4d6-6a3a47469a4d",
+          "ButtonText": "Back to the map.",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "ambient_tavern"
+      },
+      "VisualX": 1920,
+      "VisualY": 260
+    },
+    {
+      "State": "tavern_bar",
+      "Type": "Dialogue",
+      "Text": "Hale on bar.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "616499c9-e25a-4605-aec6-f0245bd86d40",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern_bar_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "153e7c2a-26a2-40bd-bb12-87fff52ddf5d",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Bar",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_0"
+      },
+      "VisualX": 2240,
+      "VisualY": 260
+    },
+    {
+      "State": "tavern_bar_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "a8948c89-3b61-4676-a6bb-7dbd2d1c9af0",
+          "ButtonText": "Note it.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Bar More",
+        "speaker": "Hale",
+        "portrait": "hale.png"
+      },
+      "VisualX": 0,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_back_room",
+      "Type": "Dialogue",
+      "Text": "Hale on back room.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "d4c28c2e-7c26-447f-8316-909e3bbbe9ea",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "482c9cbc-4343-4cc5-aeae-05cf96d0cc5f",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Back Room",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_1"
+      },
+      "VisualX": 320,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_dice_table",
+      "Type": "Dialogue",
+      "Text": "Hale on dice table.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "88daf401-6b40-43ef-a54b-0c4e010c4759",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "519088f5-90fb-4d11-9c1c-aaf75e8766ed",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Dice Table",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_2"
+      },
+      "VisualX": 640,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_cook",
+      "Type": "Dialogue",
+      "Text": "Hale on cook.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "dbf4a8b2-b0c4-412d-a020-3626f3fe39c0",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "a7abe1c2-9e1a-4ef4-b341-e07a83f73f16",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "74e69a5d-0dd2-4a65-bd62-8881ad1b72db",
+          "ButtonText": "Take the lantern.",
+          "NextStateId": "tavern",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Operator": "==",
+              "Value": "0"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "item_gain",
+              "Amount": 1,
+              "Parameter": "lantern"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Cook",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_3"
+      },
+      "VisualX": 960,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_singer",
+      "Type": "Dialogue",
+      "Text": "Hale on singer.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "f3aed0b6-c7ac-4491-9ef8-8334e647cb8f",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern_singer_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "8f2c6ec8-cc41-49a3-ae3a-2b7fdfe01893",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Singer",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_4"
+      },
+      "VisualX": 1280,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_singer_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "64e50cad-6623-4a04-a5e7-e4236472f1a3",
+          "ButtonText": "Note it.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Singer More",
+        "speaker": "Hale",
+        "portrait": "hale.png"
+      },
+      "VisualX": 1600,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_stairs",
+      "Type": "Dialogue",
+      "Text": "Hale on stairs.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "66836886-a260-4d0b-bb45-145c1a81682c",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "fc132d0d-113d-417d-b0cb-c97d0fef7928",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Stairs",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_5"
+      },
+      "VisualX": 1920,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_cellar_door",
+      "Type": "Dialogue",
+      "Text": "Hale on cellar door.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "1c2442f9-298c-43a5-b0cc-ec313571810a",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "1a358ca0-0d75-485d-99c9-4309570dc195",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "895fd7b3-26b9-4c7f-9118-bb16000f49c8",
+          "ButtonText": "Take the key.",
+          "NextStateId": "tavern",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Operator": "==",
+              "Value": "0"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Script",
+              "TargetId": "unlock_hint",
+              "Amount": 0,
+              "Parameter": "cellar"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Cellar Door",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_6"
+      },
+      "VisualX": 2240,
+      "VisualY": 520
+    },
+    {
+      "State": "tavern_regulars",
+      "Type": "Dialogue",
+      "Text": "Hale on regulars.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "9d1de2a0-5d15-4a2f-b2ee-4e4519f9919c",
+          "ButtonText": "Press for more.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "353c631c-dfd4-4f37-9200-339d068739fa",
+          "ButtonText": "Leave.",
+          "NextStateId": "tavern",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "459c945c-43fc-4527-9585-0a031ad2d5f1",
+          "ButtonText": "Ask about rumour 0.",
+          "NextStateId": "rumour_0",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "2e7a26e9-c76c-403f-a7e8-f9f60a227385",
+          "ButtonText": "Ask about rumour 1.",
+          "NextStateId": "rumour_1",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "d1dcec53-212a-4d9b-817a-9262453bf491",
+          "ButtonText": "Ask about rumour 2.",
+          "NextStateId": "rumour_2",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "ad0c9bb6-e952-4a69-997e-967b6c18d982",
+          "ButtonText": "Ask about rumour 3.",
+          "NextStateId": "rumour_3",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Tavern Regulars",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_7"
+      },
+      "VisualX": 0,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery",
+      "Type": "Dialogue",
+      "Text": "You reach the chandlery. Captain Voss nods. [if aff:chandlery_visits >= 1]You know this place.[else]It is unfamiliar.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "a268aa87-2607-479d-a050-914a9d33a01c",
+          "ButtonText": "Counter",
+          "NextStateId": "chandlery_counter",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "9a2ef80f-58ee-4571-b499-8d7c4093f6de",
+          "ButtonText": "Rope wall",
+          "NextStateId": "chandlery_rope_wall",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "1d87cec3-1f72-46ab-b961-fd925d39d0a8",
+          "ButtonText": "Lamp oil",
+          "NextStateId": "chandlery_lamp_oil",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "fa529ba3-fe3b-4ada-bcf2-0724d953ee26",
+          "ButtonText": "Ledger page",
+          "NextStateId": "chandlery_ledger_page",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "4fd58dbe-7bdc-468b-bafb-2c68774b15d7",
+          "ButtonText": "Back shelf",
+          "NextStateId": "chandlery_back_shelf",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "bfeaa155-1a28-47b3-a4e4-e25a15fc899e",
+          "ButtonText": "Ship models",
+          "NextStateId": "chandlery_ship_models",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7a86f7a2-43c7-4b9a-bd87-a86557b6fb7e",
+          "ButtonText": "Pawn",
+          "NextStateId": "chandlery_pawn",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "842e7fc2-2954-4a6e-b12a-a1f6d42fddbb",
+          "ButtonText": "Delivery",
+          "NextStateId": "chandlery_delivery",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "f3b7a50d-f373-4a53-b488-f87605e999f3",
+          "ButtonText": "Back to the map.",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "ambient_chandlery"
+      },
+      "VisualX": 320,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_counter",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on counter.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "b0a844e5-2587-4e6b-9c9b-cf35873be078",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery_counter_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "c215a82a-06ec-41ad-aa05-75438b0d590b",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Counter",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_0"
+      },
+      "VisualX": 640,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_counter_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "a49636a2-fa7f-4eab-8c4f-9b0687322e25",
+          "ButtonText": "Note it.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Counter More",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png"
+      },
+      "VisualX": 960,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_rope_wall",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on rope wall.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "d86f40f6-b239-43c7-974c-77a2dd02de92",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "e883a1d4-5de0-4997-84b5-a81842d87208",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Rope Wall",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_1"
+      },
+      "VisualX": 1280,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_lamp_oil",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on lamp oil.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "3908f227-c59d-4916-9b0e-e76f2ac34446",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "80b0c08b-c770-4420-8aa4-248c8857f9a4",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Lamp Oil",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_2"
+      },
+      "VisualX": 1600,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_ledger_page",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on ledger page.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "9cfc8652-3919-4242-a2ed-dbbd5464ecc2",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "c2216b02-fc24-4d0b-89d4-88b1cfbf3360",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "3d4882a5-ce5b-4a92-b1f5-1707da45e18a",
+          "ButtonText": "Take the lantern.",
+          "NextStateId": "chandlery",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Operator": "==",
+              "Value": "0"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "item_gain",
+              "Amount": 1,
+              "Parameter": "lantern"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Ledger Page",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_3"
+      },
+      "VisualX": 1920,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_back_shelf",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on back shelf.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "cda6c6fd-bd68-4167-a693-4036d17e4497",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery_back_shelf_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7e26f36a-8483-48b8-b32d-d3313a0b9965",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Back Shelf",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_4"
+      },
+      "VisualX": 2240,
+      "VisualY": 780
+    },
+    {
+      "State": "chandlery_back_shelf_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "fd56a926-076b-4e36-bb23-13f55b06258e",
+          "ButtonText": "Note it.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Back Shelf More",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png"
+      },
+      "VisualX": 0,
+      "VisualY": 1040
+    },
+    {
+      "State": "chandlery_ship_models",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on ship models.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "78e4b98d-4787-493b-8a44-eb860726e25c",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "9aea6429-b149-4e24-b192-b70442594052",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "cefe2a1f-727d-4349-9822-cb77f4de2c08",
+          "ButtonText": "Visit the shop.",
+          "NextStateId": "shop",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Ship Models",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_5"
+      },
+      "VisualX": 320,
+      "VisualY": 1040
+    },
+    {
+      "State": "chandlery_pawn",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on pawn.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "597a1ecf-fcf0-4fec-b91e-e9e5efe09f07",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "149e259b-5d58-4705-b979-d04af47aebdd",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Pawn",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_6"
+      },
+      "VisualX": 640,
+      "VisualY": 1040
+    },
+    {
+      "State": "chandlery_delivery",
+      "Type": "Dialogue",
+      "Text": "Captain Voss on delivery.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "78572976-3a12-417c-9a26-f88938703800",
+          "ButtonText": "Press for more.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7b8f2ab5-3451-4013-9675-f6ad325b55dd",
+          "ButtonText": "Leave.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Chandlery Delivery",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "sfx_7"
+      },
+      "VisualX": 960,
+      "VisualY": 1040
+    },
+    {
+      "State": "lighthouse",
+      "Type": "Dialogue",
+      "Text": "You reach the lighthouse. Mara nods. [if aff:lighthouse_visits >= 1]You know this place.[else]It is unfamiliar.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "9c3a23cd-e67a-4b75-bc39-47249fc2d0a1",
+          "ButtonText": "Base",
+          "NextStateId": "lighthouse_base",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "e8c14743-7abe-4539-807d-1034d726c86b",
+          "ButtonText": "Stairs up",
+          "NextStateId": "lighthouse_stairs_up",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "a4a45eff-ccb5-43d9-9810-d60ea72991b9",
+          "ButtonText": "Lamp room",
+          "NextStateId": "lighthouse_lamp_room",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "1eb20109-a91c-4439-95ab-8b4d15b40aeb",
+          "ButtonText": "Keeper bed",
+          "NextStateId": "lighthouse_keeper_bed",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "b6246771-c845-4070-a377-1407e8e72789",
+          "ButtonText": "Log book",
+          "NextStateId": "lighthouse_log_book",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "e39639be-7a60-4a91-b306-98a1c0093492",
+          "ButtonText": "Balcony",
+          "NextStateId": "lighthouse_balcony",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "a2c68e45-ca04-479f-af15-b6ad2db3997f",
+          "ButtonText": "Signal",
+          "NextStateId": "lighthouse_signal",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "f237e45a-cd02-45e1-9635-3d03551fd8f9",
+          "ButtonText": "Locked hatch",
+          "NextStateId": "lighthouse_locked_hatch",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "7691b06f-6555-4bfe-b8c9-817af8be8831",
+          "ButtonText": "Back to the map.",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "ambient_lighthouse"
+      },
+      "VisualX": 1280,
+      "VisualY": 1040
+    },
+    {
+      "State": "lighthouse_base",
+      "Type": "Dialogue",
+      "Text": "Mara on base.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "15bd448f-f261-49ed-be4c-5ce666c1494e",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse_base_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "fe3c9c8f-2b85-4c1f-a8aa-ca51b98c67c2",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Base",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_0"
+      },
+      "VisualX": 1600,
+      "VisualY": 1040
+    },
+    {
+      "State": "lighthouse_base_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "973f7986-26b1-4ffc-870d-710920859634",
+          "ButtonText": "Note it.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Base More",
+        "speaker": "Mara",
+        "portrait": "mara.png"
+      },
+      "VisualX": 1920,
+      "VisualY": 1040
+    },
+    {
+      "State": "lighthouse_stairs_up",
+      "Type": "Dialogue",
+      "Text": "Mara on stairs up.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "a7e6529b-ce76-49f4-b721-6e9ee7a46309",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "988af3fb-d396-40d6-9c90-11ef256badf9",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Stairs Up",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_1"
+      },
+      "VisualX": 2240,
+      "VisualY": 1040
+    },
+    {
+      "State": "lighthouse_lamp_room",
+      "Type": "Dialogue",
+      "Text": "Mara on lamp room.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "effddeea-a842-4c19-b96f-74adfaf55496",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "8c5c715f-8c74-4c1e-a7e9-e06f59b44e92",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Lamp Room",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_2"
+      },
+      "VisualX": 0,
+      "VisualY": 1300
+    },
+    {
+      "State": "lighthouse_keeper_bed",
+      "Type": "Dialogue",
+      "Text": "Mara on keeper bed.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "cca2a92b-03a5-4cc1-857a-40b22188287e",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "1a4f44f9-a651-4445-b9f3-635cf88c422b",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "23a5ef88-ef02-490b-bfde-fc1586ce03f9",
+          "ButtonText": "Take the lantern.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Operator": "==",
+              "Value": "0"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "item_gain",
+              "Amount": 1,
+              "Parameter": "lantern"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Keeper Bed",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_3"
+      },
+      "VisualX": 320,
+      "VisualY": 1300
+    },
+    {
+      "State": "lighthouse_log_book",
+      "Type": "Dialogue",
+      "Text": "Mara on log book.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "31dec4f4-df2a-4b79-bc8e-80b36f0e2289",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse_log_book_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "072a98d2-3606-4efc-9fb8-5c0dd37ee915",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Log Book",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_4"
+      },
+      "VisualX": 640,
+      "VisualY": 1300
+    },
+    {
+      "State": "lighthouse_log_book_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "804c25d6-4aff-4cd1-b678-bc8d40783f0a",
+          "ButtonText": "Note it.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Log Book More",
+        "speaker": "Mara",
+        "portrait": "mara.png"
+      },
+      "VisualX": 960,
+      "VisualY": 1300
+    },
+    {
+      "State": "lighthouse_balcony",
+      "Type": "Dialogue",
+      "Text": "Mara on balcony.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "53740902-9620-4f0d-8380-84a03d93fd4c",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "d58dcdb4-6b44-4806-8b5a-b3ee4265bb31",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Balcony",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_5"
+      },
+      "VisualX": 1280,
+      "VisualY": 1300
+    },
+    {
+      "State": "lighthouse_signal",
+      "Type": "Dialogue",
+      "Text": "Mara on signal.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "bd6b881a-e8f6-40bd-8f97-7044218e0b7b",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "a997f351-754a-49cd-a5cf-edfa5a9196f0",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Signal",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_6"
+      },
+      "VisualX": 1600,
+      "VisualY": 1300
+    },
+    {
+      "State": "lighthouse_locked_hatch",
+      "Type": "Dialogue",
+      "Text": "Mara on locked hatch.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "844a7034-e77f-4e48-90a6-ec179556585e",
+          "ButtonText": "Press for more.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "e0cfab4c-eaef-44d2-93bf-6d016bae4b5b",
+          "ButtonText": "Leave.",
+          "NextStateId": "lighthouse",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Lighthouse Locked Hatch",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "sfx_7"
+      },
+      "VisualX": 1920,
+      "VisualY": 1300
+    },
+    {
+      "State": "archive",
+      "Type": "Dialogue",
+      "Text": "You reach the archive. Hale nods. [if aff:archive_visits >= 1]You know this place.[else]It is unfamiliar.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "26debfdb-8825-4e56-a179-b37d806c10b5",
+          "ButtonText": "Desk",
+          "NextStateId": "archive_desk",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "df703017-04c9-478d-82b3-359986048719",
+          "ButtonText": "Stacks",
+          "NextStateId": "archive_stacks",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "9bca3cb7-2ee0-489d-86c9-1b9270ac06ac",
+          "ButtonText": "Birth records",
+          "NextStateId": "archive_birth_records",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "265974a7-cc96-4f46-86aa-7d550101b811",
+          "ButtonText": "Tide tables",
+          "NextStateId": "archive_tide_tables",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "9e7d6b37-7936-4536-a43d-35702c1eea1f",
+          "ButtonText": "Clerk",
+          "NextStateId": "archive_clerk",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "0fcf31ca-8e75-4fdf-9ece-615db9a6442e",
+          "ButtonText": "Map room",
+          "NextStateId": "archive_map_room",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Affinity",
+              "TargetId": "trust",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "87ddaeb7-84b2-4054-aead-44b0537390e5",
+          "ButtonText": "Sealed box",
+          "NextStateId": "archive_sealed_box",
+          "Visibility": "Disable",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Operator": ">=",
+              "Value": "2"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "c6c80e2b-c8c6-44b2-bb84-44d18e317041",
+          "ButtonText": "Fire damage",
+          "NextStateId": "archive_fire_damage",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "key",
+              "Operator": ">=",
+              "Value": "1"
+            }
+          ],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "0e8bec94-8f6f-415f-a21b-37ca1b29fc99",
+          "ButtonText": "Back to the map.",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "ambient_archive"
+      },
+      "VisualX": 2240,
+      "VisualY": 1300
+    },
+    {
+      "State": "archive_desk",
+      "Type": "Dialogue",
+      "Text": "Hale on desk.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "0acd8be1-46e4-4990-b0f9-70583f9d52f9",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive_desk_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "73c1cd2c-81f9-4b52-9905-d591c5b2e75a",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Desk",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_0"
+      },
+      "VisualX": 0,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_desk_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "e4ddf9b9-c28e-4907-8722-35c28fcd7f40",
+          "ButtonText": "Note it.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Desk More",
+        "speaker": "Hale",
+        "portrait": "hale.png"
+      },
+      "VisualX": 320,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_stacks",
+      "Type": "Dialogue",
+      "Text": "Hale on stacks.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "535b6a43-7178-4a0a-9038-f0b5e998d0ee",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "9b2bd6c0-816b-4e06-b92e-23399ccea098",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Stacks",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_1"
+      },
+      "VisualX": 640,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_birth_records",
+      "Type": "Dialogue",
+      "Text": "Hale on birth records.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "46f5a1b4-b156-41ad-b30c-16a3831d03bf",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "ceaf4915-8885-44e8-8216-858f73ccef03",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Birth Records",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_2"
+      },
+      "VisualX": 960,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_tide_tables",
+      "Type": "Dialogue",
+      "Text": "Hale on tide tables.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "3f665ede-f106-47ce-81fc-069e7a609683",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": -1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "e040015c-e064-4114-85f1-115bb2fff17b",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "ec3b9605-4274-43eb-ad84-e91ef132bf2d",
+          "ButtonText": "Take the lantern.",
+          "NextStateId": "archive",
+          "Visibility": "Hide",
+          "Requirements": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Operator": "==",
+              "Value": "0"
+            }
+          ],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "lantern",
+              "Amount": 1,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "item_gain",
+              "Amount": 1,
+              "Parameter": "lantern"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Tide Tables",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_3"
+      },
+      "VisualX": 1280,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_clerk",
+      "Type": "Dialogue",
+      "Text": "Hale on clerk.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "33dcd77f-f179-42d2-a48b-96628f3c4be3",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive_clerk_more",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "6aa8b9e0-231b-4e14-b291-35bdd70a39d1",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Clerk",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_4"
+      },
+      "VisualX": 1600,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_clerk_more",
+      "Type": "Dialogue",
+      "Text": "You dig deeper.\n[if aff:clues >= 5]A pattern emerges: the missing page was from [colour=#ff8800]March[/colour].[else]Nothing yet.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "50e40d54-712e-46b3-a471-fde41f229dd0",
+          "ButtonText": "Note it.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Clerk More",
+        "speaker": "Hale",
+        "portrait": "hale.png"
+      },
+      "VisualX": 1920,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_map_room",
+      "Type": "Dialogue",
+      "Text": "Hale on map room.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "6da79a87-3d9a-4079-abd0-d7fb12926185",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "4d82feac-ab62-46cd-b672-d6ae12b80aed",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Map Room",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_5"
+      },
+      "VisualX": 2240,
+      "VisualY": 1560
+    },
+    {
+      "State": "archive_sealed_box",
+      "Type": "Dialogue",
+      "Text": "Hale on sealed box.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "c6e50df2-e5a3-463e-9f52-5265c8b007ee",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "a4b9a9c4-b753-41ee-b083-60852789d059",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Sealed Box",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_6"
+      },
+      "VisualX": 0,
+      "VisualY": 1820
+    },
+    {
+      "State": "archive_fire_damage",
+      "Type": "Dialogue",
+      "Text": "Hale on fire damage.\nSecond page: [i]{player_name}[/i], you have [b]{aff:clues}[/b] clues.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "40cbacd0-249a-4584-9dbe-3023a906922f",
+          "ButtonText": "Press for more.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Inventory",
+              "TargetId": "coin",
+              "Amount": 1,
+              "Parameter": null
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "77bd891f-f7b1-43df-a323-1e1ee2015522",
+          "ButtonText": "Leave.",
+          "NextStateId": "archive",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Archive Fire Damage",
+        "speaker": "Hale",
+        "portrait": "hale.png",
+        "audio_cue": "sfx_7"
+      },
+      "VisualX": 320,
+      "VisualY": 1820
+    },
+    {
+      "State": "shop",
+      "Type": "Shop",
+      "Text": "Voss opens the crate.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": "voss_shop"
+      },
+      "Choices": [
+        {
+          "InternalId": "18189af4-f3d7-4f82-bf26-8ea03836e865",
+          "ButtonText": "Done.",
+          "NextStateId": "chandlery",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Shop",
+        "speaker": "Captain Voss",
+        "portrait": "voss.png",
+        "audio_cue": "shop_open"
+      },
+      "VisualX": 640,
+      "VisualY": 1820
+    },
+    {
+      "State": "cellar",
+      "Type": "Dialogue",
+      "Text": "The cellar is dark. Your lantern shows a [b]door[/b].\nBehind it: the ledger.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "29acf1a5-7cbd-4f5a-a28a-f60465f42986",
+          "ButtonText": "Open it.",
+          "NextStateId": "cellar_ledger",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "3945336b-d51b-4815-aaf7-19f3fd68373b",
+          "ButtonText": "Back.",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Cellar",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "creak"
+      },
+      "VisualX": 960,
+      "VisualY": 1820
+    },
+    {
+      "State": "cellar_ledger",
+      "Type": "Dialogue",
+      "Text": "The ledger names {culprit}.\n[if inv:coin >= 5]You also find a purse.[/if]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "fe7b8ae4-6e78-46a4-b4d1-9ec12955d6f0",
+          "ButtonText": "Take it.",
+          "NextStateId": "map",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [
+            {
+              "Type": "Affinity",
+              "TargetId": "clues",
+              "Amount": 3,
+              "Parameter": null
+            },
+            {
+              "Type": "Event",
+              "TargetId": "ledger_found",
+              "Amount": 0,
+              "Parameter": "cellar"
+            }
+          ],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Cellar Ledger",
+        "speaker": "Wren",
+        "portrait": "wren.png",
+        "audio_cue": "reveal"
+      },
+      "VisualX": 1280,
+      "VisualY": 1820
+    },
+    {
+      "State": "accuse_gate",
+      "Type": "Dialogue",
+      "Text": "Who do you accuse?",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "6bd8c676-56d0-40cd-a760-136783feb17b",
+          "ButtonText": "Hale",
+          "NextStateId": "end_hale",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "179a071e-518a-4452-9b4b-1b75321c5296",
+          "ButtonText": "Captain Voss",
+          "NextStateId": "end_voss",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "5685d624-04fc-4555-9daf-106db8dee081",
+          "ButtonText": "Wren",
+          "NextStateId": "end_wren",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        },
+        {
+          "InternalId": "b401ba85-70c1-4ca1-b56b-72898dd63cb9",
+          "ButtonText": "Nobody yet",
+          "NextStateId": "map",
+          "Visibility": "Always",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Accuse Gate",
+        "speaker": "Mara",
+        "portrait": "mara.png"
+      },
+      "VisualX": 1600,
+      "VisualY": 1820
+    },
+    {
+      "State": "end_hale",
+      "Type": "Dialogue",
+      "Text": "Hale confesses; the tavern falls silent.\n[b]The End.[/b]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [
+        {
+          "Type": "Event",
+          "TargetId": "case_closed",
+          "Amount": 0,
+          "Parameter": "hale"
+        }
+      ],
+      "Metadata": {
+        "title": "End Hale",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "end"
+      },
+      "VisualX": 1920,
+      "VisualY": 1820
+    },
+    {
+      "State": "end_voss",
+      "Type": "Dialogue",
+      "Text": "Voss laughs, then pays the fine.\n[b]The End.[/b]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [
+        {
+          "Type": "Event",
+          "TargetId": "case_closed",
+          "Amount": 0,
+          "Parameter": "voss"
+        }
+      ],
+      "Metadata": {
+        "title": "End Voss",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "end"
+      },
+      "VisualX": 2240,
+      "VisualY": 1820
+    },
+    {
+      "State": "end_wren",
+      "Type": "Dialogue",
+      "Text": "Wren runs; the gulls scatter.\n[b]The End.[/b]",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": true,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [],
+      "DefaultAfterActions": [
+        {
+          "Type": "Event",
+          "TargetId": "case_closed",
+          "Amount": 0,
+          "Parameter": "wren"
+        }
+      ],
+      "Metadata": {
+        "title": "End Wren",
+        "speaker": "Mara",
+        "portrait": "mara.png",
+        "audio_cue": "end"
+      },
+      "VisualX": 0,
+      "VisualY": 2080
+    },
+    {
+      "State": "rumour_0",
+      "Type": "Dialogue",
+      "Text": "Rumour 0: they say the tide table was altered.\nOr maybe not.\nWho knows.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "84768b8c-54dd-4ba5-a264-67ba04a10547",
+          "ButtonText": "Heard enough.",
+          "NextStateId": "map",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Rumour 0",
+        "speaker": "Wren",
+        "portrait": "wren.png"
+      },
+      "VisualX": 320,
+      "VisualY": 2080
+    },
+    {
+      "State": "rumour_1",
+      "Type": "Dialogue",
+      "Text": "Rumour 1: they say the tide table was altered.\nOr maybe not.\nWho knows.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "f5f554ed-8323-4ef5-8ba2-e1619fb9af50",
+          "ButtonText": "Heard enough.",
+          "NextStateId": "map",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Rumour 1",
+        "speaker": "Wren",
+        "portrait": "wren.png"
+      },
+      "VisualX": 640,
+      "VisualY": 2080
+    },
+    {
+      "State": "rumour_2",
+      "Type": "Dialogue",
+      "Text": "Rumour 2: they say the tide table was altered.\nOr maybe not.\nWho knows.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "eb25f8a1-fc2e-4a59-9ce3-bc0c10755c97",
+          "ButtonText": "Heard enough.",
+          "NextStateId": "map",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Rumour 2",
+        "speaker": "Wren",
+        "portrait": "wren.png"
+      },
+      "VisualX": 960,
+      "VisualY": 2080
+    },
+    {
+      "State": "rumour_3",
+      "Type": "Dialogue",
+      "Text": "Rumour 3: they say the tide table was altered.\nOr maybe not.\nWho knows.",
+      "DefaultNextId": "[EXIT]",
+      "SayItAll": false,
+      "ShopData": {
+        "ShopId": ""
+      },
+      "Choices": [
+        {
+          "InternalId": "e05b3e13-f8c1-40fb-ba82-8159c9d22950",
+          "ButtonText": "Heard enough.",
+          "NextStateId": "map",
+          "Visibility": "Disable",
+          "Requirements": [],
+          "AfterChoiceActions": [],
+          "VisualX": 0,
+          "VisualY": 0
+        }
+      ],
+      "DefaultAfterActions": [],
+      "Metadata": {
+        "title": "Rumour 3",
+        "speaker": "Wren",
+        "portrait": "wren.png"
+      },
+      "VisualX": 1280,
+      "VisualY": 2080
+    }
+  ],
+  "InitialVariables": {
+    "aff:clues": 0,
+    "aff:trust": 0,
+    "aff:days": 1,
+    "inv:coin": 2,
+    "inv:lantern": 0,
+    "inv:key": 0,
+    "aff:tavern_visits": 0,
+    "aff:quay_visits": 0,
+    "aff:archive_visits": 0,
+    "aff:lighthouse_visits": 0,
+    "aff:chandlery_visits": 0
+  },
+  "TextVariables": {
+    "player_name": "Traveller",
+    "culprit": "Hale"
+  }
+}
