@@ -10,6 +10,7 @@ public interface IProjectFilePicker
     Task<string?> OpenAsync(Window owner);
     Task<string?> SaveAsync(Window owner, string suggestedName);
     Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension);
+    Task<string?> PickFolderAsync(Window owner, string title);
 }
 
 public sealed class NativeProjectFilePicker : IProjectFilePicker
@@ -29,5 +30,10 @@ public sealed class NativeProjectFilePicker : IProjectFilePicker
     {
         var file = await owner.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions { Title = title, SuggestedFileName = suggestedName, DefaultExtension = extension, ShowOverwritePrompt = true });
         return file?.TryGetLocalPath();
+    }
+    public async Task<string?> PickFolderAsync(Window owner, string title)
+    {
+        var folders = await owner.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = title, AllowMultiple = false });
+        return folders.FirstOrDefault()?.TryGetLocalPath();
     }
 }

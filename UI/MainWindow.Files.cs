@@ -113,6 +113,7 @@ public sealed partial class MainWindow
         var version = copy ? ProjectFiles.SaveCopy(path, snapshot) : ProjectFiles.Save(path, snapshot, expected);
         filePath = path; diskVersion = version; isExample = false; savedSnapshot = snapshot;
         ClearCurrentRecovery(); Remember(path); UpdateStatus(); Status("Saved " + path);
+        TryAutoExportEngineRuntime();
     }
     private async Task<bool> ConfirmReplace()
     {

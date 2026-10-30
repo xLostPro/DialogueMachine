@@ -18,6 +18,7 @@ public sealed class WorkspacePreferences
     // Read the original preferences without requiring users to reset their settings.
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public List<string>? RecentFiles { get; set; }
+    public Dictionary<string, string> EngineExportFolders { get; set; } = [];
 }
 
 public sealed class WorkspaceStore(string directory)
@@ -46,6 +47,22 @@ public sealed class WorkspaceStore(string directory)
         if (p.Theme is not ("Dark" or "Light" or "High contrast")) p.Theme = "Dark";
         p.Scale = double.IsFinite(p.Scale) ? Math.Clamp(p.Scale, 1, 1.3) : 1;
         p.LastProjectPath ??= p.RecentProjects.FirstOrDefault()?.Path;
+        p.EngineExportFolders = p.EngineExportFolders is null
+            ? new(PathComparer)
+            : new(p.EngineExportFolders.Where(kv => !string.IsNullOrWhiteSpace(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value)), PathComparer);
+    }
+    public static string? GetEngineExportFolder(WorkspacePreferences p, string path)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return null;
+        path = System.IO.Path.GetFullPath(path);
+        return p.EngineExportFolders.TryGetValue(path, out var folder) ? folder : null;
+    }
+    public static void SetEngineExportFolder(WorkspacePreferences p, string path, string? folder)
+    {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        path = System.IO.Path.GetFullPath(path);
+        if (string.IsNullOrWhiteSpace(folder)) p.EngineExportFolders.Remove(path);
+        else p.EngineExportFolders[path] = System.IO.Path.GetFullPath(folder);
     }
     public static void Remember(WorkspacePreferences p, string path, string name)
     {
@@ -56,7 +73,9 @@ public sealed class WorkspaceStore(string directory)
     }
     public static void Forget(WorkspacePreferences p, string path)
     {
+        path = System.IO.Path.GetFullPath(path);
         p.RecentProjects.RemoveAll(r => PathComparer.Equals(r.Path, path));
+        p.EngineExportFolders.Remove(path);
         if (PathComparer.Equals(p.LastProjectPath, path)) p.LastProjectPath = p.RecentProjects.FirstOrDefault()?.Path;
     }
 }

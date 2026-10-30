@@ -213,4 +213,132 @@ public sealed partial class MainWindow
             return false;
         }
     }
+
+    public async Task<bool> ConfigureEngineExportFolderAsync()
+    {
+        if (!hasProject) return false;
+        if (filePath is null)
+        {
+            await Ui.Ask(this, "Save story first", "Please save your story to a file before configuring its engine export folder.", "Close");
+            return false;
+        }
+
+        var currentFolder = WorkspaceStore.GetEngineExportFolder(preferences, filePath);
+        var folderInput = new TextBox
+        {
+            Name = "EngineExportFolderPath",
+            Text = currentFolder ?? "",
+            PlaceholderText = "Path to engine Assets or project folder…",
+            MinHeight = 36
+        };
+        Avalonia.Automation.AutomationProperties.SetName(folderInput, "Engine export folder path");
+
+        var browseButton = Ui.AsyncButton("Choose folder…", async () =>
+        {
+            var picked = await projectFilePicker.PickFolderAsync(this, "Choose engine export folder");
+            if (!string.IsNullOrWhiteSpace(picked)) folderInput.Text = picked;
+        });
+        browseButton.Name = "BrowseEngineExportFolder";
+
+        var clearButton = Ui.Button("Clear", () => folderInput.Text = "");
+        clearButton.Name = "ClearEngineExportFolder";
+
+        var controlsRow = new Grid
+        {
+            ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto"),
+            Children = { folderInput, browseButton, clearButton }
+        };
+        browseButton.Margin = new Thickness(8, 0, 0, 0);
+        clearButton.Margin = new Thickness(8, 0, 0, 0);
+        Grid.SetColumn(folderInput, 0);
+        Grid.SetColumn(browseButton, 1);
+        Grid.SetColumn(clearButton, 2);
+
+        Window? dialog = null;
+        var cancel = Ui.Button("Cancel", () => dialog!.Close(false));
+        cancel.Name = "CancelExport";
+        var save = Ui.Button("Save", () => dialog!.Close(true), "primary");
+        save.Name = "SaveEngineExportFolder";
+
+        var content = Ui.Stack(
+            Ui.Text("Engine export folder", 24),
+            Ui.Text("When configured, saving your story automatically exports a companion runtime file (*.runtime.json) directly into your game engine project (Unity, Unreal, Godot).", 13, true),
+            Ui.Field("Folder location", controlsRow),
+            Ui.Text("The export file is named <ProjectName-slug>.runtime.json and is only rewritten when the story changes. Stories with validation errors will not overwrite existing exports.", 12, true),
+            Ui.Row(cancel, save)
+        );
+        content.Margin = new Thickness(24);
+
+        dialog = Ui.Dialog(this, "Engine export folder", content, 560, 320, preferences.Scale);
+        dialog.Opened += (_, _) => folderInput.Focus();
+
+        if (!await dialog.ShowDialog<bool>(this)) return false;
+
+        var nextFolder = string.IsNullOrWhiteSpace(folderInput.Text) ? null : folderInput.Text.Trim();
+        WorkspaceStore.SetEngineExportFolder(preferences, filePath, nextFolder);
+        WritePreferences();
+        if (nextFolder is not null)
+        {
+            Status("Engine export folder set to " + nextFolder);
+            TryAutoExportEngineRuntime();
+        }
+        else
+        {
+            Status("Engine export folder cleared");
+        }
+        return true;
+    }
+
+    public void TryAutoExportEngineRuntime()
+    {
+        if (filePath is null) return;
+        var folder = WorkspaceStore.GetEngineExportFolder(preferences, filePath);
+        if (string.IsNullOrWhiteSpace(folder)) return;
+
+        var errors = DialogueEngine.Validate(project).Where(d => d.Severity == "Error").ToList();
+        if (errors.Count > 0)
+        {
+            RefreshDiagnostics();
+            C<Border>("DiagnosticsBorder").IsVisible = true;
+            return;
+        }
+
+        RuntimeHandoff handoff;
+        try
+        {
+            handoff = RuntimeExport.Create(project);
+        }
+        catch (Exception ex) when (ex is InvalidDataException or ArgumentException)
+        {
+            RefreshDiagnostics();
+            C<Border>("DiagnosticsBorder").IsVisible = true;
+            return;
+        }
+
+        var fileName = RuntimeExport.Slug(project.ProjectName) + ".runtime.json";
+        var outPath = Path.Combine(folder, fileName);
+
+        if (File.Exists(outPath))
+        {
+            try
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(outPath));
+                if (doc.RootElement.TryGetProperty("StorySha256", out var shaProp) &&
+                    string.Equals(shaProp.GetString(), handoff.StorySha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    return;
+                }
+            }
+            catch { }
+        }
+
+        try
+        {
+            ProjectStore.AtomicWrite(outPath, RuntimeExport.Serialize(handoff));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Status("Engine export failed: " + ex.Message);
+        }
+    }
 }

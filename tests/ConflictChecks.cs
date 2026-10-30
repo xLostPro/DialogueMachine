@@ -219,6 +219,7 @@ internal static class ConflictChecks
         public Task<string?> OpenAsync(Window owner) => Task.FromResult<string?>(null);
         public Task<string?> SaveAsync(Window owner, string suggestedName) => Task.FromResult(Paths.Count > 0 ? Paths.Dequeue() : null);
         public Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension) => Task.FromResult<string?>(null);
+        public Task<string?> PickFolderAsync(Window owner, string title) => Task.FromResult<string?>(null);
     }
     private static T Named<T>(Window window, string name) where T : Control => window.GetVisualDescendants().OfType<T>().Single(c => c.Name == name);
     private static void Press(Button button) { button.RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }

@@ -7,7 +7,7 @@ namespace DialogueMachine.Core;
 
 public static class StoryTestCommand
 {
-    public const string Help = "Dialogue Machine story tests\nvalidate <project.json>\nreplay <project.json> [--all | --scenario <id-or-name>] [--max-steps <1..10000>] [--analyze] [--max-configurations <1..10000>] [--trace <output.json>]\nconformance <outputDir>\nExit: 0 passed, 1 invalid story, 2 input/usage/write error, 3 replay/assertion/dead-end failure, 4 bounded limit, 5 cancelled.\n";
+    public const string Help = "Dialogue Machine story tests\nvalidate <project.json>\nreplay <project.json> [--all | --scenario <id-or-name>] [--max-steps <1..10000>] [--analyze] [--max-configurations <1..10000>] [--trace <output.json>]\nexport-runtime <project.json> <out.runtime.json> [--seed N] [--max-operations N]\nconformance <outputDir>\nExit: 0 passed, 1 invalid story, 2 input/usage/write error, 3 replay/assertion/dead-end failure, 4 bounded limit, 5 cancelled.\n";
     public static int Run(string[] args, TextWriter output, CancellationToken cancellation = default)
     {
         if (args.Length == 1 && args[0] is "--help" or "-h") { output.Write(Help); return 0; }
@@ -20,8 +20,61 @@ public static class StoryTestCommand
                 foreach (var (name, content) in fixtures) ProjectStore.AtomicWrite(Path.Combine(args[1], name + ".json"), content);
                 output.WriteLine(JsonSerializer.Serialize(new { SchemaVersion = 1, Command = "conformance", ExitCode = 0, Fixtures = fixtures.Keys }, ProjectStore.Options)); return 0;
             }
-            if (args.Length < 2 || args[0] is not ("validate" or "replay")) throw new ArgumentException("Use validate <project.json>, replay <project.json> or conformance <outputDir>. See --help.");
-            var command = args[0]; string? selector = null; var all = false; var analyze = false; int? maxSteps = null; var maxConfigurations = 1000;
+            if (args.Length < 2 || args[0] is not ("validate" or "replay" or "export-runtime")) throw new ArgumentException("Use validate <project.json>, replay <project.json>, export-runtime <project.json> <out.runtime.json> or conformance <outputDir>. See --help.");
+            var command = args[0];
+            if (command == "export-runtime")
+            {
+                if (args.Length < 3) throw new ArgumentException("Use export-runtime <project.json> <out.runtime.json> [--seed N] [--max-operations N]. See --help.");
+                var projectPath = args[1]; var outPath = args[2];
+                if (Path.GetFullPath(outPath).Equals(Path.GetFullPath(projectPath), OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+                    throw new ArgumentException("Runtime export output must use a different path from the authored project.");
+                var seed = 0; var maxOperations = 1000;
+                var suppliedOpts = new HashSet<string>(StringComparer.Ordinal);
+                for (var i = 3; i < args.Length; i++)
+                {
+                    var option = args[i];
+                    if (!suppliedOpts.Add(option)) throw new ArgumentException($"Unsupported or duplicate option ‘{option}’.");
+                    string Value() => ++i < args.Length ? args[i] : throw new ArgumentException($"{option} needs a value.");
+                    switch (option)
+                    {
+                        case "--seed":
+                            var s = Value();
+                            if (!int.TryParse(s, out seed)) throw new ArgumentException("--seed must be an integer.");
+                            break;
+                        case "--max-operations":
+                            var m = Value();
+                            if (!int.TryParse(m, out maxOperations) || maxOperations < 1 || maxOperations > 10000)
+                                throw new ArgumentException("--max-operations must be an integer between 1 and 10,000.");
+                            break;
+                        default: throw new ArgumentException($"Unknown option ‘{option}’. See --help.");
+                    }
+                }
+                cancellation.ThrowIfCancellationRequested(); var exportProject = ProjectStore.Load(projectPath);
+                var errors = DialogueEngine.Validate(exportProject).Where(d => d.Severity == "Error").ToList();
+                if (errors.Count > 0)
+                {
+                    exit = 1;
+                    report = new { SchemaVersion = 1, Command = command, ExitCode = exit, Diagnostics = errors };
+                }
+                else
+                {
+                    try
+                    {
+                        var handoff = RuntimeExport.Create(exportProject, seed, maxOperations);
+                        ProjectStore.AtomicWrite(outPath, RuntimeExport.Serialize(handoff));
+                        exit = 0;
+                        report = new { SchemaVersion = 1, Command = command, ExitCode = exit, Output = outPath, StorySha256 = handoff.StorySha256 };
+                    }
+                    catch (InvalidDataException ex)
+                    {
+                        exit = 1;
+                        report = new { SchemaVersion = 1, Command = command, ExitCode = exit, Diagnostics = new[] { new Diagnostic("", "Error", ex.Message) } };
+                    }
+                }
+                var exportJson = JsonSerializer.Serialize(report, ProjectStore.Options);
+                output.WriteLine(exportJson); return exit;
+            }
+            string? selector = null; var all = false; var analyze = false; int? maxSteps = null; var maxConfigurations = 1000;
             var supplied = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 2; i < args.Length; i++)
             {

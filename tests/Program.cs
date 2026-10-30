@@ -1065,6 +1065,7 @@ runtimeWindow.Show();
 Pump(runtimeWindow.LoadExampleAsync());
 var fileMenu = runtimeWindow.FindControl<Menu>("AppMenu")!.Items.OfType<MenuItem>().First(m => (string?)m.Header == "_File");
 Check(fileMenu.ItemsSource!.OfType<MenuItem>().Any(m => (string?)m.Header == "Export runtime companion…"), "File menu includes Export runtime companion action");
+Check(fileMenu.ItemsSource!.OfType<MenuItem>().Any(m => (string?)m.Header == "Engine export folder…"), "File menu includes Engine export folder action");
 
 var exportTask = runtimeWindow.ExportRuntimeCompanionAsync();
 var exportDialog = Modal(runtimeWindow);
@@ -1102,6 +1103,74 @@ Dispatcher.UIThread.RunJobs();
 Pump(invalidTask);
 runtimeWindow.Project.InitialVariables.Remove("bad_var");
 Check(ProjectStore.Serialize(runtimeWindow.Project) == beforeState && !runtimeWindow.HasUnsavedChanges, "malformed runtime variable check does not mutate history or crash");
+
+var unsavedFolderTask = runtimeWindow.ConfigureEngineExportFolderAsync();
+var unsavedPrompt = Modal(runtimeWindow);
+Press(unsavedPrompt.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Close")));
+Pump(unsavedFolderTask);
+Check(!unsavedFolderTask.Result, "configuring engine export folder on unsaved story prompts to save first");
+
+var savedStoryPath = Path.Combine(workflowRoot, "saved-story.dialogue.json");
+runtimePicker.SavePaths.Enqueue(savedStoryPath);
+Pump(runtimeWindow.SaveProjectAsync(true));
+
+var configTask = runtimeWindow.ConfigureEngineExportFolderAsync();
+var configDialog = Modal(runtimeWindow);
+var folderInput = NamedControl<TextBox>(configDialog, "EngineExportFolderPath");
+var browseBtn = NamedControl<Button>(configDialog, "BrowseEngineExportFolder");
+var clearBtn = NamedControl<Button>(configDialog, "ClearEngineExportFolder");
+var saveFolderBtn = NamedControl<Button>(configDialog, "SaveEngineExportFolder");
+var cancelFolderBtn = NamedControl<Button>(configDialog, "CancelExport");
+
+Check(folderInput is not null && browseBtn is not null && clearBtn is not null && saveFolderBtn is not null && cancelFolderBtn is not null, "engine export folder dialog controls exist");
+Check(AutomationProperties.GetName(folderInput!) == "Engine export folder path", "engine export folder controls have accessibility names");
+
+var targetEngineFolder = Path.Combine(workflowRoot, "EngineAssets");
+runtimePicker.FolderPaths.Enqueue(targetEngineFolder);
+Press(browseBtn!);
+Check(folderInput!.Text == targetEngineFolder, "browse button updates engine export folder input");
+
+Press(clearBtn!);
+Check(string.IsNullOrEmpty(folderInput!.Text), "clear button empties engine export folder input");
+
+folderInput!.Text = targetEngineFolder;
+Capture(configDialog, "engine-export-folder-dialog");
+Press(saveFolderBtn!);
+Pump(configTask);
+
+Check(WorkspaceStore.GetEngineExportFolder(new WorkspaceStore(settingsRoot).Load(), savedStoryPath) == Path.GetFullPath(targetEngineFolder), "configured engine export folder persists in workspace preferences");
+
+var expectedAutoExport = Path.Combine(targetEngineFolder, RuntimeExport.Slug(runtimeWindow.Project.ProjectName) + ".runtime.json");
+Check(File.Exists(expectedAutoExport), "auto-export wrote file to engine folder on folder config / save");
+Check(File.ReadAllText(expectedAutoExport) == RuntimeExport.Serialize(RuntimeExport.Create(runtimeWindow.Project)), "auto-exported runtime file matches RuntimeExport.Serialize");
+
+var writeTime1 = File.GetLastWriteTimeUtc(expectedAutoExport);
+Thread.Sleep(50);
+Pump(runtimeWindow.SaveProjectAsync());
+Check(File.GetLastWriteTimeUtc(expectedAutoExport) == writeTime1, "unchanged SHA skips the export write on save");
+
+// Introduce validation error and save
+runtimeWindow.Project.ListOfCharacterStates[0].DefaultNextId = "broken_scene_target";
+var lastGoodContent = File.ReadAllText(expectedAutoExport);
+var writeTimeBeforeBadSave = File.GetLastWriteTimeUtc(expectedAutoExport);
+Pump(runtimeWindow.SaveProjectAsync());
+Check(File.ReadAllText(expectedAutoExport) == lastGoodContent, "invalid story on save leaves the last good export file intact");
+Check(File.GetLastWriteTimeUtc(expectedAutoExport) == writeTimeBeforeBadSave, "invalid story on save does not overwrite export file");
+Check(runtimeWindow.FindControl<Border>("DiagnosticsBorder")!.IsVisible, "invalid story on save shows diagnostics");
+
+// Restore valid target
+runtimeWindow.Project.ListOfCharacterStates[0].DefaultNextId = null;
+
+// Clear folder
+configTask = runtimeWindow.ConfigureEngineExportFolderAsync();
+configDialog = Modal(runtimeWindow);
+clearBtn = NamedControl<Button>(configDialog, "ClearEngineExportFolder");
+saveFolderBtn = NamedControl<Button>(configDialog, "SaveEngineExportFolder");
+Press(clearBtn!);
+Press(saveFolderBtn!);
+Pump(configTask);
+Check(WorkspaceStore.GetEngineExportFolder(new WorkspaceStore(settingsRoot).Load(), savedStoryPath) is null, "clearing folder removes entry from preferences");
+
 runtimeWindow.Close();
 Console.WriteLine($"SUCCESS: {passed} checks. Screenshots: {output}");
 }
@@ -1115,7 +1184,9 @@ sealed class TestFilePicker : IProjectFilePicker
 {
     public Queue<string?> OpenPaths { get; } = new();
     public Queue<string?> SavePaths { get; } = new();
+    public Queue<string?> FolderPaths { get; } = new();
     public Task<string?> OpenAsync(Window owner) => Task.FromResult(OpenPaths.Count > 0 ? OpenPaths.Dequeue() : null);
     public Task<string?> SaveAsync(Window owner, string suggestedName) => Task.FromResult(SavePaths.Count > 0 ? SavePaths.Dequeue() : null);
     public Task<string?> ExportAsync(Window owner, string title, string suggestedName, string extension) => Task.FromResult(SavePaths.Count > 0 ? SavePaths.Dequeue() : null);
+    public Task<string?> PickFolderAsync(Window owner, string title) => Task.FromResult(FolderPaths.Count > 0 ? FolderPaths.Dequeue() : null);
 }

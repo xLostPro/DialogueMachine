@@ -30,4 +30,30 @@ public static class RuntimeExport
             project.Entry, seed, numeric, new(project.TextVariables, StringComparer.Ordinal), maxOperations);
     }
     public static string Serialize(RuntimeHandoff handoff) => JsonSerializer.Serialize(handoff, ProjectStore.Options);
+    public static string Slug(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "story";
+        var sb = new StringBuilder();
+        var hyphen = false;
+        foreach (var ch in name.Trim())
+        {
+            if (char.IsLetterOrDigit(ch))
+            {
+                sb.Append(char.ToLowerInvariant(ch));
+                hyphen = false;
+            }
+            else if (ch is '-' or '_')
+            {
+                sb.Append(ch);
+                hyphen = false;
+            }
+            else if (!hyphen && sb.Length > 0)
+            {
+                sb.Append('-');
+                hyphen = true;
+            }
+        }
+        var slug = sb.ToString().Trim('-', '_');
+        return string.IsNullOrEmpty(slug) ? "story" : slug;
+    }
 }
