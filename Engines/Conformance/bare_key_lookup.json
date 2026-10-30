@@ -1,0 +1,146 @@
+{
+  "name": "bare_key_lookup",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022bare\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[if coin \\u003E= 1]inventory set[else]inventory zero[/if] | [if trust \\u003E= 1]affinity set[else]affinity zero[/if] | [if missing == 0]defaults to zero[else]not zero[/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022bare\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "5cac1b3cda1d7b75e2fcf71a041e43e391364841a09985b8c41519032963f71c",
+    "StartingScene": "bare",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:coin": 5,
+      "aff:missing": 0,
+      "aff:trust": 0,
+      "inv:coin": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 1
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:trust",
+      "value": 1
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:coin",
+      "value": 0
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "bare",
+      "ended": false,
+      "page": "inventory zero | affinity zero | defaults to zero",
+      "plain": "inventory zero | affinity zero | defaults to zero",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:coin": 5,
+        "aff:missing": 0,
+        "aff:trust": 0,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "bare",
+      "ended": false,
+      "page": "inventory set | affinity zero | defaults to zero",
+      "plain": "inventory set | affinity zero | defaults to zero",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:coin": 5,
+        "aff:missing": 0,
+        "aff:trust": 0,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "bare",
+      "ended": false,
+      "page": "inventory set | affinity set | defaults to zero",
+      "plain": "inventory set | affinity set | defaults to zero",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:coin": 5,
+        "aff:missing": 0,
+        "aff:trust": 1,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "bare",
+      "ended": false,
+      "page": "inventory set | affinity set | defaults to zero",
+      "plain": "inventory set | affinity set | defaults to zero",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:coin": 0,
+        "aff:missing": 0,
+        "aff:trust": 1,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:coin": 0,
+        "aff:missing": 0,
+        "aff:trust": 1,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "name": "lighthouse",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022arrival\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022You\\u0027re late, {player_name}. The tide has already turned.\\nBeyond the harbour, a single light flickers in the mist.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u0022f2e12ab4-3965-4bc7-8b91-bcdfc1d7c63f\u0022,\n          \u0022ButtonText\u0022: \u0022What happened to the lighthouse?\u0022,\n          \u0022NextStateId\u0022: \u0022keeper\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u0022db53086a-b4c2-4137-9656-29150f2c68b5\u0022,\n          \u0022ButtonText\u0022: \u0022I brought something for you.\u0022,\n          \u0022NextStateId\u0022: \u0022gift\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Amount\u0022: -1,\n              \u0022Parameter\u0022: null\n            },\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Amount\u0022: 1,\n              \u0022Parameter\u0022: null\n            }\n          ],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u00221b9caf60-4e31-4a14-a2dc-83c111957595\u0022,\n          \u0022ButtonText\u0022: \u0022I should go.\u0022,\n          \u0022NextStateId\u0022: \u0022departure\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022A light in the fog\u0022,\n        \u0022speaker\u0022: \u0022Mara\u0022,\n        \u0022notes\u0022: \u0022Establish the mystery. Let the player decide how much to trust Mara.\u0022\n      },\n      \u0022VisualX\u0022: 70,\n      \u0022VisualY\u0022: 220\n    },\n    {\n      \u0022State\u0022: \u0022keeper\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022The keeper vanished three nights ago. No footprints. No boat. Just the light, still burning.\\n[if aff:trust \\u003E= 1]I think you can help me find him.[else]I don\\u0027t know if I can trust you with the rest.[/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u0022a40ad635-8ec4-478e-b55c-20b9f404a348\u0022,\n          \u0022ButtonText\u0022: \u0022I\\u0027ll help you find him.\u0022,\n          \u0022NextStateId\u0022: \u0022promise\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Amount\u0022: 1,\n              \u0022Parameter\u0022: null\n            }\n          ],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u0022d59c80f6-5166-426b-a838-d7d067edaa5d\u0022,\n          \u0022ButtonText\u0022: \u0022This sounds dangerous.\u0022,\n          \u0022NextStateId\u0022: \u0022departure\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022The missing keeper\u0022,\n        \u0022speaker\u0022: \u0022Mara\u0022\n      },\n      \u0022VisualX\u0022: 440,\n      \u0022VisualY\u0022: 55\n    },\n    {\n      \u0022State\u0022: \u0022gift\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022A ferryman\\u0027s coin? I haven\\u0027t seen one of these since I was a child.\\nThank you. Perhaps I was wrong about you.\u0022,\n      \u0022DefaultNextId\u0022: \u0022keeper\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022A small kindness\u0022,\n        \u0022speaker\u0022: \u0022Mara\u0022\n      },\n      \u0022VisualX\u0022: 440,\n      \u0022VisualY\u0022: 385\n    },\n    {\n      \u0022State\u0022: \u0022promise\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Then meet me at the old jetty at dawn.\\nAnd whatever you do\\u2026 don\\u0027t follow the light alone.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022Into the unknown\u0022,\n        \u0022speaker\u0022: \u0022Mara\u0022,\n        \u0022ending\u0022: \u0022true\u0022\n      },\n      \u0022VisualX\u0022: 810,\n      \u0022VisualY\u0022: 70\n    },\n    {\n      \u0022State\u0022: \u0022departure\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Of course. The road is safer before dark.\\nBehind you, the lighthouse goes out.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022The road home\u0022,\n        \u0022speaker\u0022: \u0022Mara\u0022,\n        \u0022ending\u0022: \u0022true\u0022\n      },\n      \u0022VisualX\u0022: 810,\n      \u0022VisualY\u0022: 400\n    }\n  ]\n}",
+    "StorySha256": "07524617de542ff6429d1b3a76ad968dc31532c47a6a403be145eaf4a624a6ac",
+    "StartingScene": "arrival",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:trust": 0,
+      "inv:coin": 1
+    },
+    "TextValues": {
+      "player_name": "Traveller",
+      "npc_name": "Mara"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "db53086a-b4c2-4137-9656-29150f2c68b5"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "a40ad635-8ec4-478e-b55c-20b9f404a348"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "arrival",
+      "ended": false,
+      "page": "You\u0027re late, Traveller. The tide has already turned.",
+      "plain": "You\u0027re late, Traveller. The tide has already turned.",
+      "pageIndex": 0,
+      "pageCount": 2,
+      "choices": [
+        {
+          "id": "f2e12ab4-3965-4bc7-8b91-bcdfc1d7c63f",
+          "text": "What happened to the lighthouse?",
+          "enabled": true
+        },
+        {
+          "id": "db53086a-b4c2-4137-9656-29150f2c68b5",
+          "text": "I brought something for you.",
+          "enabled": true
+        },
+        {
+          "id": "1b9caf60-4e31-4a14-a2dc-83c111957595",
+          "text": "I should go.",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 0,
+        "inv:coin": 1
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "arrival",
+      "ended": false,
+      "page": "Beyond the harbour, a single light flickers in the mist.",
+      "plain": "Beyond the harbour, a single light flickers in the mist.",
+      "pageIndex": 1,
+      "pageCount": 2,
+      "choices": [
+        {
+          "id": "f2e12ab4-3965-4bc7-8b91-bcdfc1d7c63f",
+          "text": "What happened to the lighthouse?",
+          "enabled": true
+        },
+        {
+          "id": "db53086a-b4c2-4137-9656-29150f2c68b5",
+          "text": "I brought something for you.",
+          "enabled": true
+        },
+        {
+          "id": "1b9caf60-4e31-4a14-a2dc-83c111957595",
+          "text": "I should go.",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 0,
+        "inv:coin": 1
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "gift",
+      "ended": false,
+      "page": "A ferryman\u0027s coin? I haven\u0027t seen one of these since I was a child.",
+      "plain": "A ferryman\u0027s coin? I haven\u0027t seen one of these since I was a child.",
+      "pageIndex": 0,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "gift",
+      "ended": false,
+      "page": "Thank you. Perhaps I was wrong about you.",
+      "plain": "Thank you. Perhaps I was wrong about you.",
+      "pageIndex": 1,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "keeper",
+      "ended": false,
+      "page": "The keeper vanished three nights ago. No footprints. No boat. Just the light, still burning.",
+      "plain": "The keeper vanished three nights ago. No footprints. No boat. Just the light, still burning.",
+      "pageIndex": 0,
+      "pageCount": 2,
+      "choices": [
+        {
+          "id": "a40ad635-8ec4-478e-b55c-20b9f404a348",
+          "text": "I\u0027ll help you find him.",
+          "enabled": true
+        },
+        {
+          "id": "d59c80f6-5166-426b-a838-d7d067edaa5d",
+          "text": "This sounds dangerous.",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "keeper",
+      "ended": false,
+      "page": "I think you can help me find him.",
+      "plain": "I think you can help me find him.",
+      "pageIndex": 1,
+      "pageCount": 2,
+      "choices": [
+        {
+          "id": "a40ad635-8ec4-478e-b55c-20b9f404a348",
+          "text": "I\u0027ll help you find him.",
+          "enabled": true
+        },
+        {
+          "id": "d59c80f6-5166-426b-a838-d7d067edaa5d",
+          "text": "This sounds dangerous.",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "promise",
+      "ended": false,
+      "page": "Then meet me at the old jetty at dawn.",
+      "plain": "Then meet me at the old jetty at dawn.",
+      "pageIndex": 0,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 2,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "promise",
+      "ended": false,
+      "page": "And whatever you do\u2026 don\u0027t follow the light alone.",
+      "plain": "And whatever you do\u2026 don\u0027t follow the light alone.",
+      "pageIndex": 1,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 2,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 2,
+        "inv:coin": 0
+      },
+      "text": {
+        "npc_name": "Mara",
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

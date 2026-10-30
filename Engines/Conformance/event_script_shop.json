@@ -1,0 +1,136 @@
+{
+  "name": "event_script_shop",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022shop\u0022,\n      \u0022Type\u0022: \u0022Shop\u0022,\n      \u0022Text\u0022: \u0022Welcome to the shop.\u0022,\n      \u0022DefaultNextId\u0022: \u0022stall\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022harbour_shop\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Buy\u0022,\n          \u0022NextStateId\u0022: null,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [\n            {\n              \u0022Type\u0022: \u0022Event\u0022,\n              \u0022TargetId\u0022: \u0022purchase\u0022,\n              \u0022Amount\u0022: 0,\n              \u0022Parameter\u0022: \u0022lamp\u0022\n            },\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022lamp\u0022,\n              \u0022Amount\u0022: 1,\n              \u0022Parameter\u0022: null\n            },\n            {\n              \u0022Type\u0022: \u0022Script\u0022,\n              \u0022TargetId\u0022: \u0022open_bag\u0022,\n              \u0022Amount\u0022: 0,\n              \u0022Parameter\u0022: \u0022one\\ntwo\u0022\n            }\n          ],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Script\u0022,\n          \u0022TargetId\u0022: \u0022close_shop\u0022,\n          \u0022Amount\u0022: 0,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022shop\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022stall\u0022,\n      \u0022Type\u0022: \u0022Shop\u0022,\n      \u0022Text\u0022: \u0022A second shop.\\nWith two pages.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022stall\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022stall\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "99030ef1f8fbebbb73a929875d123a786ad3c3b9aa0c8e1649c5e311d2dec178",
+    "StartingScene": "shop",
+    "Seed": 0,
+    "NumericValues": {
+      "inv:lamp": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "shop",
+      "ended": false,
+      "page": "Welcome to the shop.",
+      "plain": "Welcome to the shop.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Buy",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "inv:lamp": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [
+        {
+          "type": "Shop",
+          "targetId": "harbour_shop",
+          "parameter": null
+        }
+      ]
+    },
+    {
+      "sceneId": "stall",
+      "ended": false,
+      "page": "A second shop.",
+      "plain": "A second shop.",
+      "pageIndex": 0,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "inv:lamp": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [
+        {
+          "type": "Event",
+          "targetId": "purchase",
+          "parameter": "lamp"
+        },
+        {
+          "type": "Script",
+          "targetId": "open_bag",
+          "parameter": "one\ntwo"
+        },
+        {
+          "type": "Script",
+          "targetId": "close_shop",
+          "parameter": null
+        },
+        {
+          "type": "Shop",
+          "targetId": "stall",
+          "parameter": null
+        }
+      ]
+    },
+    {
+      "sceneId": "stall",
+      "ended": false,
+      "page": "With two pages.",
+      "plain": "With two pages.",
+      "pageIndex": 1,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "inv:lamp": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "inv:lamp": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

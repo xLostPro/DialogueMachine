@@ -5,7 +5,7 @@
 ## Now
 
 1. **Engine integration (Unity → Unreal → Godot).** See [Engines/CONTRACT.md](Engines/CONTRACT.md).
-   - Phase 1: Shared C# runtime + conformance fixtures. Done when: the harness passes, fixtures are checked in, desktop playtest behaviour is unchanged, and `Engines/Conformance/` has ≥ 14 cases.
+   - Phase 1: Shared C# runtime + conformance fixtures. Done.
    - Phase 2: Data pipeline in Dialogue Machine. Done when: a writer can press Save and see the engine-side file update without any further steps.
    - Phase 3: Live link (localhost WebSocket bridge). Done when: a scripted client sees story updates on save, and a scripted runner's progress is tracked live on the graph with the trail and variables shown.
    - Phase 4: Unity (priority 1). Done when: the harness and conformance pass, the package compiles in Unity 2022.3, and a manual check works.

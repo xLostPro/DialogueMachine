@@ -1,3 +1,5 @@
+using DialogueMachine.Runtime;
+
 namespace DialogueMachine.Core;
 
 public sealed record TraceEntry(int Sequence, string Kind, string? SceneId, Guid? ChoiceId = null,
@@ -5,25 +7,10 @@ public sealed record TraceEntry(int Sequence, string Kind, string? SceneId, Guid
     string? EventType = null, string? EventId = null, string? Parameter = null, string? Destination = null, ulong? RandomState = null);
 public sealed record StoryEnding(string SceneId, Guid? ChoiceId);
 
-// SplitMix64 with explicit state: portable integer arithmetic, independent of System.Random versions.
 internal sealed class ReplayRandom(ulong state)
 {
-    public ulong State { get; set; } = state;
-    public int Next(int count)
-    {
-        if (count <= 0) throw new ArgumentOutOfRangeException(nameof(count));
-        ulong value;
-        var threshold = unchecked(0UL - (ulong)count) % (ulong)count;
-        do
-        {
-            State = unchecked(State + 0x9E3779B97F4A7C15UL);
-            value = State;
-            value = unchecked((value ^ (value >> 30)) * 0xBF58476D1CE4E5B9UL);
-            value = unchecked((value ^ (value >> 27)) * 0x94D049BB133111EBUL);
-            value ^= value >> 31;
-        } while (value < threshold);
-        return (int)(value % (ulong)count);
-    }
+    public ulong State = state;
+    public int Next(int count) => DialogueRules.SplitMix64(ref State, count);
 }
 
 public sealed class Simulation
@@ -62,7 +49,7 @@ public sealed class Simulation
         if (p.ListOfCharacterStates.Any(s => s.State == "[EXIT]")) throw new InvalidOperationException("[EXIT] is reserved for endings. Rename the scene before playtesting.");
         if (p.ListOfCharacterStates.GroupBy(s => s.State).Any(g => g.Count() > 1)) throw new InvalidOperationException("Duplicate scene IDs are ambiguous. Rename them before playtesting.");
         Project = ProjectStore.Clone(p); scenes = Project.ListOfCharacterStates.ToDictionary(s => s.State, StringComparer.Ordinal);
-        Seed = seed; random = new(unchecked((ulong)(long)seed)); this.start = start ?? p.Entry; record = recordHistory; keepHistory = recordHistory && retainHistory;
+        Seed = seed; random = new(DialogueRules.SeedState(seed)); this.start = start ?? p.Entry; record = recordHistory; keepHistory = recordHistory && retainHistory;
         startingVariables = DialogueEngine.DiscoverVariables(p).ToDictionary(k => k, k => k.StartsWith("inv:", StringComparison.Ordinal) ? Math.Max(0, p.InitialVariables.GetValueOrDefault(k)) : p.InitialVariables.GetValueOrDefault(k), StringComparer.Ordinal);
         startingText = new(p.TextVariables, StringComparer.Ordinal);
         foreach (var (key, value) in numericOverrides ?? new Dictionary<string, int>())
@@ -88,7 +75,7 @@ public sealed class Simulation
     internal Simulation Fork() => new(this);
     public void Restart()
     {
-        Variables = new(startingVariables); TextVariables = new(startingText); random.State = unchecked((ulong)(long)Seed);
+        Variables = new(startingVariables); TextVariables = new(startingText); random.State = DialogueRules.SeedState(Seed);
         history.Clear(); Trace.Clear(); ReplaySteps.Clear(); Transcript.Clear(); Events.Clear(); Ending = null; Enter(start);
     }
     private void Add(string kind, Guid? choiceId = null, string? text = null, int? page = null, string? key = null,
@@ -147,14 +134,7 @@ public sealed class Simulation
     {
         if (Current is null) return;
         var text = DialogueEngine.ResolveText(Current.Text, Variables, TextVariables);
-        var pages = text.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
-        if (pages.Length == 0) Pages = ["(No dialogue)"];
-        else if (!Current.SayItAll)
-        {
-            if (randomLine < 0) randomLine = random.Next(pages.Length);
-            Pages = [pages[Math.Min(randomLine, pages.Length - 1)]];
-        }
-        else Pages = pages;
+        Pages = DialogueRules.BuildPages(text, Current.SayItAll, ref random.State, ref randomLine);
         PageIndex = Math.Min(PageIndex, Pages.Length - 1);
     }
     private void Deliver()
@@ -221,7 +201,7 @@ public sealed class Simulation
                 if (record) Events.Add($"{a.Type}: {a.TargetId}({a.Parameter}) — logged only"); continue;
             }
             var key = DialogueEngine.Key(a.Type, a.TargetId); var before = Variables.GetValueOrDefault(key);
-            var amount = (int)Math.Clamp((long)before + a.Amount, a.Type == "Inventory" ? 0 : int.MinValue, int.MaxValue);
+            var amount = DialogueRules.ApplyAmount(a.Type, before, a.Amount);
             Variables[key] = amount; Add("VariableChange", key: key, before: before, after: amount, text: "Action");
         }
     }

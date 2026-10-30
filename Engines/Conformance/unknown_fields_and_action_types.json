@@ -1,0 +1,72 @@
+{
+  "name": "unknown_fields_and_action_types",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022future\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Trust is {aff:trust}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022,\n        \u0022FutureShop\u0022: {\n          \u0022retained\u0022: 42\n        }\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Go\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00220\u0022,\n              \u0022FutureRequirement\u0022: {\n                \u0022retained\u0022: 42\n              }\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [\n            {\n              \u0022Type\u0022: \u0022Teleport\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Amount\u0022: 100,\n              \u0022Parameter\u0022: null\n            },\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Amount\u0022: 1,\n              \u0022Parameter\u0022: null,\n              \u0022FutureAction\u0022: {\n                \u0022retained\u0022: 42\n              }\n            }\n          ],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150,\n          \u0022FutureChoice\u0022: {\n            \u0022retained\u0022: 42\n          }\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Affinity\u0022,\n          \u0022TargetId\u0022: \u0022trust\u0022,\n          \u0022Amount\u0022: 2,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Quest\u0022,\n          \u0022TargetId\u0022: \u0022ghost\u0022,\n          \u0022Amount\u0022: 5,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022future\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0,\n      \u0022FutureScene\u0022: {\n        \u0022retained\u0022: 42\n      }\n    }\n  ]\n}",
+    "StorySha256": "a0d849ae0b1b859d77057615bf380ab3cf99bbb9abe15137848112ce5128b901",
+    "StartingScene": "future",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:trust": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000,
+    "FutureHandoffField": {
+      "retained": 42
+    }
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "future",
+      "ended": false,
+      "page": "Trust is 0.",
+      "plain": "Trust is 0.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Go",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 3
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

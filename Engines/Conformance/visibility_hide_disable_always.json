@@ -1,0 +1,314 @@
+{
+  "name": "visibility_hide_disable_always",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022gate\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Trust is {aff:trust}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Hide \\u003E=\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 0,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000002\u0022,\n          \u0022ButtonText\u0022: \u0022Disable \\u003E=\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000003\u0022,\n          \u0022ButtonText\u0022: \u0022Always \\u003E=\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 2,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000004\u0022,\n          \u0022ButtonText\u0022: \u0022Disable ==\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022==\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000005\u0022,\n          \u0022ButtonText\u0022: \u0022Hide !=\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 0,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022!=\u0022,\n              \u0022Value\u0022: \u00220\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000006\u0022,\n          \u0022ButtonText\u0022: \u0022Disable \\u003C\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003C\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000007\u0022,\n          \u0022ButtonText\u0022: \u0022Hide \\u003C=\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 0,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003C=\u0022,\n              \u0022Value\u0022: \u00220\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000008\u0022,\n          \u0022ButtonText\u0022: \u0022Disable \\u003E\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E\u0022,\n              \u0022Value\u0022: \u00220\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000009\u0022,\n          \u0022ButtonText\u0022: \u0022Two conditions\u0022,\n          \u0022NextStateId\u0022: \u0022stuck\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            },\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022gate\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022stuck\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Only continue works here.\u0022,\n      \u0022DefaultNextId\u0022: \u0022dead_end\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000010\u0022,\n          \u0022ButtonText\u0022: \u0022Never\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00225\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022stuck\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022dead_end\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022No way forward yet.\u0022,\n      \u0022DefaultNextId\u0022: \u0022\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000011\u0022,\n          \u0022ButtonText\u0022: \u0022Pay\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00225\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022dead_end\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "f353e17ed8c6321b1928a52523d78a014b7abe22c829ce79b269c55737a8e7bc",
+    "StartingScene": "gate",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:trust": 0,
+      "inv:coin": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:trust",
+      "value": 1
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 1
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000003"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 5
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000011"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "gate",
+      "ended": false,
+      "page": "Trust is 0.",
+      "plain": "Trust is 0.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Disable \u003E=",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Always \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000004",
+          "text": "Disable ==",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000006",
+          "text": "Disable \u003C",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000007",
+          "text": "Hide \u003C=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000008",
+          "text": "Disable \u003E",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000009",
+          "text": "Two conditions",
+          "enabled": false
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 0,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "gate",
+      "ended": false,
+      "page": "Trust is 1.",
+      "plain": "Trust is 1.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Hide \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Disable \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Always \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000004",
+          "text": "Disable ==",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000005",
+          "text": "Hide !=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000006",
+          "text": "Disable \u003C",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000008",
+          "text": "Disable \u003E",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000009",
+          "text": "Two conditions",
+          "enabled": false
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "gate",
+      "ended": false,
+      "page": "Trust is 1.",
+      "plain": "Trust is 1.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Hide \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Disable \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Always \u003E=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000004",
+          "text": "Disable ==",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000005",
+          "text": "Hide !=",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000006",
+          "text": "Disable \u003C",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000008",
+          "text": "Disable \u003E",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000009",
+          "text": "Two conditions",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "stuck",
+      "ended": false,
+      "page": "Only continue works here.",
+      "plain": "Only continue works here.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000010",
+          "text": "Never",
+          "enabled": false
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "dead_end",
+      "ended": false,
+      "page": "No way forward yet.",
+      "plain": "No way forward yet.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000011",
+          "text": "Pay",
+          "enabled": false
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "dead_end",
+      "ended": false,
+      "page": "No way forward yet.",
+      "plain": "No way forward yet.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000011",
+          "text": "Pay",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 5
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 1,
+        "inv:coin": 5
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}
