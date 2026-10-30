@@ -1,0 +1,18 @@
+{
+  "name": "com.xlostpro.dialoguemachine",
+  "version": "1.3.0",
+  "displayName": "Dialogue Machine",
+  "description": "Dialogue Machine runtime, importer and live link for Unity.",
+  "unity": "2022.3",
+  "author": {
+    "name": "xLostPro",
+    "url": "https://github.com/xLostPro/DialogueMachine"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Conversation",
+      "description": "Scene-free sample demonstrating dialogue playback and default UI view in code.",
+      "path": "Samples~/BasicConversation"
+    }
+  ]
+}
