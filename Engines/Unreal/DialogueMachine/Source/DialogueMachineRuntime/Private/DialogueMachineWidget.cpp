@@ -1,6 +1,50 @@
 #include "DialogueMachineWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/VerticalBoxSlot.h"
+#include "Engine/DataTable.h"
+#include "Styling/CoreStyle.h"
+#include "Styling/SlateBrush.h"
+#include "Styling/SlateTypes.h"
+#include "Fonts/SlateFontInfo.h"
+
+namespace
+{
+    // A code-built style set: the rich text block shows missing-glyph boxes without one.
+    FRichTextStyleRow MakeRow(const FSlateFontInfo& Font, const FLinearColor& Colour, bool bUnderline = false)
+    {
+        FRichTextStyleRow Row;
+        Row.TextStyle = FCoreStyle::Get().GetWidgetStyle<FTextBlockStyle>("NormalText");
+        Row.TextStyle.SetFont(Font);
+        Row.TextStyle.SetColorAndOpacity(FSlateColor(Colour));
+        if (bUnderline)
+        {
+            Row.TextStyle.SetUnderlineBrush(FSlateColorBrush(Colour));
+        }
+        return Row;
+    }
+
+    bool TryParseColour(const FString& Raw, FColor& OutColour)
+    {
+        const FString Value = Raw.TrimStartAndEnd().TrimQuotes();
+        static const TMap<FString, FColor> Named = {
+            { TEXT("red"), FColor(255, 0, 0) }, { TEXT("green"), FColor(0, 160, 0) }, { TEXT("blue"), FColor(0, 0, 255) },
+            { TEXT("yellow"), FColor(255, 255, 0) }, { TEXT("orange"), FColor(255, 165, 0) }, { TEXT("purple"), FColor(128, 0, 128) },
+            { TEXT("cyan"), FColor(0, 255, 255) }, { TEXT("magenta"), FColor(255, 0, 255) }, { TEXT("white"), FColor(255, 255, 255) },
+            { TEXT("black"), FColor(0, 0, 0) }, { TEXT("gray"), FColor(128, 128, 128) }, { TEXT("grey"), FColor(128, 128, 128) },
+        };
+        if (const FColor* Found = Named.Find(Value.ToLower()))
+        {
+            OutColour = *Found;
+            return true;
+        }
+        if (Value.StartsWith(TEXT("#")) && (Value.Len() == 7 || Value.Len() == 9))
+        {
+            OutColour = FColor::FromHex(Value);
+            return true;
+        }
+        return false;
+    }
+}
 
 void UDialogueMachineWidget::NativeConstruct()
 {
@@ -38,6 +82,7 @@ void UDialogueMachineWidget::BuildWidgetTree()
 
     BodyRichTextBlock = WidgetTree->ConstructWidget<URichTextBlock>(URichTextBlock::StaticClass(), TEXT("BodyRichTextBlock"));
     BodyRichTextBlock->SetText(FText::GetEmpty());
+    UpdateTextStyles(TSet<FString>());
     RootBox->AddChildToVerticalBox(BodyRichTextBlock);
 
     ChoicesVerticalBox = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("ChoicesVerticalBox"));
@@ -53,83 +98,125 @@ void UDialogueMachineWidget::BuildWidgetTree()
     RootBox->AddChildToVerticalBox(ContinueButton);
 }
 
+void UDialogueMachineWidget::UpdateTextStyles(const TSet<FString>& ColourRows)
+{
+    if (!BodyRichTextBlock) return;
+    if (BodyRichTextBlock->GetTextStyleSet() && ColourRows.Difference(StyledColours).Num() == 0) return;
+
+    StyledColours.Append(ColourRows);
+
+    const FLinearColor White = FLinearColor::White;
+    UDataTable* Styles = NewObject<UDataTable>(this);
+    Styles->RowStruct = FRichTextStyleRow::StaticStruct();
+    Styles->AddRow(FName("Default"), MakeRow(FCoreStyle::GetDefaultFontStyle("Regular", 24), White));
+    Styles->AddRow(FName("b"), MakeRow(FCoreStyle::GetDefaultFontStyle("Bold", 24), White));
+    Styles->AddRow(FName("i"), MakeRow(FCoreStyle::GetDefaultFontStyle("Italic", 24), White));
+    Styles->AddRow(FName("u"), MakeRow(FCoreStyle::GetDefaultFontStyle("Regular", 24), White, true));
+    for (const FString& Row : StyledColours)
+    {
+        const FColor Colour = FColor::FromHex(Row.RightChop(2));
+        Styles->AddRow(FName(*Row), MakeRow(FCoreStyle::GetDefaultFontStyle("Regular", 24), FLinearColor::FromSRGBColor(Colour)));
+    }
+    BodyRichTextBlock->SetTextStyleSet(Styles);
+}
+
 void UDialogueMachineWidget::BindToRunner(UDialogueRunnerComponent* InRunner)
 {
+    if (BoundRunner.IsValid() && BoundRunner.Get() != InRunner)
+    {
+        BoundRunner->OnLine.RemoveDynamic(this, &UDialogueMachineWidget::HandleLine);
+        BoundRunner->OnChoices.RemoveDynamic(this, &UDialogueMachineWidget::HandleChoices);
+        BoundRunner->OnEnded.RemoveDynamic(this, &UDialogueMachineWidget::HandleEnded);
+    }
+
     RunnerComponent = InRunner;
+    BoundRunner = InRunner;
     if (!RunnerComponent) return;
 
-    RunnerComponent->OnLine.AddDynamic(this, &UDialogueMachineWidget::HandleLine);
-    RunnerComponent->OnChoices.AddDynamic(this, &UDialogueMachineWidget::HandleChoices);
-    RunnerComponent->OnEnded.AddDynamic(this, &UDialogueMachineWidget::HandleEnded);
+    // Unique: NativeConstruct binds a preset runner and games often call BindToRunner as well.
+    RunnerComponent->OnLine.AddUniqueDynamic(this, &UDialogueMachineWidget::HandleLine);
+    RunnerComponent->OnChoices.AddUniqueDynamic(this, &UDialogueMachineWidget::HandleChoices);
+    RunnerComponent->OnEnded.AddUniqueDynamic(this, &UDialogueMachineWidget::HandleEnded);
 
-    if (RunnerComponent->GetInternalRunner().IsValid())
+    if (RunnerComponent->GetInternalRunner().IsValid() && !RunnerComponent->IsEnded())
     {
         HandleLine(RunnerComponent->GetCurrentPage(), RunnerComponent->GetSpeaker());
-        HandleChoices(RunnerComponent->GetChoices());
+
+        // The runner only offers choices on a scene's last page.
+        if (RunnerComponent->GetPageIndex() >= RunnerComponent->GetPageCount() - 1)
+        {
+            HandleChoices(RunnerComponent->GetChoices());
+        }
     }
 }
 
 FString UDialogueMachineWidget::ToUnrealRichText(const FString& Text)
 {
-    if (Text.IsEmpty()) return Text;
+    TSet<FString> Unused;
+    return ConvertRichText(Text, Unused);
+}
 
-    // Escape raw < by inserting a zero-width space after it so Unreal rich text parser doesn't break
-    FString Escaped = Text.Replace(TEXT("<"), TEXT("<\u200B"));
-
-    // Replace [b], [/b], [i], [/i], [u], [/u], [colour=X], [/colour]
+// Unreal rich text closes every tag with </>, and has no nesting, so [b][i]x[/i][/b] keeps only the outer style.
+FString UDialogueMachineWidget::ConvertRichText(const FString& Text, TSet<FString>& OutColourRows)
+{
     FString Result;
+    const int32 Len = Text.Len();
     int32 Pos = 0;
-    int32 Len = Escaped.Len();
 
     while (Pos < Len)
     {
-        if (Escaped[Pos] == TEXT('['))
+        const TCHAR Ch = Text[Pos];
+        if (Ch == TEXT('['))
         {
             int32 CheckPos = Pos + 1;
-            bool bClosing = false;
-            if (CheckPos < Len && Escaped[CheckPos] == TEXT('/'))
-            {
-                bClosing = true;
-                ++CheckPos;
-            }
+            const bool bClosing = CheckPos < Len && Text[CheckPos] == TEXT('/');
+            if (bClosing) ++CheckPos;
 
-            // Check b, i, u
-            if (CheckPos < Len)
+            if (CheckPos + 1 < Len && Text[CheckPos + 1] == TEXT(']'))
             {
-                TCHAR C = FChar::ToLower(Escaped[CheckPos]);
-                if ((C == TEXT('b') || C == TEXT('i') || C == TEXT('u')) && CheckPos + 1 < Len && Escaped[CheckPos + 1] == TEXT(']'))
+                const TCHAR Tag = FChar::ToLower(Text[CheckPos]);
+                if (Tag == TEXT('b') || Tag == TEXT('i') || Tag == TEXT('u'))
                 {
-                    Result += bClosing ? FString::Printf(TEXT("</%c>"), C) : FString::Printf(TEXT("<%c>"), C);
+                    Result += bClosing ? FString(TEXT("</>")) : FString::Printf(TEXT("<%c>"), Tag);
                     Pos = CheckPos + 2;
                     continue;
                 }
             }
 
-            // Check colour or colour=...
-            if (CheckPos + 6 <= Len && Escaped.Mid(CheckPos, 6).Compare(TEXT("colour"), ESearchCase::IgnoreCase) == 0)
+            if (CheckPos + 6 <= Len && Text.Mid(CheckPos, 6).Equals(TEXT("colour"), ESearchCase::IgnoreCase))
             {
-                int32 AfterColour = CheckPos + 6;
-                if (bClosing && AfterColour < Len && Escaped[AfterColour] == TEXT(']'))
+                const int32 After = CheckPos + 6;
+                if (bClosing && After < Len && Text[After] == TEXT(']'))
                 {
-                    Result += TEXT("</color>");
-                    Pos = AfterColour + 1;
+                    Result += TEXT("</>");
+                    Pos = After + 1;
                     continue;
                 }
-                else if (!bClosing && AfterColour < Len && Escaped[AfterColour] == TEXT('='))
+                if (!bClosing && After < Len && Text[After] == TEXT('='))
                 {
-                    int32 CloseBracket = Escaped.Find(TEXT("]"), ESearchCase::CaseSensitive, ESearchDir::FromStart, AfterColour + 1);
-                    if (CloseBracket != INDEX_NONE)
+                    const int32 Close = Text.Find(TEXT("]"), ESearchCase::CaseSensitive, ESearchDir::FromStart, After + 1);
+                    FColor Colour(0, 0, 0);
+                    if (Close != INDEX_NONE && TryParseColour(Text.Mid(After + 1, Close - After - 1), Colour))
                     {
-                        FString ColorVal = Escaped.Mid(AfterColour + 1, CloseBracket - (AfterColour + 1));
-                        Result += FString::Printf(TEXT("<color=\"%s\">"), *ColorVal);
-                        Pos = CloseBracket + 1;
+                        const FString Row = FString::Printf(TEXT("c_%02X%02X%02X%02X"), Colour.R, Colour.G, Colour.B, Colour.A);
+                        OutColourRows.Add(Row);
+                        Result += FString::Printf(TEXT("<%s>"), *Row);
+                        Pos = Close + 1;
                         continue;
                     }
                 }
             }
         }
 
-        Result += Escaped[Pos];
+        // Characters that would otherwise start rich text markup have to be escaped.
+        switch (Ch)
+        {
+        case TEXT('&'): Result += TEXT("&amp;"); break;
+        case TEXT('<'): Result += TEXT("&lt;"); break;
+        case TEXT('>'): Result += TEXT("&gt;"); break;
+        case TEXT('"'): Result += TEXT("&quot;"); break;
+        default: Result.AppendChar(Ch); break;
+        }
         ++Pos;
     }
 
@@ -144,7 +231,10 @@ void UDialogueMachineWidget::HandleLine(const FString& Page, const FString& Spea
     }
     if (BodyRichTextBlock)
     {
-        BodyRichTextBlock->SetText(FText::FromString(ToUnrealRichText(Page)));
+        TSet<FString> Colours;
+        const FString Converted = ConvertRichText(Page, Colours);
+        UpdateTextStyles(Colours);
+        BodyRichTextBlock->SetText(FText::FromString(Converted));
     }
     if (ChoicesVerticalBox)
     {
@@ -163,20 +253,19 @@ void UDialogueMachineWidget::HandleChoices(const TArray<FDialogueComponentChoice
 
     for (const FDialogueComponentChoice& Choice : Choices)
     {
-        UButton* ChoiceBtn = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        UDialogueChoiceButton* ChoiceBtn = WidgetTree->ConstructWidget<UDialogueChoiceButton>(UDialogueChoiceButton::StaticClass());
         UTextBlock* ChoiceTxt = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
         ChoiceTxt->SetText(FText::FromString(Choice.Text));
         ChoiceBtn->AddChild(ChoiceTxt);
         ChoiceBtn->SetIsEnabled(Choice.bEnabled);
-
-        FString ChoiceId = Choice.Id;
-        ChoiceBtn->OnClicked.AddDynamic(this, &UDialogueMachineWidget::HandleContinueClicked);
-        // Bind choice click via lambda or dynamic
-        ChoiceBtn->OnClicked.Clear();
-        ChoiceBtn->OnClicked.AddLambda([this, ChoiceId]()
+        if (!Choice.bEnabled && !Choice.DisabledReason.IsEmpty())
         {
-            HandleChoiceClicked(ChoiceId);
-        });
+            ChoiceBtn->SetToolTipText(FText::FromString(Choice.DisabledReason));
+        }
+
+        ChoiceBtn->ChoiceId = Choice.Id;
+        ChoiceBtn->BindClick();
+        ChoiceBtn->OnChoiceClicked.AddDynamic(this, &UDialogueMachineWidget::HandleChoiceClicked);
 
         ChoicesVerticalBox->AddChildToVerticalBox(ChoiceBtn);
     }
@@ -201,7 +290,7 @@ void UDialogueMachineWidget::HandleContinueClicked()
     }
 }
 
-void UDialogueMachineWidget::HandleChoiceClicked(FString ChoiceId)
+void UDialogueMachineWidget::HandleChoiceClicked(const FString& ChoiceId)
 {
     if (RunnerComponent)
     {

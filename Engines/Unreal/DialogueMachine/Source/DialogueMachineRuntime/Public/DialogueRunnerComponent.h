@@ -125,6 +125,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Dialogue Machine")
     TMap<FString, FString> GetCurrentMetadata() const;
 
+    /** Like StartDialogue, but with starting values for variables (used by Dialogue Machine's "Play in engine"). */
+    bool StartDialogueWithValues(const FString& SceneId, int32 InSeed, const TMap<FString, int32>* Numeric, const TMap<FString, FString>* Text);
+
     TSharedPtr<FDialogueRunner> GetInternalRunner() const { return InternalRunner; }
 
 protected:
@@ -142,6 +145,7 @@ private:
     FString ActiveRunnerId;
 
     void EnsureLiveLink();
+    void CloseLiveLink();
     void SendLiveState(const FString& Status, const FString& ChoiceId = TEXT(""));
     void SendLiveEvent(const FString& Type, const FString& TargetId, const FString& Parameter);
 #endif

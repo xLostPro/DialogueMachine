@@ -115,7 +115,7 @@ bool FDialogueRunner::Choose(const FString& ChoiceId, FString* OutError)
         return false;
     }
 
-    FString DestId = FoundChoice->NextStateId.IsEmpty() ? CurrentScene->DefaultNextId : FoundChoice->NextStateId;
+    FString DestId = FoundChoice->NextStateId.TrimStartAndEnd().IsEmpty() ? CurrentScene->DefaultNextId : FoundChoice->NextStateId;
     return Move(DestId, FoundChoice, OutError);
 }
 
@@ -227,7 +227,7 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
             double Val = 0.0;
             if (Pair.Value.IsValid() && Pair.Value->TryGetNumber(Val))
             {
-                Store->SetNumber(Pair.Key, (int32)Val);
+                Store->SetNumber(FString(Pair.Key), (int32)Val);
             }
         }
     }
@@ -240,10 +240,15 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
             FString Val;
             if (Pair.Value.IsValid() && Pair.Value->TryGetString(Val))
             {
-                Store->SetText(Pair.Key, Val);
+                Store->SetText(FString(Pair.Key), Val);
             }
         }
     }
+
+    // A save without these fields means "none yet", not "keep what the runner had".
+    RandomState = 0;
+    RandomLine = -1;
+    PageIndex = 0;
 
     FString StateStr;
     if (Root->TryGetStringField(TEXT("randomState"), StateStr))
@@ -337,8 +342,15 @@ void FDialogueRunner::AddMissingVariables()
 
 TMap<FString, int32> FDialogueRunner::GetNumbers() const
 {
+    // A game-owned store can't list its keys, so the story's declared variables count as well.
+    TSet<FString> Keys(Store->GetKeys());
+    for (const auto& Pair : Handoff.NumericValues)
+    {
+        Keys.Add(Pair.Key);
+    }
+
     TMap<FString, int32> Result;
-    for (const FString& Key : Store->GetKeys())
+    for (const FString& Key : Keys)
     {
         if (Store->HasNumber(Key))
         {
@@ -350,8 +362,14 @@ TMap<FString, int32> FDialogueRunner::GetNumbers() const
 
 TMap<FString, FString> FDialogueRunner::GetTexts() const
 {
+    TSet<FString> Keys(Store->GetKeys());
+    for (const auto& Pair : Handoff.TextValues)
+    {
+        Keys.Add(Pair.Key);
+    }
+
     TMap<FString, FString> Result;
-    for (const FString& Key : Store->GetKeys())
+    for (const FString& Key : Keys)
     {
         FString Val;
         if (Store->GetText(Key, Val))

@@ -20,8 +20,10 @@ FString FDialogueRules::Key(const FString& Type, const FString& Id)
     return (Type == TEXT("Inventory") ? TEXT("inv:") : TEXT("aff:")) + Id;
 }
 
-static bool ParseIntExact(const FString& Str, int32& OutValue)
+// Mirrors int.TryParse with NumberStyles.Integer: surrounding whitespace and one sign are allowed, overflow is not.
+static bool ParseIntExact(const FString& Raw, int32& OutValue)
 {
+    const FString Str = Raw.TrimStartAndEnd();
     if (Str.IsEmpty()) return false;
     int32 Start = 0;
     if (Str[0] == TEXT('-') || Str[0] == TEXT('+'))
@@ -33,7 +35,10 @@ static bool ParseIntExact(const FString& Str, int32& OutValue)
     {
         if (!FChar::IsDigit(Str[i])) return false;
     }
-    OutValue = FCString::Atoi(*Str);
+    if (Str.Len() - Start > 10) return false;
+    const int64 Parsed = FCString::Atoi64(*Str);
+    if (Parsed < TNumericLimits<int32>::Min() || Parsed > TNumericLimits<int32>::Max()) return false;
+    OutValue = (int32)Parsed;
     return true;
 }
 
@@ -77,7 +82,7 @@ static bool IsKeyChar(TCHAR C)
     return FChar::IsAlnum(C) || C == TEXT('_') || C == TEXT(':') || C == TEXT('.') || C == TEXT('-');
 }
 
-static bool TryParseIfHeader(const FString& Text, int32 Start, int32& OutHeaderEnd, FString& OutKey, FString& OutOp, int32& OutTarget)
+static bool TryParseIfHeader(const FString& Text, int32 Start, int32& OutHeaderEnd, FString& OutKey, FString& OutOp, int32& OutTarget, bool& bOutTargetValid)
 {
     int32 Len = Text.Len();
     if (Start + 4 > Len) return false;
@@ -120,16 +125,17 @@ static bool TryParseIfHeader(const FString& Text, int32 Start, int32& OutHeaderE
 
     while (Pos < Len && FChar::IsWhitespace(Text[Pos])) ++Pos;
 
+    // The C# pattern is (-?\d+)\] : an optional minus, digits, and the bracket right after them.
     int32 NumStart = Pos;
-    if (Pos < Len && (Text[Pos] == TEXT('-') || Text[Pos] == TEXT('+'))) ++Pos;
+    if (Pos < Len && Text[Pos] == TEXT('-')) ++Pos;
     int32 DigitStart = Pos;
     while (Pos < Len && FChar::IsDigit(Text[Pos])) ++Pos;
     if (Pos == DigitStart) return false;
-    OutTarget = FCString::Atoi(*Text.Mid(NumStart, Pos - NumStart));
-
-    while (Pos < Len && FChar::IsWhitespace(Text[Pos])) ++Pos;
 
     if (Pos >= Len || Text[Pos] != TEXT(']')) return false;
+
+    // A number that doesn't fit in an int32 still forms a block, but the condition counts as false.
+    bOutTargetValid = ParseIntExact(Text.Mid(NumStart, Pos - NumStart), OutTarget);
 
     OutHeaderEnd = Pos;
     return true;
@@ -215,8 +221,9 @@ FString FDialogueRules::ResolveText(const FString& Text, const TMap<FString, int
             FString Key;
             FString Op;
             int32 Target = 0;
+            bool bTargetValid = false;
 
-            if (TryParseIfHeader(CurrentText, IfStart, HeaderEnd, Key, Op, Target))
+            if (TryParseIfHeader(CurrentText, IfStart, HeaderEnd, Key, Op, Target, bTargetValid))
             {
                 int32 ClosePos = FindNextCloseIf(CurrentText, HeaderEnd + 1);
                 int32 NextIf = FindNextIfWithSpace(CurrentText, HeaderEnd + 1);
@@ -230,8 +237,14 @@ FString FDialogueRules::ResolveText(const FString& Text, const TMap<FString, int
                     FString FalseBranch;
                     if (ElsePos != INDEX_NONE)
                     {
+                        // Like Regex.Split, only the text up to the next [else] belongs to the false branch.
                         TrueBranch = Body.Left(ElsePos);
                         FalseBranch = Body.Mid(ElsePos + 6);
+                        const int32 SecondElse = FindElseTag(FalseBranch);
+                        if (SecondElse != INDEX_NONE)
+                        {
+                            FalseBranch = FalseBranch.Left(SecondElse);
+                        }
                     }
                     else
                     {
@@ -252,7 +265,7 @@ FString FDialogueRules::ResolveText(const FString& Text, const TMap<FString, int
                         Value = *FoundAff;
                     }
 
-                    if (Compare(Value, Op, Target))
+                    if (bTargetValid && Compare(Value, Op, Target))
                     {
                         NewText += TrueBranch;
                     }
@@ -398,21 +411,8 @@ int32 FDialogueRules::ClampNumber(const FString& Key, int32 Value)
 
 TArray<FString> FDialogueRules::SplitPages(const FString& Text)
 {
-    TArray<FString> RawLines;
-    Text.ParseIntoArray(RawLines, TEXT("\n"), false);
-
     TArray<FString> Pages;
-    for (FString& Line : RawLines)
-    {
-        if (Line.EndsWith(TEXT("\r")))
-        {
-            Line.LeftInline(Line.Len() - 1);
-        }
-        if (!Line.IsEmpty())
-        {
-            Pages.Add(Line);
-        }
-    }
+    Text.ParseIntoArrayLines(Pages, true);
     return Pages;
 }
 

@@ -121,7 +121,7 @@ private:
     void End(const FString& SceneId, const FString& ChoiceId);
     bool Move(const FString& Id, const FDialogueChoice* Choice, FString* OutError = nullptr);
     void ApplyActions(const TArray<FDialogueAction>& Actions);
-    static bool IsExit(const FString& Id) { return Id.IsEmpty() || Id == FDialogueRules::Exit; }
+    static bool IsExit(const FString& Id) { return Id.TrimStartAndEnd().IsEmpty() || Id == FDialogueRules::Exit; }
 
     class FTrackedVariables : public IDialogueVariables
     {

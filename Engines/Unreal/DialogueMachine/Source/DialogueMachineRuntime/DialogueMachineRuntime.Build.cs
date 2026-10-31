@@ -16,16 +16,12 @@ public class DialogueMachineRuntime : ModuleRules
                 "JsonUtilities",
                 "UMG",
                 "Slate",
-                "SlateCore"
-            }
-        );
-
-        PrivateDependencyModuleNames.AddRange(
-            new string[]
-            {
+                "SlateCore",
                 "WebSockets"
             }
         );
+
+        PrivateDependencyModuleNames.Add("Projects");
 
         if (Target.bBuildEditor)
         {

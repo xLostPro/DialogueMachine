@@ -17,7 +17,7 @@ void FDialogueMachineEditorModule::StartupModule()
         LiveLinkTabName,
         FOnSpawnTab::CreateRaw(this, &FDialogueMachineEditorModule::OnSpawnLiveLinkTab))
         .SetDisplayName(LOCTEXT("LiveLinkTabTitle", "Dialogue Machine Live Link"))
-        .SetMenuType(ETabSpawnerType::Hidden);
+        .SetMenuType(ETabSpawnerMenuType::Hidden);
 
     RegisterMenus();
 }

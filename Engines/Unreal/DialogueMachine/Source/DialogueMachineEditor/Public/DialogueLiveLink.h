@@ -29,6 +29,18 @@ private:
     FString UpdateUrl;
     FString LastProjectName;
     FString LastStorySha;
+    FString Token;
+
+    /** A "Play in engine" request waiting for a running play session. */
+    struct FPendingPlay
+    {
+        FString SceneId;
+        int32 Seed = 0;
+        TMap<FString, int32> Numeric;
+        TMap<FString, FString> Text;
+    };
+    TSharedPtr<FPendingPlay> PendingPlay;
+    FDelegateHandle PlayStartedHandle;
 
     void OnConnected();
     void OnConnectionError(const FString& Error);
@@ -37,6 +49,8 @@ private:
 
     void HandleStoryUpdated(const TSharedPtr<class FJsonObject>& Payload);
     void HandlePlayFrom(const TSharedPtr<class FJsonObject>& Payload);
+    void OnPlayStarted(bool bSimulating);
+    void ApplyPendingPlay();
 };
 
 class SDialogueLiveLinkPanel : public SCompoundWidget
