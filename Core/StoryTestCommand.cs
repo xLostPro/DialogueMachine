@@ -181,6 +181,12 @@ public static class ConformanceFixtures
         placeholder.Choices = [Reply(1, "Hello {player_name} and {unknown}", "[EXIT]")];
         Case("placeholder_missing", Project(placeholder), [Begin, SetText("player_name", "Ada"), SetNumber("aff:trust", -2), SetNumber("inv:coin", 3), Pick(Id(1))]);
 
+        // Keys follow .NET's \w, so letters outside ASCII are valid in conditions and placeholders.
+        var unicodeKeys = Scene("unicode_keys", "[if aff:café >= 1]yes[else]no[/if] {aff:café} {naïve} [if ключ == 2]two[else]not two[/if]");
+        unicodeKeys.Choices = [Reply(1, "[if aff:café >= 1]Café[else]None[/if]", "[EXIT]")];
+        var keysProject = Project(unicodeKeys); keysProject.TextVariables["naïve"] = "Zoë";
+        Case("unicode_keys", keysProject, [Begin, SetNumber("aff:café", 3), SetNumber("aff:ключ", 2), Pick(Id(1))]);
+
         var gate = Scene("gate", "Trust is {aff:trust}.", "[EXIT]");
         gate.Choices =
         [
