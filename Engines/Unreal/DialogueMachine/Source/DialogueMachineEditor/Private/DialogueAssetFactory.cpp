@@ -10,7 +10,10 @@ UDialogueAssetFactory::UDialogueAssetFactory()
     bEditAfterNew = true;
     bEditorImport = true;
     SupportedClass = UDialogueAsset::StaticClass();
-    Formats.Add(TEXT("runtime.json;Dialogue Machine Runtime Companion"));
+    // Unreal matches only the last extension, so this has to be json. FactoryCanImport leaves other JSON to the data table
+    // importer, and the higher priority stops that importer taking our files, which it accepts and then fails on.
+    Formats.Add(TEXT("json;Dialogue Machine Runtime Companion"));
+    ImportPriority = DefaultImportPriority + 1;
 }
 
 bool UDialogueAssetFactory::FactoryCanImport(const FString& Filename)

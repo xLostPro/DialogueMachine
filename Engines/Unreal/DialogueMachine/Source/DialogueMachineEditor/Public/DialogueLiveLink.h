@@ -30,6 +30,7 @@ private:
     FString LastProjectName;
     FString LastStorySha;
     FString Token;
+    int32 AppPid = 0;
 
     /** A "Play in engine" request waiting for a running play session. */
     struct FPendingPlay

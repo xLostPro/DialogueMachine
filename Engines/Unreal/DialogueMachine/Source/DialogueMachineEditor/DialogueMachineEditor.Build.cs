@@ -14,6 +14,7 @@ public class DialogueMachineEditor : ModuleRules
                 "Engine",
                 "DialogueMachineRuntime",
                 "UnrealEd",
+                "AssetRegistry",
                 "AssetTools",
                 "Projects",
                 "WebSockets",

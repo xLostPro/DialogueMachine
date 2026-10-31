@@ -16,7 +16,6 @@
 #include "DialogueAsset.h"
 #include "DialogueRunnerComponent.h"
 #include "DialogueLiveLinkProtocol.h"
-#include "UObject/UObjectIterator.h"
 #include "Editor/EditorEngine.h"
 #include "Settings/LevelEditorPlaySettings.h"
 
@@ -56,7 +55,7 @@ void FDialogueLiveLink::Connect()
 
     int32 Port = 0;
     FString Error;
-    if (!FDialogueLiveLinkProtocol::ReadDiscovery(Port, Token, &Error))
+    if (!FDialogueLiveLinkProtocol::ReadDiscovery(Port, Token, &Error, &AppPid))
     {
         StatusMessage = Error;
         return;
@@ -130,7 +129,11 @@ void FDialogueLiveLink::OnConnected()
 void FDialogueLiveLink::OnConnectionError(const FString& Error)
 {
     bIsConnected = false;
-    StatusMessage = FString::Printf(TEXT("Connection error: %s"), *Error);
+
+    // Checked only after a failure: Windows also reports a running app as gone when it is elevated and this editor isn't.
+    StatusMessage = FDialogueLiveLinkProtocol::IsProcessGone(AppPid)
+        ? FString(TEXT("Dialogue Machine isn't running. It didn't close cleanly and left an old livelink.json behind. Start it and turn on Live link."))
+        : FString::Printf(TEXT("Connection error: %s"), *Error);
 }
 
 void FDialogueLiveLink::OnClosed(int32 StatusCode, const FString& Reason, bool bWasClean)
@@ -211,11 +214,14 @@ void FDialogueLiveLink::HandleStoryUpdated(const TSharedPtr<FJsonObject>& Payloa
     StatusMessage = FString::Printf(TEXT("Received update for '%s' (%s)"), *ProjectName, *StorySha.Left(8));
 
     // Builds should match what was played, so refresh the asset imported from this project's export too.
+    // Assets not loaded yet count: the project name is only inside the asset, so each one has to be loaded to check it.
     const FString Slug = SlugOf(ProjectName);
-    for (TObjectIterator<UDialogueAsset> It; It; ++It)
+    TArray<FAssetData> Assets;
+    FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry").Get().GetAssetsByClass(UDialogueAsset::StaticClass()->GetClassPathName(), Assets);
+    for (const FAssetData& Data : Assets)
     {
-        UDialogueAsset* Asset = *It;
-        if (!Asset->HasAnyFlags(RF_ClassDefaultObject) && Asset->StorySha256 != StorySha
+        UDialogueAsset* Asset = Cast<UDialogueAsset>(Data.GetAsset());
+        if (Asset && Asset->StorySha256 != StorySha
             && (Asset->ProjectName.Equals(Slug, ESearchCase::IgnoreCase) || Asset->ProjectName.Equals(ProjectName, ESearchCase::IgnoreCase)))
         {
             Asset->SetData(HandoffJson, StorySha, Asset->ProjectName);

@@ -14,4 +14,5 @@ private:
     TSharedRef<class SDockTab> OnSpawnLiveLinkTab(const class FSpawnTabArgs& SpawnTabArgs);
 
     TSharedPtr<class FDialogueLiveLink> LiveLinkClient;
+    TSharedPtr<class IAssetTypeActions> AssetTypeActions;
 };
