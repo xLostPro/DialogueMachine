@@ -4,6 +4,7 @@ extends SceneTree
 var DialogueRunnerClass = preload("res://addons/dialogue_machine/runtime/dialogue_runner.gd")
 var DialogueStoryClass = preload("res://addons/dialogue_machine/runtime/dialogue_story.gd")
 var Rules = preload("res://addons/dialogue_machine/runtime/dialogue_rules.gd")
+var ViewClass = preload("res://addons/dialogue_machine/runtime/dialogue_view.gd")
 
 # A game-owned store with only the four required methods.
 class GameStore extends RefCounted:
@@ -282,6 +283,11 @@ func _run_unit_tests() -> Array[String]:
 	_expect(f, Rules.plain_text("[color=red]a[/color]") == "[color=red]a[/color]", "plain_text keeps [color]")
 	_expect(f, Rules.parse_int_exact("0000000000005") == [true, 5], "parse_int_exact leading zeros")
 	_expect(f, not Rules.parse_int_exact("2147483648")[0] and Rules.parse_int_exact("-2147483648")[0], "parse_int_exact int32 bounds")
+
+	# the view's markup conversion: known tags map to BBCode, everything else is shown as text
+	_expect(f, ViewClass.to_bbcode("[b]x[/B] [colour=red]y[/colour] [Colour=#fff]z") == "[b]x[/b] [color=red]y[/color] [color=#fff]z", "to_bbcode maps the four tags")
+	_expect(f, ViewClass.to_bbcode("[color=red]a [wave]b[/wave] [") == "[lb]color=red]a [lb]wave]b[lb]/wave] [lb]", "to_bbcode escapes other brackets")
+	_expect(f, ViewClass.to_bbcode("[colour=[img]x") == "[lb]colour=[lb]img]x", "to_bbcode refuses a nested bracket in a colour")
 
 	# actions change variables quietly: the old scene must not re-emit its line
 	var story = _handoff([

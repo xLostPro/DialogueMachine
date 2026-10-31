@@ -74,10 +74,25 @@ static func requirements_met(requirements: Array, vars: Dictionary) -> Array:
 	return [true, ""]
 
 static func _is_key_char(c: int) -> bool:
-	return (c >= 48 and c <= 57) or (c >= 65 and c <= 90) or (c >= 97 and c <= 122) or c == 95 or c == 58 or c == 46 or c == 45 # 0-9 A-Z a-z _ : . -
+	if c < 128:
+		return (c >= 48 and c <= 57) or (c >= 65 and c <= 90) or (c >= 97 and c <= 122) or c == 95 or c == 58 or c == 46 or c == 45 # 0-9 A-Z a-z _ : . -
+	return _is_unicode_word(c)
 
+# Approximates .NET \w (letters, marks, digits) beyond ASCII: everything except spaces, punctuation, symbols and emoji.
+static func _is_unicode_word(c: int) -> bool:
+	if c < 0xC0:
+		return c == 0xAA or c == 0xB5 or c == 0xBA
+	if c == 0xD7 or c == 0xF7:
+		return false
+	if (c >= 0x2000 and c <= 0x2BFF) or (c >= 0x2E00 and c <= 0x2E7F) or (c >= 0x3000 and c <= 0x303F):
+		return false
+	if (c >= 0xE000 and c <= 0xF8FF) or (c >= 0xFFF0 and c <= 0xFFFF) or c >= 0x10000:
+		return false
+	return true
+
+# ASCII whitespace plus the Unicode spaces .NET's \s matches.
 static func _is_whitespace(c: int) -> bool:
-	return c == 32 or c == 9 or c == 10 or c == 13
+	return c == 32 or (c >= 9 and c <= 13) or c == 0x85 or c == 0xA0 or c == 0x1680 or (c >= 0x2000 and c <= 0x200A) or c == 0x2028 or c == 0x2029 or c == 0x202F or c == 0x205F or c == 0x3000
 
 static func _try_parse_if_header(text: String, start_pos: int) -> Array:
 	# Returns [bool success, int header_end, String key, String op, int target, bool target_valid]

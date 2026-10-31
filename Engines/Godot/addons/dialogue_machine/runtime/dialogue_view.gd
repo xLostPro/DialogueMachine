@@ -22,6 +22,7 @@ var _choices_box: VBoxContainer = null
 var _continue_button: Button = null
 var _refresh_queued: bool = false
 
+# Only [b] [i] [u] and [colour=X] are markup; any other bracket is shown as text, like Unity's rich text conversion.
 static func to_bbcode(text: String) -> String:
 	var result = ""
 	var pos = 0
@@ -32,15 +33,21 @@ static func to_bbcode(text: String) -> String:
 			if close_bracket != -1:
 				var tag = text.substr(pos + 1, close_bracket - (pos + 1))
 				var tag_lower = tag.to_lower()
-				if tag_lower.begins_with("colour="):
-					var col = tag.substr(7)
-					result += "[color=" + col + "]"
+				if tag_lower in ["b", "/b", "i", "/i", "u", "/u"]:
+					result += "[" + tag_lower + "]"
+					pos = close_bracket + 1
+					continue
+				elif tag_lower.begins_with("colour=") and not tag.contains("["):
+					result += "[color=" + tag.substr(7) + "]"
 					pos = close_bracket + 1
 					continue
 				elif tag_lower == "/colour":
 					result += "[/color]"
 					pos = close_bracket + 1
 					continue
+			result += "[lb]"
+			pos += 1
+			continue
 		result += text[pos]
 		pos += 1
 	return result
