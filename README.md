@@ -80,6 +80,17 @@ Dialogue Machine includes an official package for Unity (2022.3 LTS and Unity 6)
 - **Events & Hooks:** Attach `DialogueEventRouter` to route dialogue `Event` and `Script` actions to `UnityEvent` listeners, and handle `Shop` scenes with `onShop`.
 - **Live Link:** Open **Window → Dialogue Machine → Live Link**. When the bridge is active in Dialogue Machine, edits push instantly to your asset and live runners, and running gameplay is tracked on the graph in DM's **Follow** pane.
 
+## Unreal
+
+Dialogue Machine includes an official plugin for Unreal Engine (UE 5.3+):
+
+- **Installation:** Copy `Engines/Unreal/DialogueMachine` into your project's `Plugins/` folder (or download the pre-packaged zip from Releases) and enable the plugin.
+- **Importing:** Point Dialogue Machine's auto-export folder inside your Unreal project's `Content/` directory. The `UDialogueAssetFactory` automatically imports and reimports `*.runtime.json` files as native `UDialogueAsset` objects.
+- **Runner:** Attach `UDialogueRunnerComponent` to any Actor and assign the `UDialogueAsset`. It exposes BlueprintCallable functions (`StartDialogue`, `ContinueDialogue`, `ChooseChoice`, `SaveState`, `RestoreState`) and BlueprintAssignable delegates (`OnLine`, `OnChoices`, `OnAction`, `OnShop`, `OnVariableChanged`, `OnEnded`). Implement `IDialogueVariablesInterface` on your Actor to let game state own the variables.
+- **Presentation:** Use or subclass `UDialogueMachineWidget` (built in code using UMG) for speaker text, rich text formatting, choices vertical layout, and keyboard/gamepad navigation.
+- **Live Link:** Open **Window → Dialogue Machine Live Link**. When the bridge is running in Dialogue Machine, story edits hot-reload in Play In Editor (PIE), and dialogue progression is tracked live in Dialogue Machine's **Follow** pane in non-shipping builds.
+- **Automation Tests:** Run the `DialogueMachine.Conformance` test suite in the Unreal Editor via **Tools → Session Frontend → Automation** to verify all reference dialogue fixtures.
+
 ## Build packages
 
 ```powershell

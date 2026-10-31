@@ -1,0 +1,35 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.3.0",
+	"FriendlyName": "Dialogue Machine",
+	"Description": "Offline dialogue tree runtime and live link for Dialogue Machine.",
+	"Category": "Gameplay",
+	"CreatedBy": "xLostPro",
+	"CreatedByURL": "https://github.com/xLostPro/DialogueMachine",
+	"DocsURL": "https://github.com/xLostPro/DialogueMachine",
+	"MarketplaceURL": "",
+	"SupportURL": "https://github.com/xLostPro/DialogueMachine/issues",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "DialogueMachineRuntime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "DialogueMachineEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "WebSockets",
+			"Enabled": true
+		}
+	]
+}

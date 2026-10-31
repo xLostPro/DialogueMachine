@@ -1,0 +1,244 @@
+{
+  "name": "pages_and_sayitall_false_seed0",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022random\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022First line.\\nSecond line.\\nThird line.\\nFourth line.\\nFifth line.\u0022,\n      \u0022DefaultNextId\u0022: \u0022conditional\u0022,\n      \u0022SayItAll\u0022: false,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022random\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022conditional\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[if aff:mood \\u003E= 1]Warm line.[else]Cold line.[/if]\\nMiddle line.\\nLast line.\u0022,\n      \u0022DefaultNextId\u0022: \u0022pages\u0022,\n      \u0022SayItAll\u0022: false,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022conditional\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022pages\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Page one.\\n\\n   \\nPage three.\\r\\nPage four.\\rPage five.\u0022,\n      \u0022DefaultNextId\u0022: \u0022empty\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022pages\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022empty\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022\u0022,\n      \u0022DefaultNextId\u0022: \u0022empty_random\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022empty\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022empty_random\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022\\n\\n\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: false,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022empty_random\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "a043cfc98b20764738f8519e1ce09b92658c058d4742cce78cd7acc6371b1715",
+    "StartingScene": "random",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:mood": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:mood",
+      "value": 1
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "random",
+      "ended": false,
+      "page": "First line.",
+      "plain": "First line.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "conditional",
+      "ended": false,
+      "page": "Cold line.",
+      "plain": "Cold line.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "conditional",
+      "ended": false,
+      "page": "Warm line.",
+      "plain": "Warm line.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "pages",
+      "ended": false,
+      "page": "Page one.",
+      "plain": "Page one.",
+      "pageIndex": 0,
+      "pageCount": 5,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "pages",
+      "ended": false,
+      "page": "   ",
+      "plain": "   ",
+      "pageIndex": 1,
+      "pageCount": 5,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "pages",
+      "ended": false,
+      "page": "Page three.",
+      "plain": "Page three.",
+      "pageIndex": 2,
+      "pageCount": 5,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "pages",
+      "ended": false,
+      "page": "Page four.",
+      "plain": "Page four.",
+      "pageIndex": 3,
+      "pageCount": 5,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "pages",
+      "ended": false,
+      "page": "Page five.",
+      "plain": "Page five.",
+      "pageIndex": 4,
+      "pageCount": 5,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "empty",
+      "ended": false,
+      "page": "(No dialogue)",
+      "plain": "(No dialogue)",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "empty_random",
+      "ended": false,
+      "page": "(No dialogue)",
+      "plain": "(No dialogue)",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:mood": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}
