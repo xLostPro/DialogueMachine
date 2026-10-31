@@ -8,7 +8,7 @@ const NO_DIALOGUE: String = "(No dialogue)"
 const SPLITMIX_STEP: int = -7046029254386353131 # 0x9E3779B97F4A7C15
 const SPLITMIX_MUL1: int = -4658895280553007687 # 0xBF58476D1CE4E5B9
 const SPLITMIX_MUL2: int = -7723592293110705685 # 0x94D049BB133111EB
-const SIGN_MASK: int = -9223372036854775808     # 0x8000000000000000
+const SIGN_MASK: int = 1 << 63                   # 0x8000000000000000
 
 const INT32_MIN: int = -2147483648
 const INT32_MAX: int = 2147483647
@@ -40,7 +40,8 @@ static func parse_int_exact(raw: String) -> Array:
 		var c = s.unicode_at(i)
 		if c < 48 or c > 57:
 			return [false, 0]
-	if s.length() - start > 10:
+	var digits = s.substr(start).lstrip("0")
+	if digits.length() > 10:
 		return [false, 0]
 	var val = s.to_int()
 	if val < INT32_MIN or val > INT32_MAX:
@@ -271,7 +272,7 @@ static func resolve_text(text: String, vars: Dictionary, text_vars: Dictionary) 
 	return substituted
 
 static func plain_text(text: String) -> String:
-	# Strip [b], [/b], [i], [/i], [u], [/u], [colour=...], [/colour]
+	# Strip [b] [i] [u] [colour] [colour=...] and their closing forms, like the C# pattern.
 	# Note: [color] is NOT stripped and stays in the text.
 	var result = ""
 	var pos = 0
@@ -281,10 +282,8 @@ static func plain_text(text: String) -> String:
 			var close_bracket = text.find("]", pos + 1)
 			if close_bracket != -1:
 				var tag = text.substr(pos + 1, close_bracket - (pos + 1)).to_lower()
-				if tag in ["b", "/b", "i", "/i", "u", "/u", "/colour"]:
-					pos = close_bracket + 1
-					continue
-				if tag.begins_with("colour="):
+				var name = tag.substr(1) if tag.begins_with("/") else tag
+				if name in ["b", "i", "u", "colour"] or name.begins_with("colour="):
 					pos = close_bracket + 1
 					continue
 		result += text[pos]
@@ -383,6 +382,17 @@ static func u64_to_string(val: int) -> String:
 		digits = str(rem) + digits
 		current = next_val
 	return digits
+
+# True for a decimal that fits in a uint64.
+static func is_u64_string(s: String) -> bool:
+	var t = s.strip_edges()
+	if t.is_empty() or t.length() > 20:
+		return false
+	for i in range(t.length()):
+		var c = t.unicode_at(i)
+		if c < 48 or c > 57:
+			return false
+	return t.length() < 20 or t <= "18446744073709551615"
 
 static func string_to_u64(s: String) -> int:
 	var trimmed = s.strip_edges()

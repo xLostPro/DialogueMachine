@@ -71,6 +71,9 @@ var can_continue: bool:
 class DialogueVariables extends RefCounted:
 	var _numeric: Dictionary = {}
 	var _text: Dictionary = {}
+	# Keys the story declares or has written. A provider only needs get/set methods; these are the keys asked for.
+	var _known_numeric: Dictionary = {}
+	var _known_text: Dictionary = {}
 	var _provider: Object = null
 	var runner_ref = null
 
@@ -81,27 +84,41 @@ class DialogueVariables extends RefCounted:
 	func set_provider(provider: Object) -> void:
 		_provider = provider
 
+	func declare(numeric_keys: Array, text_keys: Array) -> void:
+		for k in numeric_keys:
+			_known_numeric[str(k)] = true
+		for k in text_keys:
+			_known_text[str(k)] = true
+
 	func get_number(num_key: String) -> int:
 		if _provider and _provider.has_method("get_number"):
 			return int(_provider.get_number(num_key))
 		return int(_numeric.get(num_key, 0))
 
-	func set_number(num_key: String, val: int) -> void:
+	# Stores a value without events or a page refresh: used while a conversation starts, restores or moves on.
+	func write_number(num_key: String, val: int) -> void:
 		var clamped = DialogueRules.clamp_number(num_key, val)
-		var before = get_number(num_key)
-		var had = has_number(num_key)
+		_known_numeric[num_key] = true
 		if _provider and _provider.has_method("set_number"):
 			_provider.set_number(num_key, clamped)
 		else:
 			_numeric[num_key] = clamped
+
+	func set_number(num_key: String, val: int) -> void:
+		var before = get_number(num_key)
+		var had = has_number(num_key)
+		write_number(num_key, val)
 		var after = get_number(num_key)
 		if runner_ref and (before != after or not had):
 			runner_ref.variable_changed.emit(num_key, before, after)
 			runner_ref.refresh_page()
 
+	# A provider without has_number is treated as holding every key, so story defaults never overwrite game state.
 	func has_number(num_key: String) -> bool:
 		if _provider and _provider.has_method("has_number"):
 			return bool(_provider.has_number(num_key))
+		if _provider and _provider.has_method("get_number"):
+			return true
 		return _numeric.has(num_key)
 
 	func get_text(text_key: String) -> Variant:
@@ -109,12 +126,16 @@ class DialogueVariables extends RefCounted:
 			return _provider.get_text(text_key)
 		return _text.get(text_key, null)
 
-	func set_text(text_key: String, val: String) -> void:
-		var before = get_text(text_key)
+	func write_text(text_key: String, val: String) -> void:
+		_known_text[text_key] = true
 		if _provider and _provider.has_method("set_text"):
 			_provider.set_text(text_key, val)
 		else:
 			_text[text_key] = val
+
+	func set_text(text_key: String, val: String) -> void:
+		var before = get_text(text_key)
+		write_text(text_key, val)
 		var after = get_text(text_key)
 		if runner_ref and before != after:
 			runner_ref.variable_changed.emit(text_key, before, after)
@@ -123,19 +144,14 @@ class DialogueVariables extends RefCounted:
 	func has_text(text_key: String) -> bool:
 		if _provider and _provider.has_method("has_text"):
 			return bool(_provider.has_text(text_key))
-		return _text.has(text_key)
+		return get_text(text_key) != null
 
 	func get_keys() -> Array[String]:
 		var keys_dict: Dictionary = {}
-		for k in _numeric.keys():
+		for k in all_numeric().keys():
 			keys_dict[str(k)] = true
-		for k in _text.keys():
+		for k in all_text().keys():
 			keys_dict[str(k)] = true
-		if _provider and _provider.has_method("get_keys"):
-			var p_keys = _provider.get_keys()
-			if p_keys is Array:
-				for k in p_keys:
-					keys_dict[str(k)] = true
 		var res: Array[String] = []
 		for k in keys_dict.keys():
 			res.append(str(k))
@@ -144,22 +160,35 @@ class DialogueVariables extends RefCounted:
 
 	func all_numeric() -> Dictionary:
 		var res: Dictionary = _numeric.duplicate()
-		if _provider and _provider.has_method("get_all_numeric"):
-			var p_num = _provider.get_all_numeric()
-			if p_num is Dictionary:
-				for k in p_num.keys():
-					res[str(k)] = int(p_num[k])
+		if _provider:
+			if _provider.has_method("get_all_numeric"):
+				var p_num = _provider.get_all_numeric()
+				if p_num is Dictionary:
+					for k in p_num.keys():
+						res[str(k)] = int(p_num[k])
+			if _provider.has_method("get_number"):
+				for k in _known_numeric.keys():
+					if not res.has(k) and has_number(k):
+						res[k] = int(_provider.get_number(k))
 		return res
 
 	func all_text() -> Dictionary:
 		var res: Dictionary = _text.duplicate()
-		if _provider and _provider.has_method("get_all_text"):
-			var p_txt = _provider.get_all_text()
-			if p_txt is Dictionary:
-				for k in p_txt.keys():
-					res[str(k)] = str(p_txt[k])
+		if _provider:
+			if _provider.has_method("get_all_text"):
+				var p_txt = _provider.get_all_text()
+				if p_txt is Dictionary:
+					for k in p_txt.keys():
+						res[str(k)] = str(p_txt[k])
+			if _provider.has_method("get_text"):
+				for k in _known_text.keys():
+					if not res.has(k):
+						var v = _provider.get_text(k)
+						if v != null:
+							res[k] = str(v)
 		return res
 
+	# Drops the runner's own values; a game-owned provider keeps its state.
 	func clear() -> void:
 		_numeric.clear()
 		_text.clear()
@@ -181,32 +210,50 @@ var _ws_token: String = ""
 var _ws_connected: bool = false
 var _ws_retry_time: float = 0.0
 var _last_sent_state: Dictionary = {}
+var _live_link_started: bool = false
 
 func _init():
 	variables = DialogueVariables.new(variables_provider, self)
 
 func _ready():
+	add_to_group("dialogue_runner")
+	# The live link only polls after the first start() and only in debug builds.
+	set_process(false)
 	if variables_provider:
 		variables.set_provider(variables_provider)
 	if story:
 		load_story(story)
 		if auto_start and not Engine.is_editor_hint():
-			start(start_scene_id, custom_seed)
+			start(start_scene_id)
 
 func _process(delta: float):
-	if Engine.is_editor_hint() or not live_link:
-		return
-	if not OS.is_debug_build():
-		return
 	_poll_live_link(delta)
 
-func load_story(source: Variant) -> void:
+func _exit_tree():
+	if _ws:
+		_ws.close()
+		_ws = null
+		_ws_connected = false
+
+static func _text_of(value: Variant, fallback: String = "") -> String:
+	return fallback if value == null else str(value)
+
+static func _number_of(value: Variant, fallback: int) -> int:
+	return int(value) if value is int or value is float else fallback
+
+static func _to_int32(value: Variant) -> int:
+	return clampi(int(value), DialogueRules.INT32_MIN, DialogueRules.INT32_MAX)
+
+func load_story(source: Variant) -> bool:
 	var handoff_dict: Dictionary = {}
+	var source_sha: String = _story_sha
+	var source_name: String = _project_name
+	var source_story: Resource = null
 	if source is DialogueStory:
-		story = source
+		source_story = source
 		handoff_dict = source.get_handoff()
-		_story_sha = source.sha
-		_project_name = source.project_name
+		source_sha = source.sha
+		source_name = source.project_name
 	elif source is String:
 		var parsed = JSON.parse_string(source)
 		if parsed is Dictionary:
@@ -216,34 +263,73 @@ func load_story(source: Variant) -> void:
 
 	if handoff_dict.is_empty():
 		push_error("DialogueRunner.load_story: empty or invalid story payload")
-		return
+		return false
 
-	var schema = int(handoff_dict.get("SchemaVersion", 1))
+	var schema = _number_of(handoff_dict.get("SchemaVersion", 1), 1)
 	if schema > 1:
 		push_error("DialogueRunner: unsupported schema version %d" % schema)
-		return
-
-	_handoff = handoff_dict
-	_story_sha = str(handoff_dict.get("StorySha256", _story_sha))
-	_project_name = str(handoff_dict.get("ProjectName", _project_name))
+		return false
 
 	var story_raw = handoff_dict.get("StoryJson", "")
 	var story_dict: Dictionary = {}
 	if story_raw is String and not story_raw.is_empty():
-		var parsed = JSON.parse_string(story_raw)
-		if parsed is Dictionary:
-			story_dict = parsed
+		var parsed_story = JSON.parse_string(story_raw)
+		if parsed_story is Dictionary:
+			story_dict = parsed_story
 	elif story_raw is Dictionary:
 		story_dict = story_raw
+	if story_dict.is_empty():
+		push_error("DialogueRunner.load_story: the story has no StoryJson")
+		return false
 
-	_scenes_by_id.clear()
+	var scenes: Dictionary = {}
 	var list = story_dict.get("ListOfCharacterStates", [])
 	if list is Array:
 		for s in list:
 			if s is Dictionary:
-				var state_id = str(s.get("State", ""))
-				if not state_id.is_empty():
-					_scenes_by_id[state_id] = s
+				var state_id = _text_of(s.get("State", null))
+				if not state_id.strip_edges().is_empty():
+					scenes[state_id] = s
+
+	if source_story:
+		story = source_story
+	_handoff = handoff_dict
+	_scenes_by_id = scenes
+	_story_sha = _text_of(handoff_dict.get("StorySha256", null), source_sha)
+	_project_name = _text_of(handoff_dict.get("ProjectName", null), source_name)
+
+	var numeric_keys: Array = []
+	var text_keys: Array = []
+	var num_vals = handoff_dict.get("NumericValues", {})
+	if num_vals is Dictionary:
+		numeric_keys = num_vals.keys()
+	var txt_vals = handoff_dict.get("TextValues", {})
+	if txt_vals is Dictionary:
+		text_keys = txt_vals.keys()
+	variables.declare(numeric_keys, text_keys)
+	return true
+
+# Fills in the story's starting values. Keys a game store already holds keep their values.
+func _add_missing_variables() -> void:
+	var num_vals = _handoff.get("NumericValues", {})
+	if num_vals is Dictionary:
+		for k in num_vals.keys():
+			var val = num_vals[k]
+			if (val is int or val is float) and not variables.has_number(str(k)):
+				variables.write_number(str(k), _to_int32(val))
+
+	var txt_vals = _handoff.get("TextValues", {})
+	if txt_vals is Dictionary:
+		for k in txt_vals.keys():
+			if txt_vals[k] != null and not variables.has_text(str(k)):
+				variables.write_text(str(k), str(txt_vals[k]))
+
+func _load_metadata() -> void:
+	current_metadata.clear()
+	var meta = _scene.get("Metadata", {})
+	if meta is Dictionary:
+		for k in meta.keys():
+			current_metadata[str(k)] = _text_of(meta[k])
 
 func start(scene_id: String = "", seed_override: Variant = null, numeric_overrides: Dictionary = {}, text_overrides: Dictionary = {}) -> void:
 	if _scenes_by_id.is_empty():
@@ -253,24 +339,16 @@ func start(scene_id: String = "", seed_override: Variant = null, numeric_overrid
 			push_error("DialogueRunner.start: no story loaded")
 			return
 
+	_scene = {}
+	_pages = []
 	variables.clear()
-	var num_vals = _handoff.get("NumericValues", {})
-	if num_vals is Dictionary:
-		for k in num_vals.keys():
-			var val = num_vals[k]
-			if val is int or val is float:
-				variables.set_number(str(k), int(val))
+	_add_missing_variables()
 
-	var txt_vals = _handoff.get("TextValues", {})
-	if txt_vals is Dictionary:
-		for k in txt_vals.keys():
-			variables.set_text(str(k), str(txt_vals[k]))
-
+	# Overrides apply before the first scene resolves, like a scenario's starting values.
 	for k in numeric_overrides.keys():
-		variables.set_number(str(k), int(numeric_overrides[k]))
-
+		variables.write_number(str(k), _to_int32(numeric_overrides[k]))
 	for k in text_overrides.keys():
-		variables.set_text(str(k), str(text_overrides[k]))
+		variables.write_text(str(k), str(text_overrides[k]))
 
 	var chosen_seed: int = 0
 	if seed_override != null:
@@ -278,14 +356,14 @@ func start(scene_id: String = "", seed_override: Variant = null, numeric_overrid
 	elif override_seed:
 		chosen_seed = custom_seed
 	else:
-		chosen_seed = int(_handoff.get("Seed", 0))
+		chosen_seed = _number_of(_handoff.get("Seed", null), 0)
 
 	_random_state = DialogueRules.seed_state(chosen_seed)
 	_random_line = -1
 
-	var target_scene = scene_id
+	var target_scene = scene_id.strip_edges()
 	if target_scene.is_empty():
-		target_scene = str(_handoff.get("StartingScene", ""))
+		target_scene = _text_of(_handoff.get("StartingScene", null)).strip_edges()
 	if target_scene.is_empty() and not _scenes_by_id.is_empty():
 		target_scene = _scenes_by_id.keys()[0]
 
@@ -293,6 +371,9 @@ func start(scene_id: String = "", seed_override: Variant = null, numeric_overrid
 		push_error("DialogueRunner.start: missing scene '%s'" % target_scene)
 		return
 
+	_live_link_started = true
+	if live_link and OS.is_debug_build() and not Engine.is_editor_hint():
+		set_process(true)
 	_enter(target_scene, "started")
 
 func get_choices() -> Array[Dictionary]:
@@ -364,7 +445,9 @@ func choose(choice_id: String) -> void:
 func replace_story(new_story: Variant) -> void:
 	var prev_scene_id = current_scene_id
 	var prev_page = page_index
-	load_story(new_story)
+	if not load_story(new_story):
+		return
+	_add_missing_variables()
 
 	if is_ended or prev_scene_id == null:
 		return
@@ -375,9 +458,11 @@ func replace_story(new_story: Variant) -> void:
 		return
 
 	_scene = _scenes_by_id[str(prev_scene_id)]
+	_load_metadata()
 	_rebuild_pages()
 	page_index = clampi(prev_page, 0, _pages.size() - 1)
 	_deliver()
+	_send_live_link_state("step", null)
 
 func save_state() -> String:
 	var data: Dictionary = {
@@ -400,28 +485,35 @@ func restore_state(json_str: String) -> void:
 		push_error("A save state must be a JSON object.")
 		return
 
-	var target_scene_val = parsed.get("sceneId", null)
-	var target_scene = str(target_scene_val).strip_edges() if target_scene_val != null else null
-	if target_scene != null and not target_scene.is_empty() and not _is_exit(target_scene):
-		if not _scenes_by_id.has(target_scene):
-			push_error("Scene '%s' does not exist." % target_scene)
-			return
+	var target_scene: String = _text_of(parsed.get("sceneId", null)).strip_edges()
+	var scene_ended: bool = target_scene.is_empty() or _is_exit(target_scene)
+	if not scene_ended and not _scenes_by_id.has(target_scene):
+		push_error("Scene '%s' does not exist." % target_scene)
+		return
+
+	var random_raw = parsed.get("randomState", "0")
+	var random_text: String = str(int(random_raw)) if random_raw is float or random_raw is int else _text_of(random_raw, "0")
+	if not DialogueRules.is_u64_string(random_text):
+		push_error("randomState must be a decimal uint64.")
+		return
 
 	variables.clear()
 	var num_vals = parsed.get("numeric", {})
 	if num_vals is Dictionary:
 		for k in num_vals.keys():
-			variables.set_number(str(k), int(num_vals[k]))
+			if num_vals[k] is int or num_vals[k] is float:
+				variables.write_number(str(k), _to_int32(num_vals[k]))
 	var txt_vals = parsed.get("text", {})
 	if txt_vals is Dictionary:
 		for k in txt_vals.keys():
-			variables.set_text(str(k), str(txt_vals[k]))
+			if txt_vals[k] is String:
+				variables.write_text(str(k), txt_vals[k])
 
-	_random_state = DialogueRules.string_to_u64(str(parsed.get("randomState", "0")))
-	_random_line = int(parsed.get("randomLine", -1))
-	var saved_page = int(parsed.get("pageIndex", 0))
+	_random_state = DialogueRules.string_to_u64(random_text)
+	_random_line = _number_of(parsed.get("randomLine", null), -1)
+	var saved_page = _number_of(parsed.get("pageIndex", null), 0)
 
-	if target_scene == null or target_scene.is_empty() or _is_exit(target_scene):
+	if scene_ended:
 		_scene = {}
 		_pages = []
 		page_index = 0
@@ -430,13 +522,10 @@ func restore_state(json_str: String) -> void:
 		_scene = _scenes_by_id[target_scene]
 		is_ended = false
 		page_index = saved_page
-		current_metadata.clear()
-		var meta = _scene.get("Metadata", {})
-		if meta is Dictionary:
-			for k in meta.keys():
-				current_metadata[str(k)] = str(meta[k])
+		_load_metadata()
 		_rebuild_pages()
 		_deliver()
+	_send_live_link_state("ended" if scene_ended else "step", null)
 
 func refresh_page() -> void:
 	if _scene.is_empty():
@@ -503,12 +592,7 @@ func _enter(id: String, status: String, choice_taken: Variant = null) -> void:
 	page_index = 0
 	_random_line = -1
 
-	current_metadata.clear()
-	var meta = _scene.get("Metadata", {})
-	if meta is Dictionary:
-		for k in meta.keys():
-			current_metadata[str(k)] = str(meta[k])
-
+	_load_metadata()
 	_rebuild_pages()
 	_deliver()
 
@@ -542,7 +626,10 @@ func _apply_actions(actions: Array) -> void:
 				var act_key = DialogueRules.key(type, target_id)
 				var before_val = variables.get_number(act_key)
 				var after_val = DialogueRules.apply_amount(type, before_val, amount)
-				variables.set_number(act_key, after_val)
+				# Written quietly: the scene is about to change, so the old one must not refresh.
+				variables.write_number(act_key, after_val)
+				if after_val != before_val:
+					variable_changed.emit(act_key, before_val, after_val)
 			elif type == "Event" or type == "Script":
 				action_raised.emit(type, target_id, parameter, amount)
 				_send_live_link_event(type, target_id, parameter)
@@ -625,16 +712,24 @@ func _send_frame(type: String, payload: Dictionary) -> void:
 	}
 	_ws.send_text(JSON.stringify(frame))
 
-func _send_live_link_hello() -> void:
-	var payload = {
-		"token": _ws_token,
+static func get_plugin_version() -> String:
+	var cfg = ConfigFile.new()
+	if cfg.load("res://addons/dialogue_machine/plugin.cfg") == OK:
+		return str(cfg.get_value("plugin", "version", "0.0.0"))
+	return "0.0.0"
+
+static func build_hello(token: String) -> Dictionary:
+	return {
+		"token": token,
 		"engine": "godot",
 		"engineVersion": Engine.get_version_info().get("string", "4.3"),
-		"pluginVersion": "1.3.0",
+		"pluginVersion": get_plugin_version(),
 		"protocol": 1,
 		"schemaVersion": 1
 	}
-	_send_frame("hello", payload)
+
+func _send_live_link_hello() -> void:
+	_send_frame("hello", build_hello(_ws_token))
 
 func _handle_live_link_packet(text: String) -> void:
 	var parsed = JSON.parse_string(text)
@@ -657,14 +752,19 @@ func _handle_live_link_packet(text: String) -> void:
 			var txt_overrides = payload.get("text", {})
 			start(target_scene, seed_val, num_overrides if num_overrides is Dictionary else {}, txt_overrides if txt_overrides is Dictionary else {})
 		"runtime.setVariable":
+			var target_runner = payload.get("runnerId", null)
+			if target_runner != null and str(target_runner) != str(get_instance_id()):
+				return
 			var key = str(payload.get("key", ""))
-			if payload.has("number"):
-				variables.set_number(key, int(payload["number"]))
-			elif payload.has("text"):
+			if payload.has("number") and (payload["number"] is int or payload["number"] is float):
+				variables.set_number(key, _to_int32(payload["number"]))
+			elif payload.has("text") and payload["text"] != null:
 				variables.set_text(key, str(payload["text"]))
+			_send_live_link_state("step", null)
 
 func _send_live_link_state(status: String, choice_taken: Variant, scene_override: Variant = null) -> void:
-	if not live_link or not _ws or _ws.get_ready_state() != WebSocketPeer.STATE_OPEN:
+	# The state is kept while the socket is still connecting, so it can be sent once it opens.
+	if not live_link or not _live_link_started or not OS.is_debug_build():
 		return
 	var s_id = current_scene_id if scene_override == null else scene_override
 	var runner_name = str(get_path()) if is_inside_tree() else name

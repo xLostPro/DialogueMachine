@@ -2,6 +2,18 @@
 extends SceneTree
 
 var DialogueRunnerClass = preload("res://addons/dialogue_machine/runtime/dialogue_runner.gd")
+var DialogueStoryClass = preload("res://addons/dialogue_machine/runtime/dialogue_story.gd")
+var Rules = preload("res://addons/dialogue_machine/runtime/dialogue_rules.gd")
+
+# A game-owned store with only the four required methods.
+class GameStore extends RefCounted:
+	var numbers: Dictionary = {}
+	var texts: Dictionary = {}
+	func get_number(key): return numbers.get(key, 0)
+	func set_number(key, value): numbers[key] = value
+	func get_text(key): return texts.get(key, null)
+	func set_text(key, value): texts[key] = value
+	func has_number(key): return numbers.has(key)
 
 func _init():
 	print("--- Running Dialogue Machine Godot Conformance Tests ---")
@@ -37,6 +49,14 @@ func _init():
 	var passed_count = 0
 	var failed_count = 0
 
+	var unit_failures = _run_unit_tests()
+	for failure in unit_failures:
+		printerr("FAIL: unit -> ", failure)
+	failed_count += unit_failures.size()
+	if unit_failures.is_empty():
+		print("PASS: unit tests")
+		passed_count += 1
+
 	for fname in files:
 		var fpath = fixture_dir + "/" + fname
 		var file = FileAccess.open(fpath, FileAccess.READ)
@@ -54,7 +74,10 @@ func _init():
 
 		var test_name = str(fixture.get("name", fname))
 		var err_msg = _run_fixture(test_name, fixture)
-		if err_msg.is_empty():
+		if not (err_msg is String):
+			printerr("FAIL: %s -> the fixture did not finish (script error)" % test_name)
+			failed_count += 1
+		elif err_msg.is_empty():
 			print("PASS: ", test_name)
 			passed_count += 1
 		else:
@@ -212,3 +235,127 @@ func _deep_equals(a: Variant, b: Variant) -> bool:
 				return false
 		return true
 	return a == b
+
+# ---------------------------------------------------------------------------
+# Unit tests for what the shared fixtures can't reach
+# ---------------------------------------------------------------------------
+
+func _scene(id: String, text: String, extra: Dictionary = {}) -> Dictionary:
+	var scene = {
+		"State": id, "Type": "Dialogue", "Text": text, "DefaultNextId": "[EXIT]", "SayItAll": true,
+		"Choices": [], "DefaultAfterActions": [], "Metadata": {"speaker": "Ann", "title": id}
+	}
+	scene.merge(extra, true)
+	return scene
+
+func _handoff(scenes: Array, extra: Dictionary = {}) -> Dictionary:
+	var h = {
+		"SchemaVersion": 1, "Contract": "dialogue-machine.website.v1",
+		"StoryJson": JSON.stringify({"ListOfCharacterStates": scenes}), "StorySha256": "x",
+		"StartingScene": scenes[0]["State"], "Seed": 0, "NumericValues": {}, "TextValues": {}
+	}
+	h.merge(extra, true)
+	return h
+
+func _expect(failures: Array[String], ok: bool, what: String) -> void:
+	if not ok:
+		failures.append(what)
+
+func _run_unit_tests() -> Array[String]:
+	var f: Array[String] = []
+
+	# 64-bit helpers, with values computed from the C# definition
+	_expect(f, Rules.string_to_u64("11400714819323198485") == -7046029254386353131, "string_to_u64 with the high bit")
+	_expect(f, Rules.u64_to_string(-1) == "18446744073709551615", "u64_to_string of -1")
+	_expect(f, Rules.u64_to_string(Rules.string_to_u64("17418742259747381416")) == "17418742259747381416", "u64 round trip")
+	_expect(f, Rules.is_u64_string("18446744073709551615") and not Rules.is_u64_string("18446744073709551616") and not Rules.is_u64_string("-1") and not Rules.is_u64_string("1a"), "is_u64_string bounds")
+	var golden = {0: [2, 1, 2, 4, 2, 2, 1, 2], 1: [2, 0, 1, 0, 5, 2, 0, 3], 42: [5, 5, 0, 2, 6, 4, 2, 6], -1: [0, 1, 0, 6, 1, 5, 3, 4], 2147483647: [1, 4, 0, 1, 2, 5, 4, 6]}
+	for seed_val in golden.keys():
+		var state = [Rules.seed_state(seed_val)]
+		var got: Array = []
+		for _i in range(8):
+			got.append(Rules.splitmix64(state, 7))
+		_expect(f, got == golden[seed_val], "splitmix64 seed %d: %s" % [seed_val, got])
+
+	# text rules
+	_expect(f, Rules.plain_text("[colour]a[/colour=x][COLOUR=red]b[/COLOUR][B]c[/B]") == "abc", "plain_text strips colour forms")
+	_expect(f, Rules.plain_text("[color=red]a[/color]") == "[color=red]a[/color]", "plain_text keeps [color]")
+	_expect(f, Rules.parse_int_exact("0000000000005") == [true, 5], "parse_int_exact leading zeros")
+	_expect(f, not Rules.parse_int_exact("2147483648")[0] and Rules.parse_int_exact("-2147483648")[0], "parse_int_exact int32 bounds")
+
+	# actions change variables quietly: the old scene must not re-emit its line
+	var story = _handoff([
+		_scene("A", "Trust [if aff:trust>=1]high[else]low[/if]", {"Choices": [{"InternalId": "go", "ButtonText": "Go", "NextStateId": "B", "Visibility": 0, "Requirements": [], "AfterChoiceActions": [{"Type": "Affinity", "TargetId": "trust", "Amount": 1}]}]}),
+		_scene("B", "Done")
+	])
+	var r = DialogueRunnerClass.new()
+	var lines: Array = []
+	var changes: Array = []
+	r.line_shown.connect(func(l): lines.append(l))
+	r.variable_changed.connect(func(k, b, a): changes.append(k))
+	r.load_story(story)
+	r.start()
+	_expect(f, lines == ["Trust low"], "start lines: %s" % [lines])
+	_expect(f, changes.is_empty(), "start emits no variable_changed")
+	lines.clear()
+	r.choose("go")
+	_expect(f, lines == ["Done"], "choose emits only the new line: %s" % [lines])
+	_expect(f, changes == ["aff:trust"], "choose emits one variable_changed: %s" % [changes])
+	r.free()
+
+	# game-owned variables keep their values and are visible to text
+	var store = GameStore.new()
+	store.numbers["aff:trust"] = 3
+	r = DialogueRunnerClass.new()
+	r.variables.set_provider(store)
+	r.load_story(_handoff([_scene("A", "Trust [if aff:trust>=1]high[else]low[/if]")], {"NumericValues": {"aff:trust": 0, "inv:coin": 2}}))
+	r.start()
+	_expect(f, store.numbers["aff:trust"] == 3, "start keeps the game's value")
+	_expect(f, r.current_page == "Trust high", "provider values reach text: %s" % [r.current_page])
+	_expect(f, store.numbers.get("inv:coin", -1) == 2, "start fills keys the game lacks")
+	r.free()
+
+	# variables refresh the page while keeping the random line
+	r = DialogueRunnerClass.new()
+	r.load_story(_handoff([_scene("A", "[if aff:x>=1]p[else]q[/if]1\n[if aff:x>=1]p[else]q[/if]2\nthree", {"SayItAll": false})], {"Seed": 1}))
+	r.start()
+	var before = r.current_page
+	r.variables.set_number("aff:x", 1)
+	_expect(f, r.current_page.begins_with("p") == before.begins_with("q") or r.page_count == 1, "set_number refreshes the page")
+	r.free()
+
+	# auto_start honours the story seed (seed 1 picks line 5 of 6; seed 0 would pick line 1)
+	var seed_story = _handoff([_scene("A", "a\nb\nc\nd\ne\nf", {"SayItAll": false})], {"Seed": 1})
+	var plain = DialogueRunnerClass.new()
+	plain.load_story(seed_story)
+	plain.start()
+	var res = DialogueStoryClass.new()
+	res.handoff_json = JSON.stringify(seed_story)
+	var auto = DialogueRunnerClass.new()
+	auto.story = res
+	auto.auto_start = true
+	auto._ready() # the node isn't in a tree yet while the SceneTree is still initialising
+	_expect(f, plain.current_page == "f", "seed 1 picks f: %s" % [plain.current_page])
+	_expect(f, auto.current_page == plain.current_page, "auto_start keeps the story seed: %s" % [auto.current_page])
+	auto.free()
+	plain.free()
+
+	# hot reload refreshes the speaker and adds new starting variables
+	r = DialogueRunnerClass.new()
+	r.load_story(_handoff([_scene("A", "Hi")]))
+	r.start()
+	r.replace_story(_handoff([_scene("A", "Hi", {"Metadata": {"speaker": "Bob"}})], {"NumericValues": {"aff:new": 4}}))
+	_expect(f, r.speaker == "Bob", "replace_story refreshes the speaker")
+	_expect(f, r.variables.get_number("aff:new") == 4, "replace_story adds new starting values")
+	r.replace_story({"SchemaVersion": 1})
+	_expect(f, not r.is_ended and r.speaker == "Bob", "a bad payload leaves the story and conversation alone")
+	r.free()
+
+	# a bad save changes nothing
+	r = DialogueRunnerClass.new()
+	r.load_story(_handoff([_scene("A", "Hi")]))
+	r.start()
+	r.restore_state(JSON.stringify({"sceneId": "A", "randomState": "banana"}))
+	_expect(f, not r.is_ended and r.current_page == "Hi", "restore with a bad randomState is refused")
+	r.free()
+	return f

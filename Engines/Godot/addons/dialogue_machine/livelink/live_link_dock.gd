@@ -155,15 +155,7 @@ func _send_frame(type: String, payload: Dictionary):
 	_ws.send_text(JSON.stringify(frame))
 
 func _send_hello():
-	var payload = {
-		"token": _ws_token,
-		"engine": "godot",
-		"engineVersion": Engine.get_version_info().get("string", "4.3"),
-		"pluginVersion": "1.3.0",
-		"protocol": 1,
-		"schemaVersion": 1
-	}
-	_send_frame("hello", payload)
+	_send_frame("hello", DialogueRunner.build_hello(_ws_token))
 
 func _handle_packet(text: String):
 	var parsed = JSON.parse_string(text)
@@ -200,27 +192,55 @@ func _handle_packet(text: String):
 			_diagnostics_label.text = ""
 			_handle_story_updated(payload)
 
+# The export file name Dialogue Machine uses (RuntimeExport.Slug).
+static func _slug(name: String) -> String:
+	var out = ""
+	var hyphen = false
+	for ch in name.strip_edges():
+		var c = ch.unicode_at(0)
+		if (c >= 48 and c <= 57) or (c >= 65 and c <= 90) or (c >= 97 and c <= 122) or c > 127:
+			out += ch.to_lower()
+			hyphen = false
+		elif ch == "-" or ch == "_":
+			out += ch
+			hyphen = false
+		elif not hyphen and not out.is_empty():
+			out += "-"
+			hyphen = true
+	out = out.lstrip("-_").rstrip("-_")
+	return "story" if out.is_empty() else out
+
+# JSON.parse_string reads every number as a float; whole numbers go back to ints so the file matches the export.
+static func _intify(value: Variant) -> Variant:
+	if value is Dictionary:
+		var d: Dictionary = {}
+		for k in value.keys():
+			d[k] = _intify(value[k])
+		return d
+	if value is Array:
+		var a: Array = []
+		for v in value:
+			a.append(_intify(v))
+		return a
+	if value is float and value == floor(value) and absf(value) < 9007199254740992.0:
+		return int(value)
+	return value
+
 func _handle_story_updated(payload: Dictionary):
 	var proj_name = str(payload.get("ProjectName", ""))
 	var sha = str(payload.get("StorySha256", ""))
 	_info_label.text = "Updated: %s (SHA: %s)" % [proj_name, sha.substr(0, 8)]
 
-	# Save to matching DialogueStory resource or .runtime.json if present
-	var json_str = JSON.stringify(payload, "  ")
-	# Check if matching runtime.json exists in res://
-	var target_file = "res://story.runtime.json"
-	if not proj_name.is_empty():
-		var candidate = "res://" + proj_name.to_lower().replace(" ", "_") + ".runtime.json"
-		if FileAccess.file_exists(candidate):
-			target_file = candidate
-		elif FileAccess.file_exists("res://story.runtime.json"):
-			target_file = "res://story.runtime.json"
-		else:
-			target_file = candidate
+	# Write the pushed story next to Dialogue Machine's own export so builds match what was played.
+	var target_file = "res://" + _slug(proj_name) + ".runtime.json"
+	if FileAccess.file_exists(target_file):
+		var existing = JSON.parse_string(FileAccess.get_file_as_string(target_file))
+		if existing is Dictionary and str(existing.get("StorySha256", "")) == sha and not sha.is_empty():
+			return
 
 	var f = FileAccess.open(target_file, FileAccess.WRITE)
 	if f:
-		f.store_string(json_str)
+		f.store_string(JSON.stringify(_intify(payload), "  "))
 		f.close()
 		if Engine.is_editor_hint():
 			EditorInterface.get_resource_filesystem().scan()
