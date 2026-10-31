@@ -398,21 +398,8 @@ int32 FDialogueRules::ClampNumber(const FString& Key, int32 Value)
 
 TArray<FString> FDialogueRules::SplitPages(const FString& Text)
 {
-    TArray<FString> RawLines;
-    Text.ParseIntoArray(RawLines, TEXT("\n"), false);
-
     TArray<FString> Pages;
-    for (FString& Line : RawLines)
-    {
-        if (Line.EndsWith(TEXT("\r")))
-        {
-            Line.LeftInline(Line.Len() - 1);
-        }
-        if (!Line.IsEmpty())
-        {
-            Pages.Add(Line);
-        }
-    }
+    Text.ParseIntoArrayLines(Pages, true);
     return Pages;
 }
 

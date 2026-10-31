@@ -163,20 +163,15 @@ void UDialogueMachineWidget::HandleChoices(const TArray<FDialogueComponentChoice
 
     for (const FDialogueComponentChoice& Choice : Choices)
     {
-        UButton* ChoiceBtn = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        UDialogueChoiceButton* ChoiceBtn = WidgetTree->ConstructWidget<UDialogueChoiceButton>(UDialogueChoiceButton::StaticClass());
         UTextBlock* ChoiceTxt = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
         ChoiceTxt->SetText(FText::FromString(Choice.Text));
         ChoiceBtn->AddChild(ChoiceTxt);
         ChoiceBtn->SetIsEnabled(Choice.bEnabled);
 
-        FString ChoiceId = Choice.Id;
-        ChoiceBtn->OnClicked.AddDynamic(this, &UDialogueMachineWidget::HandleContinueClicked);
-        // Bind choice click via lambda or dynamic
-        ChoiceBtn->OnClicked.Clear();
-        ChoiceBtn->OnClicked.AddLambda([this, ChoiceId]()
-        {
-            HandleChoiceClicked(ChoiceId);
-        });
+        ChoiceBtn->ChoiceId = Choice.Id;
+        ChoiceBtn->BindClick();
+        ChoiceBtn->OnChoiceClicked.AddDynamic(this, &UDialogueMachineWidget::HandleChoiceClicked);
 
         ChoicesVerticalBox->AddChildToVerticalBox(ChoiceBtn);
     }
@@ -201,7 +196,7 @@ void UDialogueMachineWidget::HandleContinueClicked()
     }
 }
 
-void UDialogueMachineWidget::HandleChoiceClicked(FString ChoiceId)
+void UDialogueMachineWidget::HandleChoiceClicked(const FString& ChoiceId)
 {
     if (RunnerComponent)
     {

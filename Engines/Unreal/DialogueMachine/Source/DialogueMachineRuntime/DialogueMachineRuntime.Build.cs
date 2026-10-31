@@ -23,7 +23,8 @@ public class DialogueMachineRuntime : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                "WebSockets"
+                "WebSockets",
+                "Projects"
             }
         );
 

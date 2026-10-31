@@ -62,8 +62,7 @@ TSharedPtr<FDialogueScene> FDialogueStory::ReadScene(const TSharedPtr<FJsonObjec
         Scene->Type = TEXT("Dialogue");
     }
     Source->TryGetStringField(TEXT("Text"), Scene->Text);
-    Source->TryGetStringField(TEXT("DefaultNextId"), Scene->DefaultNextId);
-    if (Scene->DefaultNextId.IsEmpty())
+    if (!Source->TryGetStringField(TEXT("DefaultNextId"), Scene->DefaultNextId))
     {
         Scene->DefaultNextId = TEXT("[EXIT]");
     }
@@ -88,7 +87,7 @@ TSharedPtr<FDialogueScene> FDialogueStory::ReadScene(const TSharedPtr<FJsonObjec
             FString StrVal;
             if (Pair.Value.IsValid() && Pair.Value->TryGetString(StrVal))
             {
-                Scene->Metadata.Add(Pair.Key, StrVal);
+                Scene->Metadata.Add(FString(Pair.Key), StrVal);
             }
         }
     }
@@ -240,7 +239,7 @@ bool FDialogueHandoff::Parse(const FString& Json, FDialogueHandoff& OutHandoff, 
             double NumVal = 0.0;
             if (Pair.Value.IsValid() && Pair.Value->TryGetNumber(NumVal))
             {
-                OutHandoff.NumericValues.Add(Pair.Key, (int32)NumVal);
+                OutHandoff.NumericValues.Add(FString(Pair.Key), (int32)NumVal);
             }
         }
     }
@@ -253,7 +252,7 @@ bool FDialogueHandoff::Parse(const FString& Json, FDialogueHandoff& OutHandoff, 
             FString StrVal;
             if (Pair.Value.IsValid() && Pair.Value->TryGetString(StrVal))
             {
-                OutHandoff.TextValues.Add(Pair.Key, StrVal);
+                OutHandoff.TextValues.Add(FString(Pair.Key), StrVal);
             }
         }
     }

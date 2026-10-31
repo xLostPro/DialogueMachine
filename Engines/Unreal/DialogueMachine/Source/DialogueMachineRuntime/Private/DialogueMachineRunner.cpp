@@ -115,7 +115,7 @@ bool FDialogueRunner::Choose(const FString& ChoiceId, FString* OutError)
         return false;
     }
 
-    FString DestId = FoundChoice->NextStateId.IsEmpty() ? CurrentScene->DefaultNextId : FoundChoice->NextStateId;
+    FString DestId = FoundChoice->NextStateId.TrimStartAndEnd().IsEmpty() ? CurrentScene->DefaultNextId : FoundChoice->NextStateId;
     return Move(DestId, FoundChoice, OutError);
 }
 
@@ -227,7 +227,7 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
             double Val = 0.0;
             if (Pair.Value.IsValid() && Pair.Value->TryGetNumber(Val))
             {
-                Store->SetNumber(Pair.Key, (int32)Val);
+                Store->SetNumber(FString(Pair.Key), (int32)Val);
             }
         }
     }
@@ -240,7 +240,7 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
             FString Val;
             if (Pair.Value.IsValid() && Pair.Value->TryGetString(Val))
             {
-                Store->SetText(Pair.Key, Val);
+                Store->SetText(FString(Pair.Key), Val);
             }
         }
     }
