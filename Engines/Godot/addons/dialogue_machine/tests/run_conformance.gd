@@ -358,4 +358,11 @@ func _run_unit_tests() -> Array[String]:
 	r.restore_state(JSON.stringify({"sceneId": "A", "randomState": "banana"}))
 	_expect(f, not r.is_ended and r.current_page == "Hi", "restore with a bad randomState is refused")
 	r.free()
+	# start() before the runner's own _ready (a sibling started it) must keep the live link polling
+	r = DialogueRunnerClass.new()
+	r.load_story(_handoff([_scene("A", "Hi")]))
+	r.start()
+	r._ready()
+	_expect(f, r.is_processing() == OS.is_debug_build(), "live link polling survives start() before _ready")
+	r.free()
 	return f

@@ -213,12 +213,12 @@ var _last_sent_state: Dictionary = {}
 var _live_link_started: bool = false
 
 func _init():
+	# The live link only polls after the first start(). Set here, so a start() before _ready is not undone.
+	set_process(false)
 	variables = DialogueVariables.new(variables_provider, self)
 
 func _ready():
 	add_to_group("dialogue_runner")
-	# The live link only polls after the first start() and only in debug builds.
-	set_process(false)
 	if variables_provider:
 		variables.set_provider(variables_provider)
 	if story:
