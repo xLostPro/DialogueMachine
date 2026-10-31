@@ -18,7 +18,7 @@ static FString Serialize(const TSharedRef<FJsonObject>& Object)
     return Out;
 }
 
-bool FDialogueLiveLinkProtocol::ReadDiscovery(int32& OutPort, FString& OutToken, FString* OutError)
+bool FDialogueLiveLinkProtocol::ReadDiscovery(int32& OutPort, FString& OutToken, FString* OutError, int32* OutPid)
 {
 #if PLATFORM_WINDOWS
     const FString Path = FPlatformMisc::GetEnvironmentVariable(TEXT("LOCALAPPDATA")) / TEXT("DialogueMachine/livelink.json");
@@ -44,7 +44,21 @@ bool FDialogueLiveLinkProtocol::ReadDiscovery(int32& OutPort, FString& OutToken,
     {
         return Fail(TEXT("Malformed discovery file."));
     }
+    if (OutPid)
+    {
+        *OutPid = 0;
+        Root->TryGetNumberField(TEXT("pid"), *OutPid);
+    }
     return true;
+}
+
+bool FDialogueLiveLinkProtocol::IsProcessGone(int32 Pid)
+{
+#if PLATFORM_DESKTOP
+    return Pid > 0 && !FPlatformProcess::IsApplicationRunning((uint32)Pid);
+#else
+    return false; // Not implemented on every other platform, where calling it is fatal.
+#endif
 }
 
 FString FDialogueLiveLinkProtocol::Url(int32 Port)

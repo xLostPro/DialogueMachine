@@ -9,7 +9,10 @@ struct DIALOGUEMACHINERUNTIME_API FDialogueLiveLinkProtocol
     static constexpr int32 SchemaVersion = 1;
 
     /** Reads port and token from the discovery file Dialogue Machine writes while Live link is on. */
-    static bool ReadDiscovery(int32& OutPort, FString& OutToken, FString* OutError = nullptr);
+    static bool ReadDiscovery(int32& OutPort, FString& OutToken, FString* OutError = nullptr, int32* OutPid = nullptr);
+
+    /** True when the process that wrote the discovery file has exited. An unknown pid (0) counts as still running. */
+    static bool IsProcessGone(int32 Pid);
 
     static FString Url(int32 Port);
 
