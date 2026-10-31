@@ -1,0 +1,159 @@
+{
+  "name": "placeholder_missing",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022placeholder\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022{player_name} {unknown} {aff:trust} {inv:coin} {} {not a key}\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Hello {player_name} and {unknown}\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022placeholder\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "d8cfaf525027df1bb518d36ba1ef320c1e7e17ea033d6311776e681918c57de0",
+    "StartingScene": "placeholder",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:trust": 0,
+      "inv:coin": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setText",
+      "key": "player_name",
+      "value": "Ada"
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:trust",
+      "value": -2
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 3
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "placeholder",
+      "ended": false,
+      "page": "Traveller {unknown} 0 0 {} {not a key}",
+      "plain": "Traveller {unknown} 0 0 {} {not a key}",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Hello Traveller and {unknown}",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 0,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "placeholder",
+      "ended": false,
+      "page": "Ada {unknown} 0 0 {} {not a key}",
+      "plain": "Ada {unknown} 0 0 {} {not a key}",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Hello Ada and {unknown}",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 0,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "placeholder",
+      "ended": false,
+      "page": "Ada {unknown} -2 0 {} {not a key}",
+      "plain": "Ada {unknown} -2 0 {} {not a key}",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Hello Ada and {unknown}",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": -2,
+        "inv:coin": 0
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "placeholder",
+      "ended": false,
+      "page": "Ada {unknown} -2 3 {} {not a key}",
+      "plain": "Ada {unknown} -2 3 {} {not a key}",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Hello Ada and {unknown}",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": -2,
+        "inv:coin": 3
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": -2,
+        "inv:coin": 3
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    }
+  ]
+}

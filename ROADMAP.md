@@ -10,7 +10,7 @@
    - Phase 3: Live link (localhost WebSocket bridge). Done.
    - Phase 4: Unity (priority 1). Done.
    - Phase 5: Unreal (priority 2). Done.
-   - Phase 6: Godot (priority 3). Done when: the Godot CI job is green, and the manual live-link checklist is in the PR.
+   - Phase 6: Godot (priority 3). Done.
    - Phase 7: Release wiring for all engines. Done when: release packaging and version synchronization checks pass.
 2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.

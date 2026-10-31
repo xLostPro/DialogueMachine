@@ -20,6 +20,7 @@ internal static class RuntimeChecks
         RunnerChecks(check, throws);
         UnityPackageChecks(check, throws);
         UnrealPluginChecks(check, throws);
+        GodotPluginChecks(check, throws);
     }
 
     private static void Replay(string name, string json, Action<bool, string> check)
@@ -181,5 +182,29 @@ internal static class RuntimeChecks
         {
             check(ueFiles.TryGetValue(fileName, out var ueContent) && ueContent == content, $"Unreal conformance fixture {fileName} matches Engines/Conformance");
         }
+    }
+
+    private static void GodotPluginChecks(Action<bool, string> check, Action<Action, string> throws)
+    {
+        var pluginCfgPath = "Engines/Godot/addons/dialogue_machine/plugin.cfg";
+        check(File.Exists(pluginCfgPath), "Godot plugin.cfg exists");
+        var cfgContent = File.ReadAllText(pluginCfgPath);
+        var csproj = File.ReadAllText("DialogueMachine.csproj");
+        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>([^<]+)</Version>");
+        var expectedVersion = match.Success ? match.Groups[1].Value : "1.3.0";
+        var versionMatch = System.Text.RegularExpressions.Regex.Match(cfgContent, @"version=""([^""]+)""");
+        check(versionMatch.Success && versionMatch.Groups[1].Value == expectedVersion, "Godot plugin.cfg version matches DialogueMachine.csproj");
+
+        var godotConformance = "Engines/Godot/addons/dialogue_machine/tests/conformance";
+        check(Directory.Exists(godotConformance), "Godot addon Conformance directory exists");
+        var originalFiles = Directory.GetFiles(Path.GetFullPath(Folder), "*.json").ToDictionary(f => Path.GetFileName(f), f => File.ReadAllText(f).Replace("\r\n", "\n"));
+        var godotFiles = Directory.GetFiles(Path.GetFullPath(godotConformance), "*.json").ToDictionary(f => Path.GetFileName(f), f => File.ReadAllText(f).Replace("\r\n", "\n"));
+        check(godotFiles.Keys.Order().SequenceEqual(originalFiles.Keys.Order()), "Godot addon has the exact same conformance fixtures");
+        foreach (var (fileName, content) in originalFiles)
+        {
+            check(godotFiles.TryGetValue(fileName, out var gContent) && gContent == content, $"Godot conformance fixture {fileName} matches Engines/Conformance");
+        }
+
+        check(File.Exists("Engines/Godot/project.godot"), "Godot sample project.godot exists");
     }
 }
