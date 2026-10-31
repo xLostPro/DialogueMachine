@@ -106,6 +106,7 @@ internal static class LiveLinkChecks
             check(http.Send(request).StatusCode == HttpStatusCode.Forbidden, "requests with an Origin header are refused");
         }
         throws(() => new ScriptedEngine(server.Port, origin: "https://example.com"), "a browser-style WebSocket with an Origin header cannot connect");
+        using (new ScriptedEngine(server.Port, origin: "http://127.0.0.1")) check(true, "Unreal's fixed loopback Origin is accepted");
 
         var engine = new ScriptedEngine(server.Port);
         engine.Hello(server.Token);

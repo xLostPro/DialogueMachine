@@ -138,8 +138,9 @@ public sealed class LiveLinkServer(LiveLinkOptions options) : IDisposable
 
     private async Task Serve(HttpListenerContext context)
     {
-        // Browsers always send Origin and engine clients don't, so this keeps websites out.
-        if (context.Request.Headers["Origin"] is not null) { Reject(context, 403); return; }
+        // Browsers always send Origin and most engine clients don't, so this keeps websites out. Unreal's
+        // WebSocket client always sends exactly this one; the secret token still gates every connection.
+        if (context.Request.Headers["Origin"] is { } origin && origin != "http://127.0.0.1") { Reject(context, 403); return; }
         if (!context.Request.IsWebSocketRequest) { Reject(context, 400); return; }
         if (Interlocked.Increment(ref connections) > MaxClients) { Interlocked.Decrement(ref connections); Reject(context, 503); return; }
         try
