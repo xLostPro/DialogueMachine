@@ -43,8 +43,12 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Dialogue Machine")
     void BindToRunner(UDialogueRunnerComponent* InRunner);
 
+    /** Converts Dialogue Machine markup ([b] [i] [u] [colour=X]) to Unreal rich text tags. */
     UFUNCTION(BlueprintCallable, Category = "Dialogue Machine")
     static FString ToUnrealRichText(const FString& Text);
+
+    /** Same, and reports the colour style rows (named c_RRGGBBAA) the converted text refers to. */
+    static FString ConvertRichText(const FString& Text, TSet<FString>& OutColourRows);
 
 protected:
     UPROPERTY(BlueprintReadOnly, Category = "Dialogue Machine")
@@ -79,4 +83,8 @@ protected:
 
 private:
     void BuildWidgetTree();
+    void UpdateTextStyles(const TSet<FString>& ColourRows);
+
+    TWeakObjectPtr<UDialogueRunnerComponent> BoundRunner;
+    TSet<FString> StyledColours;
 };

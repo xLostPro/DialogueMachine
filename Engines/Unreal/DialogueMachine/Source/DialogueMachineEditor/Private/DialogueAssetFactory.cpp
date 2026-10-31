@@ -18,33 +18,22 @@ bool UDialogueAssetFactory::FactoryCanImport(const FString& Filename)
     return Filename.EndsWith(TEXT(".runtime.json"));
 }
 
-UObject* UDialogueAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
+// Reads a runtime companion into the asset. The project name comes from the file name Dialogue Machine wrote.
+static bool ReadCompanion(UDialogueAsset* Asset, const FString& Filename, FString& OutError)
 {
     FString JsonString;
     if (!FFileHelper::LoadFileToString(JsonString, *Filename))
     {
-        if (Warn)
-        {
-            Warn->Logf(ELogVerbosity::Error, TEXT("Failed to read file: %s"), *Filename);
-        }
-        return nullptr;
+        OutError = FString::Printf(TEXT("Failed to read file: %s"), *Filename);
+        return false;
     }
 
     FDialogueHandoff Handoff;
-    FString Error;
-    if (!FDialogueHandoff::Parse(JsonString, Handoff, Error))
+    FString ParseError;
+    if (!FDialogueHandoff::Parse(JsonString, Handoff, ParseError))
     {
-        if (Warn)
-        {
-            Warn->Logf(ELogVerbosity::Error, TEXT("Failed to parse runtime companion '%s': %s"), *Filename, *Error);
-        }
-        return nullptr;
-    }
-
-    UDialogueAsset* Asset = Cast<UDialogueAsset>(StaticFindObject(UDialogueAsset::StaticClass(), InParent, *InName.ToString()));
-    if (!Asset)
-    {
-        Asset = NewObject<UDialogueAsset>(InParent, InClass, InName, Flags);
+        OutError = FString::Printf(TEXT("Failed to parse runtime companion '%s': %s"), *Filename, *ParseError);
+        return false;
     }
 
     FString ProjectName = FPaths::GetBaseFilename(Filename);
@@ -54,9 +43,32 @@ UObject* UDialogueAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
     }
 
     Asset->SetData(JsonString, Handoff.StorySha256, ProjectName);
-
+    if (Asset->AssetImportData)
+    {
+        Asset->AssetImportData->Update(Filename);
+    }
     Asset->Modify();
     Asset->MarkPackageDirty();
+    return true;
+}
+
+UObject* UDialogueAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InParent, FName InName, EObjectFlags Flags, const FString& Filename, const TCHAR* Parms, FFeedbackContext* Warn, bool& bOutOperationCanceled)
+{
+    UDialogueAsset* Asset = Cast<UDialogueAsset>(StaticFindObject(UDialogueAsset::StaticClass(), InParent, *InName.ToString()));
+    if (!Asset)
+    {
+        Asset = NewObject<UDialogueAsset>(InParent, InClass, InName, Flags);
+    }
+
+    FString Error;
+    if (!ReadCompanion(Asset, Filename, Error))
+    {
+        if (Warn)
+        {
+            Warn->Logf(ELogVerbosity::Error, TEXT("%s"), *Error);
+        }
+        return nullptr;
+    }
 
     return Asset;
 }
@@ -64,9 +76,9 @@ UObject* UDialogueAssetFactory::FactoryCreateFile(UClass* InClass, UObject* InPa
 bool UDialogueAssetFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilenames)
 {
     UDialogueAsset* Asset = Cast<UDialogueAsset>(Obj);
-    if (Asset)
+    if (Asset && Asset->AssetImportData)
     {
-        // Allow reimport if asset exists
+        Asset->AssetImportData->ExtractFilenames(OutFilenames);
         return true;
     }
     return false;
@@ -74,13 +86,26 @@ bool UDialogueAssetFactory::CanReimport(UObject* Obj, TArray<FString>& OutFilena
 
 void UDialogueAssetFactory::SetReimportPaths(UObject* Obj, const TArray<FString>& NewReimportPaths)
 {
+    UDialogueAsset* Asset = Cast<UDialogueAsset>(Obj);
+    if (Asset && Asset->AssetImportData && NewReimportPaths.Num() > 0)
+    {
+        Asset->AssetImportData->UpdateFilenameOnly(NewReimportPaths[0]);
+    }
 }
 
 EReimportResult::Type UDialogueAssetFactory::Reimport(UObject* Obj)
 {
     UDialogueAsset* Asset = Cast<UDialogueAsset>(Obj);
-    if (!Asset)
+    if (!Asset || !Asset->AssetImportData)
     {
+        return EReimportResult::Failed;
+    }
+
+    const FString Filename = Asset->AssetImportData->GetFirstFilename();
+    FString Error;
+    if (Filename.IsEmpty() || !ReadCompanion(Asset, Filename, Error))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Dialogue Machine reimport failed: %s"), Error.IsEmpty() ? TEXT("the source file is unknown.") : *Error);
         return EReimportResult::Failed;
     }
 

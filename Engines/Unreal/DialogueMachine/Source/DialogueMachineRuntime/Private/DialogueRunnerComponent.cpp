@@ -4,6 +4,7 @@
 #include "Misc/Paths.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
+#include "DialogueLiveLinkProtocol.h"
 #if !UE_BUILD_SHIPPING
 #include "WebSocketsModule.h"
 #endif
@@ -11,49 +12,38 @@
 class FInterfaceVariablesAdapter : public IDialogueVariables
 {
 public:
-    TScriptInterface<IDialogueVariablesInterface> Target;
-    FDictionaryVariables Fallback;
+    TWeakObjectPtr<UObject> Target;
 
-    FInterfaceVariablesAdapter(UObject* InObj)
-    {
-        Target.SetObject(InObj);
-        Target.SetInterface(Cast<IDialogueVariablesInterface>(InObj));
-    }
+    FInterfaceVariablesAdapter(UObject* InObj) : Target(InObj) {}
 
+    // Execute_ dispatches to Blueprint implementers too; a C++ Cast<> to the interface only works for native ones.
     virtual bool HasNumber(const FString& Key) const override
     {
-        if (Target.GetInterface()) return IDialogueVariablesInterface::Execute_HasNumber(Target.GetObject(), Key);
-        return Fallback.HasNumber(Key);
+        return Target.IsValid() && IDialogueVariablesInterface::Execute_HasNumber(Target.Get(), Key);
     }
 
     virtual int32 GetNumber(const FString& Key) const override
     {
-        if (Target.GetInterface()) return IDialogueVariablesInterface::Execute_GetNumber(Target.GetObject(), Key);
-        return Fallback.GetNumber(Key);
+        return Target.IsValid() ? IDialogueVariablesInterface::Execute_GetNumber(Target.Get(), Key) : 0;
     }
 
     virtual void SetNumber(const FString& Key, int32 Value) override
     {
-        if (Target.GetInterface()) IDialogueVariablesInterface::Execute_SetNumber(Target.GetObject(), Key, Value);
-        else Fallback.SetNumber(Key, Value);
+        if (Target.IsValid()) IDialogueVariablesInterface::Execute_SetNumber(Target.Get(), Key, Value);
     }
 
     virtual bool GetText(const FString& Key, FString& OutValue) const override
     {
-        if (Target.GetInterface()) return IDialogueVariablesInterface::Execute_GetText(Target.GetObject(), Key, OutValue);
-        return Fallback.GetText(Key, OutValue);
+        return Target.IsValid() && IDialogueVariablesInterface::Execute_GetText(Target.Get(), Key, OutValue);
     }
 
     virtual void SetText(const FString& Key, const FString& Value) override
     {
-        if (Target.GetInterface()) IDialogueVariablesInterface::Execute_SetText(Target.GetObject(), Key, Value);
-        else Fallback.SetText(Key, Value);
+        if (Target.IsValid()) IDialogueVariablesInterface::Execute_SetText(Target.Get(), Key, Value);
     }
 
-    virtual TArray<FString> GetKeys() const override
-    {
-        return Fallback.GetKeys();
-    }
+    // The game owns the store and can't enumerate it; the runner looks up the story's declared keys instead.
+    virtual TArray<FString> GetKeys() const override { return TArray<FString>(); }
 };
 
 UDialogueRunnerComponent::UDialogueRunnerComponent()
@@ -64,10 +54,7 @@ UDialogueRunnerComponent::UDialogueRunnerComponent()
 UDialogueRunnerComponent::~UDialogueRunnerComponent()
 {
 #if !UE_BUILD_SHIPPING
-    if (LiveLinkSocket.IsValid() && LiveLinkSocket->IsConnected())
-    {
-        LiveLinkSocket->Close();
-    }
+    CloseLiveLink();
 #endif
 }
 
@@ -94,10 +81,7 @@ void UDialogueRunnerComponent::BeginPlay()
 void UDialogueRunnerComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 #if !UE_BUILD_SHIPPING
-    if (LiveLinkSocket.IsValid() && LiveLinkSocket->IsConnected())
-    {
-        LiveLinkSocket->Close();
-    }
+    CloseLiveLink();
 #endif
     Super::EndPlay(EndPlayReason);
 }
@@ -155,6 +139,11 @@ void UDialogueRunnerComponent::BindRunnerEvents()
 
 bool UDialogueRunnerComponent::StartDialogue(const FString& SceneId, int32 InSeed)
 {
+    return StartDialogueWithValues(SceneId, InSeed, nullptr, nullptr);
+}
+
+bool UDialogueRunnerComponent::StartDialogueWithValues(const FString& SceneId, int32 InSeed, const TMap<FString, int32>* Numeric, const TMap<FString, FString>* Text)
+{
     if (!Story)
     {
         return false;
@@ -176,9 +165,12 @@ bool UDialogueRunnerComponent::StartDialogue(const FString& SceneId, int32 InSee
     EnsureLiveLink();
 #endif
 
-    int32 ActualSeed = InSeed != 0 ? InSeed : Seed;
+    // Zero means "use the seed saved in the story", like the other engines.
+    const int32 ChosenSeed = InSeed != 0 ? InSeed : Seed;
+    TOptional<int32> ActualSeed;
+    if (ChosenSeed != 0) ActualSeed = ChosenSeed;
     FString StartId = SceneId.IsEmpty() ? StartScene : SceneId;
-    bool bSuccess = InternalRunner->Start(StartId, ActualSeed, nullptr, nullptr, &Error);
+    bool bSuccess = InternalRunner->Start(StartId, ActualSeed, Numeric, Text, &Error);
 
 #if !UE_BUILD_SHIPPING
     if (bSuccess)
@@ -268,6 +260,24 @@ bool UDialogueRunnerComponent::CanContinue() const { return InternalRunner.IsVal
 TMap<FString, FString> UDialogueRunnerComponent::GetCurrentMetadata() const { return InternalRunner.IsValid() ? InternalRunner->GetCurrentMetadata() : TMap<FString, FString>(); }
 
 #if !UE_BUILD_SHIPPING
+void UDialogueRunnerComponent::CloseLiveLink()
+{
+    if (LiveLinkSocket.IsValid())
+    {
+        // The lambdas below capture this component, so unbind them before it can go away.
+        LiveLinkSocket->OnConnected().Clear();
+        LiveLinkSocket->OnClosed().Clear();
+        LiveLinkSocket->OnConnectionError().Clear();
+        LiveLinkSocket->OnMessage().Clear();
+        if (LiveLinkSocket->IsConnected())
+        {
+            LiveLinkSocket->Close();
+        }
+        LiveLinkSocket.Reset();
+    }
+    bLiveLinkConnected = false;
+}
+
 void UDialogueRunnerComponent::EnsureLiveLink()
 {
     if (bLiveLinkConnected && LiveLinkSocket.IsValid() && LiveLinkSocket->IsConnected())
@@ -282,62 +292,27 @@ void UDialogueRunnerComponent::EnsureLiveLink()
     }
     LastConnectAttemptTime = Now;
 
-    FString DiscoveryPath;
-#if PLATFORM_WINDOWS
-    DiscoveryPath = FPlatformMisc::GetEnvironmentVariable(TEXT("LOCALAPPDATA")) / TEXT("DialogueMachine/livelink.json");
-#else
-    DiscoveryPath = FPaths::Combine(FPlatformProcess::UserHomeDir(), TEXT(".local/share/DialogueMachine/livelink.json"));
-#endif
-
-    if (!FPaths::FileExists(DiscoveryPath))
-    {
-        return;
-    }
-
-    FString JsonContent;
-    if (!FFileHelper::LoadFileToString(JsonContent, *DiscoveryPath))
-    {
-        return;
-    }
-
-    TSharedPtr<FJsonObject> Root;
-    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonContent);
-    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
-    {
-        return;
-    }
-
     int32 Port = 0;
     FString Token;
-    if (!Root->TryGetNumberField(TEXT("port"), Port) || !Root->TryGetStringField(TEXT("token"), Token) || Port <= 0 || Token.IsEmpty())
+    if (!FDialogueLiveLinkProtocol::ReadDiscovery(Port, Token))
     {
         return;
     }
 
-    FString Url = FString::Printf(TEXT("ws://127.0.0.1:%d/dialogue-machine/"), Port);
-    LiveLinkSocket = FWebSocketsModule::Get().CreateWebSocket(Url, TEXT(""));
+    CloseLiveLink();
+    LiveLinkSocket = FWebSocketsModule::Get().CreateWebSocket(FDialogueLiveLinkProtocol::Url(Port), TEXT(""));
     ActiveRunnerId = FString::FromInt(GetUniqueID());
 
     LiveLinkSocket->OnConnected().AddLambda([this, Token]()
     {
         bLiveLinkConnected = true;
-        TSharedPtr<FJsonObject> Hello = MakeShared<FJsonObject>();
-        Hello->SetNumberField(TEXT("protocol"), 1);
-        Hello->SetStringField(TEXT("type"), TEXT("hello"));
+        LiveLinkSocket->Send(FDialogueLiveLinkProtocol::MakeHello(Token));
 
-        TSharedPtr<FJsonObject> Payload = MakeShared<FJsonObject>();
-        Payload->SetStringField(TEXT("token"), Token);
-        Payload->SetStringField(TEXT("engine"), TEXT("unreal"));
-        Payload->SetStringField(TEXT("engineVersion"), TEXT("5.3"));
-        Payload->SetStringField(TEXT("pluginVersion"), TEXT("1.3.0"));
-        Payload->SetNumberField(TEXT("protocol"), 1);
-        Payload->SetNumberField(TEXT("schemaVersion"), 1);
-        Hello->SetObjectField(TEXT("payload"), Payload);
-
-        FString OutStr;
-        TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutStr);
-        FJsonSerializer::Serialize(Hello.ToSharedRef(), Writer);
-        LiveLinkSocket->Send(OutStr);
+        // The first "started" was sent before the socket opened, so announce the runner again.
+        if (InternalRunner.IsValid() && !InternalRunner->IsEnded() && !InternalRunner->GetCurrentSceneId().IsEmpty())
+        {
+            SendLiveState(TEXT("started"));
+        }
     });
 
     LiveLinkSocket->OnClosed().AddLambda([this](int32 StatusCode, const FString& Reason, bool bWasClean)
@@ -353,31 +328,37 @@ void UDialogueRunnerComponent::EnsureLiveLink()
     LiveLinkSocket->OnMessage().AddLambda([this](const FString& Message)
     {
         TSharedPtr<FJsonObject> MsgRoot;
-        TSharedRef<TJsonReader<>> MsgReader = TJsonReaderFactory<>::Create(Message);
-        if (!FJsonSerializer::Deserialize(MsgReader, MsgRoot) || !MsgRoot.IsValid()) return;
+        if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Message), MsgRoot) || !MsgRoot.IsValid()) return;
 
         FString Type;
-        if (MsgRoot->TryGetStringField(TEXT("type"), Type) && Type == TEXT("runtime.setVariable"))
+        if (!MsgRoot->TryGetStringField(TEXT("type"), Type)) return;
+
+        if (Type == TEXT("ping"))
         {
-            const TSharedPtr<FJsonObject>* Payload = nullptr;
-            if (MsgRoot->TryGetObjectField(TEXT("payload"), Payload) && Payload && Payload->IsValid())
+            LiveLinkSocket->Send(FDialogueLiveLinkProtocol::MakePong());
+            return;
+        }
+
+        if (Type != TEXT("runtime.setVariable")) return;
+
+        const TSharedPtr<FJsonObject>* Payload = nullptr;
+        if (MsgRoot->TryGetObjectField(TEXT("payload"), Payload) && Payload && Payload->IsValid())
+        {
+            FString RunnerId;
+            (*Payload)->TryGetStringField(TEXT("runnerId"), RunnerId);
+            if (RunnerId == ActiveRunnerId && InternalRunner.IsValid())
             {
-                FString RunnerId;
-                (*Payload)->TryGetStringField(TEXT("runnerId"), RunnerId);
-                if (RunnerId == ActiveRunnerId && InternalRunner.IsValid())
+                FString Key;
+                (*Payload)->TryGetStringField(TEXT("key"), Key);
+                double NumVal = 0.0;
+                if ((*Payload)->TryGetNumberField(TEXT("number"), NumVal))
                 {
-                    FString Key;
-                    (*Payload)->TryGetStringField(TEXT("key"), Key);
-                    double NumVal = 0.0;
-                    if ((*Payload)->TryGetNumberField(TEXT("number"), NumVal))
-                    {
-                        InternalRunner->GetVariables()->SetNumber(Key, (int32)NumVal);
-                    }
-                    FString TextVal;
-                    if ((*Payload)->TryGetStringField(TEXT("text"), TextVal))
-                    {
-                        InternalRunner->GetVariables()->SetText(Key, TextVal);
-                    }
+                    InternalRunner->GetVariables()->SetNumber(Key, (int32)NumVal);
+                }
+                FString TextVal;
+                if ((*Payload)->TryGetStringField(TEXT("text"), TextVal))
+                {
+                    InternalRunner->GetVariables()->SetText(Key, TextVal);
                 }
             }
         }
@@ -401,7 +382,11 @@ void UDialogueRunnerComponent::SendLiveState(const FString& Status, const FStrin
     Payload->SetStringField(TEXT("runnerId"), ActiveRunnerId);
 
     AActor* Owner = GetOwner();
+#if WITH_EDITOR
+    FString RunnerName = Owner ? Owner->GetActorLabel() : GetName();
+#else
     FString RunnerName = Owner ? Owner->GetName() : GetName();
+#endif
     Payload->SetStringField(TEXT("runnerName"), RunnerName);
 
     if (Story)

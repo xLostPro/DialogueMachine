@@ -10,6 +10,14 @@ class DIALOGUEMACHINERUNTIME_API UDialogueAsset : public UObject
     GENERATED_BODY()
 
 public:
+#if WITH_EDITORONLY_DATA
+    /** The *.runtime.json this asset was imported from. */
+    UPROPERTY(VisibleAnywhere, Instanced, Category = "Import Settings")
+    TObjectPtr<class UAssetImportData> AssetImportData;
+
+    virtual void PostInitProperties() override;
+#endif
+
     UPROPERTY(VisibleAnywhere, Category = "Dialogue Machine")
     FString ProjectName;
 

@@ -15,6 +15,31 @@
 #include "Widgets/Input/SButton.h"
 #include "DialogueAsset.h"
 #include "DialogueRunnerComponent.h"
+#include "DialogueLiveLinkProtocol.h"
+#include "UObject/UObjectIterator.h"
+#include "Editor/EditorEngine.h"
+#include "Settings/LevelEditorPlaySettings.h"
+
+// Dialogue Machine names the export <project-slug>.runtime.json: lower-case words joined by single hyphens.
+static FString SlugOf(const FString& Name)
+{
+    FString Slug;
+    bool bHyphen = false;
+    for (TCHAR Ch : Name.TrimStartAndEnd())
+    {
+        if (FChar::IsAlnum(Ch))
+        {
+            if (bHyphen && !Slug.IsEmpty()) Slug += TEXT('-');
+            Slug.AppendChar(FChar::ToLower(Ch));
+            bHyphen = false;
+        }
+        else
+        {
+            bHyphen = true;
+        }
+    }
+    return Slug.IsEmpty() ? TEXT("story") : Slug;
+}
 
 FDialogueLiveLink::FDialogueLiveLink()
 {
@@ -29,44 +54,16 @@ void FDialogueLiveLink::Connect()
 {
     if (bIsConnected) return;
 
-    FString DiscoveryPath;
-#if PLATFORM_WINDOWS
-    DiscoveryPath = FPlatformMisc::GetEnvironmentVariable(TEXT("LOCALAPPDATA")) / TEXT("DialogueMachine/livelink.json");
-#else
-    DiscoveryPath = FPaths::Combine(FPlatformProcess::UserHomeDir(), TEXT(".local/share/DialogueMachine/livelink.json"));
-#endif
-
-    if (!FPaths::FileExists(DiscoveryPath))
-    {
-        StatusMessage = TEXT("Dialogue Machine is not running (discovery file not found).");
-        return;
-    }
-
-    FString JsonContent;
-    if (!FFileHelper::LoadFileToString(JsonContent, *DiscoveryPath))
-    {
-        StatusMessage = TEXT("Failed to read discovery file.");
-        return;
-    }
-
-    TSharedPtr<FJsonObject> Root;
-    TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonContent);
-    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
-    {
-        StatusMessage = TEXT("Invalid discovery file JSON.");
-        return;
-    }
-
     int32 Port = 0;
-    FString Token;
-    if (!Root->TryGetNumberField(TEXT("port"), Port) || !Root->TryGetStringField(TEXT("token"), Token) || Port <= 0 || Token.IsEmpty())
+    FString Error;
+    if (!FDialogueLiveLinkProtocol::ReadDiscovery(Port, Token, &Error))
     {
-        StatusMessage = TEXT("Malformed discovery file.");
+        StatusMessage = Error;
         return;
     }
 
-    FString Url = FString::Printf(TEXT("ws://127.0.0.1:%d/dialogue-machine/"), Port);
-    Socket = FWebSocketsModule::Get().CreateWebSocket(Url, TEXT(""));
+    Disconnect();
+    Socket = FWebSocketsModule::Get().CreateWebSocket(FDialogueLiveLinkProtocol::Url(Port), TEXT(""));
 
     Socket->OnConnected().AddRaw(this, &FDialogueLiveLink::OnConnected);
     Socket->OnConnectionError().AddRaw(this, &FDialogueLiveLink::OnConnectionError);
@@ -81,6 +78,11 @@ void FDialogueLiveLink::Disconnect()
 {
     if (Socket.IsValid())
     {
+        // Unbind first: the raw delegates point at this object, which may be about to be destroyed.
+        Socket->OnConnected().RemoveAll(this);
+        Socket->OnConnectionError().RemoveAll(this);
+        Socket->OnClosed().RemoveAll(this);
+        Socket->OnMessage().RemoveAll(this);
         if (Socket->IsConnected())
         {
             Socket->Close();
@@ -98,6 +100,10 @@ bool FDialogueLiveLink::IsConnected() const
 
 FString FDialogueLiveLink::GetStatusText() const
 {
+    if (IsConnected() && !AppVersion.IsEmpty())
+    {
+        return FString::Printf(TEXT("%s  ·  Dialogue Machine %s"), *StatusMessage, *AppVersion);
+    }
     return StatusMessage;
 }
 
@@ -118,43 +124,7 @@ void FDialogueLiveLink::OnConnected()
 {
     bIsConnected = true;
     StatusMessage = TEXT("Connected to Dialogue Machine. Handshaking...");
-
-    FString DiscoveryPath;
-#if PLATFORM_WINDOWS
-    DiscoveryPath = FPlatformMisc::GetEnvironmentVariable(TEXT("LOCALAPPDATA")) / TEXT("DialogueMachine/livelink.json");
-#else
-    DiscoveryPath = FPaths::Combine(FPlatformProcess::UserHomeDir(), TEXT(".local/share/DialogueMachine/livelink.json"));
-#endif
-
-    FString Token;
-    FString JsonContent;
-    if (FFileHelper::LoadFileToString(JsonContent, *DiscoveryPath))
-    {
-        TSharedPtr<FJsonObject> Root;
-        TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(JsonContent);
-        if (FJsonSerializer::Deserialize(Reader, Root) && Root.IsValid())
-        {
-            Root->TryGetStringField(TEXT("token"), Token);
-        }
-    }
-
-    TSharedPtr<FJsonObject> Hello = MakeShared<FJsonObject>();
-    Hello->SetNumberField(TEXT("protocol"), 1);
-    Hello->SetStringField(TEXT("type"), TEXT("hello"));
-
-    TSharedPtr<FJsonObject> Payload = MakeShared<FJsonObject>();
-    Payload->SetStringField(TEXT("token"), Token);
-    Payload->SetStringField(TEXT("engine"), TEXT("unreal"));
-    Payload->SetStringField(TEXT("engineVersion"), TEXT("5.3"));
-    Payload->SetStringField(TEXT("pluginVersion"), TEXT("1.3.0"));
-    Payload->SetNumberField(TEXT("protocol"), 1);
-    Payload->SetNumberField(TEXT("schemaVersion"), 1);
-    Hello->SetObjectField(TEXT("payload"), Payload);
-
-    FString OutStr;
-    TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&OutStr);
-    FJsonSerializer::Serialize(Hello.ToSharedRef(), Writer);
-    Socket->Send(OutStr);
+    Socket->Send(FDialogueLiveLinkProtocol::MakeHello(Token));
 }
 
 void FDialogueLiveLink::OnConnectionError(const FString& Error)
@@ -181,11 +151,30 @@ void FDialogueLiveLink::OnMessage(const FString& Message)
     const TSharedPtr<FJsonObject>* Payload = nullptr;
     Root->TryGetObjectField(TEXT("payload"), Payload);
 
-    if (Type == TEXT("welcome") && Payload)
+    if (Type == TEXT("ping"))
     {
+        // Dialogue Machine closes the connection after 30 s of silence.
+        Socket->Send(FDialogueLiveLinkProtocol::MakePong());
+    }
+    else if (Type == TEXT("error") && Payload)
+    {
+        FString Reason;
+        (*Payload)->TryGetStringField(TEXT("message"), Reason);
+        StatusMessage = FString::Printf(TEXT("Dialogue Machine refused the connection: %s"), *Reason);
+    }
+    else if (Type == TEXT("welcome") && Payload)
+    {
+        UpdateUrl.Empty();
         (*Payload)->TryGetStringField(TEXT("appVersion"), AppVersion);
         (*Payload)->TryGetStringField(TEXT("updateUrl"), UpdateUrl);
-        StatusMessage = FString::Printf(TEXT("Connected to Dialogue Machine (app version %s)"), *AppVersion);
+        StatusMessage = TEXT("Connected to Dialogue Machine");
+    }
+    else if (Type == TEXT("story.invalid") && Payload)
+    {
+        // Keep the last good story; just tell the writer why the new one wasn't applied.
+        const TArray<TSharedPtr<FJsonValue>>* Diagnostics = nullptr;
+        (*Payload)->TryGetArrayField(TEXT("diagnostics"), Diagnostics);
+        StatusMessage = FString::Printf(TEXT("The story has %d problem(s), so the last good version is still in use."), Diagnostics ? Diagnostics->Num() : 0);
     }
     else if (Type == TEXT("story.updated") && Payload)
     {
@@ -221,6 +210,20 @@ void FDialogueLiveLink::HandleStoryUpdated(const TSharedPtr<FJsonObject>& Payloa
 
     StatusMessage = FString::Printf(TEXT("Received update for '%s' (%s)"), *ProjectName, *StorySha.Left(8));
 
+    // Builds should match what was played, so refresh the asset imported from this project's export too.
+    const FString Slug = SlugOf(ProjectName);
+    for (TObjectIterator<UDialogueAsset> It; It; ++It)
+    {
+        UDialogueAsset* Asset = *It;
+        if (!Asset->HasAnyFlags(RF_ClassDefaultObject) && Asset->StorySha256 != StorySha
+            && (Asset->ProjectName.Equals(Slug, ESearchCase::IgnoreCase) || Asset->ProjectName.Equals(ProjectName, ESearchCase::IgnoreCase)))
+        {
+            Asset->SetData(HandoffJson, StorySha, Asset->ProjectName);
+            Asset->Modify();
+            Asset->MarkPackageDirty();
+        }
+    }
+
     // Hot reload running dialogues in PIE
     if (GEditor && GEditor->PlayWorld)
     {
@@ -241,27 +244,71 @@ void FDialogueLiveLink::HandleStoryUpdated(const TSharedPtr<FJsonObject>& Payloa
 
 void FDialogueLiveLink::HandlePlayFrom(const TSharedPtr<FJsonObject>& Payload)
 {
-    FString SceneId;
-    Payload->TryGetStringField(TEXT("sceneId"), SceneId);
-    int32 Seed = 0;
-    Payload->TryGetNumberField(TEXT("seed"), Seed);
+    PendingPlay = MakeShared<FPendingPlay>();
+    Payload->TryGetStringField(TEXT("sceneId"), PendingPlay->SceneId);
+    Payload->TryGetNumberField(TEXT("seed"), PendingPlay->Seed);
 
-    if (GEditor && GEditor->PlayWorld)
+    const TSharedPtr<FJsonObject>* Numeric = nullptr;
+    if (Payload->TryGetObjectField(TEXT("numeric"), Numeric) && Numeric && Numeric->IsValid())
     {
-        for (TActorIterator<AActor> It(GEditor->PlayWorld); It; ++It)
+        for (const auto& Pair : (*Numeric)->Values)
         {
-            TArray<UDialogueRunnerComponent*> Runners;
-            (*It)->GetComponents<UDialogueRunnerComponent>(Runners);
-            for (UDialogueRunnerComponent* Runner : Runners)
+            double Value = 0.0;
+            if (Pair.Value.IsValid() && Pair.Value->TryGetNumber(Value))
             {
-                if (Runner)
-                {
-                    Runner->StartDialogue(SceneId, Seed);
-                    break;
-                }
+                PendingPlay->Numeric.Add(FString(Pair.Key), (int32)Value);
             }
         }
     }
+    const TSharedPtr<FJsonObject>* Text = nullptr;
+    if (Payload->TryGetObjectField(TEXT("text"), Text) && Text && Text->IsValid())
+    {
+        for (const auto& Pair : (*Text)->Values)
+        {
+            FString Value;
+            if (Pair.Value.IsValid() && Pair.Value->TryGetString(Value))
+            {
+                PendingPlay->Text.Add(FString(Pair.Key), Value);
+            }
+        }
+    }
+
+    if (GEditor && GEditor->PlayWorld)
+    {
+        ApplyPendingPlay();
+    }
+    else if (GEditor)
+    {
+        // Start a play session; the dialogue begins once the runners have had their BeginPlay.
+        StatusMessage = FString::Printf(TEXT("Starting Play In Editor at '%s'..."), *PendingPlay->SceneId);
+        PlayStartedHandle = FEditorDelegates::PostPIEStarted.AddSP(this, &FDialogueLiveLink::OnPlayStarted);
+        FRequestPlaySessionParams Params;
+        GEditor->RequestPlaySession(Params);
+    }
+}
+
+void FDialogueLiveLink::OnPlayStarted(bool bSimulating)
+{
+    FEditorDelegates::PostPIEStarted.Remove(PlayStartedHandle);
+    ApplyPendingPlay();
+}
+
+void FDialogueLiveLink::ApplyPendingPlay()
+{
+    if (!PendingPlay.IsValid() || !GEditor || !GEditor->PlayWorld) return;
+    TSharedPtr<FPendingPlay> Play = PendingPlay;
+    PendingPlay.Reset();
+
+    // One runner answers "Play in engine": the first one found.
+    for (TActorIterator<AActor> It(GEditor->PlayWorld); It; ++It)
+    {
+        if (UDialogueRunnerComponent* Runner = (*It)->FindComponentByClass<UDialogueRunnerComponent>())
+        {
+            Runner->StartDialogueWithValues(Play->SceneId, Play->Seed, &Play->Numeric, &Play->Text);
+            return;
+        }
+    }
+    StatusMessage = TEXT("Play from here: no Dialogue Runner component is in the play world.");
 }
 
 TSharedRef<SWidget> FDialogueLiveLink::CreatePanel()

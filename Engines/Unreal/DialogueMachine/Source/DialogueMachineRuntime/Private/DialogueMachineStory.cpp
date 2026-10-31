@@ -29,7 +29,7 @@ TSharedPtr<FDialogueStory> FDialogueStory::Parse(const FString& StoryJson, FStri
         }
 
         TSharedPtr<FDialogueScene> Scene = ReadScene(*SceneObj);
-        if (Scene->State.IsEmpty())
+        if (Scene->State.TrimStartAndEnd().IsEmpty())
         {
             OutError = TEXT("Each scene needs a non-empty ID.");
             return nullptr;

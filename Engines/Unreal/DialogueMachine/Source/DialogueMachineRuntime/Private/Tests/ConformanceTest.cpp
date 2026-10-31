@@ -200,6 +200,74 @@ bool FDialogueMachineConformanceTest::RunTest(const FString& Parameters)
             bool bExpectedCanContinue = false;
             (*Expected)->TryGetBoolField(TEXT("canContinue"), bExpectedCanContinue);
             TestEqual(FString::Printf(TEXT("%s[%d] canContinue"), *FileName, StepIdx), Runner->CanContinue(), bExpectedCanContinue);
+
+            const FString Step = FString::Printf(TEXT("%s[%d]"), *FileName, StepIdx);
+
+            const TSharedPtr<FJsonObject>* ExpectedNumeric = nullptr;
+            if ((*Expected)->TryGetObjectField(TEXT("numeric"), ExpectedNumeric) && ExpectedNumeric)
+            {
+                for (const auto& Pair : (*ExpectedNumeric)->Values)
+                {
+                    double Value = 0.0;
+                    Pair.Value->TryGetNumber(Value);
+                    TestEqual(FString::Printf(TEXT("%s numeric %s"), *Step, *FString(Pair.Key)), Runner->GetVariables()->GetNumber(FString(Pair.Key)), (int32)Value);
+                }
+            }
+
+            const TSharedPtr<FJsonObject>* ExpectedText = nullptr;
+            if ((*Expected)->TryGetObjectField(TEXT("text"), ExpectedText) && ExpectedText)
+            {
+                for (const auto& Pair : (*ExpectedText)->Values)
+                {
+                    FString Value;
+                    Pair.Value->TryGetString(Value);
+                    FString Actual;
+                    Runner->GetVariables()->GetText(FString(Pair.Key), Actual);
+                    TestEqual(FString::Printf(TEXT("%s text %s"), *Step, *FString(Pair.Key)), Actual, Value);
+                }
+            }
+
+            const TArray<TSharedPtr<FJsonValue>>* ExpectedChoices = nullptr;
+            if ((*Expected)->TryGetArrayField(TEXT("choices"), ExpectedChoices) && ExpectedChoices)
+            {
+                const TArray<FDialogueRuntimeChoice> Actual = Runner->GetChoices();
+                if (TestEqual(FString::Printf(TEXT("%s choice count"), *Step), Actual.Num(), ExpectedChoices->Num()))
+                {
+                    for (int32 i = 0; i < Actual.Num(); ++i)
+                    {
+                        const TSharedPtr<FJsonObject>* Choice = nullptr;
+                        if (!(*ExpectedChoices)[i]->TryGetObject(Choice) || !Choice) continue;
+                        FString Id, Text;
+                        bool bEnabled = false;
+                        (*Choice)->TryGetStringField(TEXT("id"), Id);
+                        (*Choice)->TryGetStringField(TEXT("text"), Text);
+                        (*Choice)->TryGetBoolField(TEXT("enabled"), bEnabled);
+                        TestEqual(FString::Printf(TEXT("%s choice %d id"), *Step, i), Actual[i].Id, Id);
+                        TestEqual(FString::Printf(TEXT("%s choice %d text"), *Step, i), Actual[i].Text, Text);
+                        TestEqual(FString::Printf(TEXT("%s choice %d enabled"), *Step, i), Actual[i].bEnabled, bEnabled);
+                    }
+                }
+            }
+
+            const TArray<TSharedPtr<FJsonValue>>* ExpectedEvents = nullptr;
+            if ((*Expected)->TryGetArrayField(TEXT("events"), ExpectedEvents) && ExpectedEvents)
+            {
+                if (TestEqual(FString::Printf(TEXT("%s event count"), *Step), Events.Num(), ExpectedEvents->Num()))
+                {
+                    for (int32 i = 0; i < Events.Num(); ++i)
+                    {
+                        const TSharedPtr<FJsonObject>* Event = nullptr;
+                        if (!(*ExpectedEvents)[i]->TryGetObject(Event) || !Event) continue;
+                        for (const TCHAR* Field : { TEXT("type"), TEXT("targetId"), TEXT("parameter") })
+                        {
+                            FString Want, Got;
+                            (*Event)->TryGetStringField(Field, Want);
+                            Events[i]->TryGetStringField(Field, Got);
+                            TestEqual(FString::Printf(TEXT("%s event %d %s"), *Step, i, Field), Got, Want);
+                        }
+                    }
+                }
+            }
         }
     }
 

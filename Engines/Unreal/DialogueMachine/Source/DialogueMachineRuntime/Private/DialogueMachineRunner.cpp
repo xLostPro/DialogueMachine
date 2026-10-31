@@ -245,6 +245,11 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
         }
     }
 
+    // A save without these fields means "none yet", not "keep what the runner had".
+    RandomState = 0;
+    RandomLine = -1;
+    PageIndex = 0;
+
     FString StateStr;
     if (Root->TryGetStringField(TEXT("randomState"), StateStr))
     {
@@ -337,8 +342,15 @@ void FDialogueRunner::AddMissingVariables()
 
 TMap<FString, int32> FDialogueRunner::GetNumbers() const
 {
+    // A game-owned store can't list its keys, so the story's declared variables count as well.
+    TSet<FString> Keys(Store->GetKeys());
+    for (const auto& Pair : Handoff.NumericValues)
+    {
+        Keys.Add(Pair.Key);
+    }
+
     TMap<FString, int32> Result;
-    for (const FString& Key : Store->GetKeys())
+    for (const FString& Key : Keys)
     {
         if (Store->HasNumber(Key))
         {
@@ -350,8 +362,14 @@ TMap<FString, int32> FDialogueRunner::GetNumbers() const
 
 TMap<FString, FString> FDialogueRunner::GetTexts() const
 {
+    TSet<FString> Keys(Store->GetKeys());
+    for (const auto& Pair : Handoff.TextValues)
+    {
+        Keys.Add(Pair.Key);
+    }
+
     TMap<FString, FString> Result;
-    for (const FString& Key : Store->GetKeys())
+    for (const FString& Key : Keys)
     {
         FString Val;
         if (Store->GetText(Key, Val))
