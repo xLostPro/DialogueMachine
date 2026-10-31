@@ -1,0 +1,147 @@
+{
+  "name": "exit_via_default",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022exit\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Choices and a default exit.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Uses the default\u0022,\n          \u0022NextStateId\u0022: null,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Affinity\u0022,\n          \u0022TargetId\u0022: \u0022seen\u0022,\n          \u0022Amount\u0022: 1,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Event\u0022,\n          \u0022TargetId\u0022: \u0022finished\u0022,\n          \u0022Amount\u0022: 0,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022exit\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "8f2a8d0d2b1aab468d370d9d103055862d054247ef8bf195b2a435fb7954c7ab",
+    "StartingScene": "exit",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:seen": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "start"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "exit",
+      "ended": false,
+      "page": "Choices and a default exit.",
+      "plain": "Choices and a default exit.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Uses the default",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:seen": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:seen": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [
+        {
+          "type": "Event",
+          "targetId": "finished",
+          "parameter": null
+        }
+      ]
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:seen": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "exit",
+      "ended": false,
+      "page": "Choices and a default exit.",
+      "plain": "Choices and a default exit.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Uses the default",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:seen": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:seen": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [
+        {
+          "type": "Event",
+          "targetId": "finished",
+          "parameter": null
+        }
+      ]
+    }
+  ]
+}

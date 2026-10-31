@@ -6,3 +6,6 @@ artifacts/
 .vs/
 .packages/
 .dotnet/
+.godot/
+*.import
+*.uid

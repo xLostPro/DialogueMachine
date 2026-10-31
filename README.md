@@ -91,6 +91,17 @@ Dialogue Machine includes an official plugin for Unreal Engine (UE 5.3+):
 - **Live Link:** Open **Window → Dialogue Machine Live Link**. When the bridge is running in Dialogue Machine, story edits hot-reload in Play In Editor (PIE), and dialogue progression is tracked live in Dialogue Machine's **Follow** pane in non-shipping builds.
 - **Automation Tests:** Run the `DialogueMachine.Conformance` test suite in the Unreal Editor via **Tools → Session Frontend → Automation** to verify all reference dialogue fixtures.
 
+## Godot
+
+Dialogue Machine includes an official addon for Godot (4.3+ with standard GDScript):
+
+- **Installation:** Copy `Engines/Godot/addons/dialogue_machine` into your project's `addons/` folder (or extract the pre-packaged zip from Releases) and enable the plugin in **Project → Project Settings → Plugins**.
+- **Importing:** Point Dialogue Machine's auto-export folder inside your Godot project's `res://` directory. Godot's `EditorImportPlugin` automatically imports each `*.runtime.json` file into a `DialogueStory` `.tres` resource whenever changes are saved.
+- **Runner:** Add `DialogueRunner` to your scene and assign the `DialogueStory` resource. It exposes GDScript functions (`start`, `continue_dialogue`, `choose`, `save_state`, `restore_state`) and signals (`line_shown`, `choices_shown`, `action_raised`, `shop_opened`, `variable_changed`, `ended`). Assign a custom `variables_provider` node to let game state own the variables.
+- **Presentation:** Add `DialogueView` (built in code using Godot UI controls) to display speaker labels, BBCode formatted dialogue via `RichTextLabel`, and dynamic response buttons with built-in keyboard and gamepad navigation.
+- **Live Link:** Open the **Dialogue Machine** dock panel. When the bridge is running in Dialogue Machine, story edits hot-reload in real time, and dialogue progression in debug builds is tracked live in Dialogue Machine's **Follow** pane.
+- **Conformance Tests:** Run `godot --headless --path Engines/Godot --script res://addons/dialogue_machine/tests/run_conformance.gd` to verify all reference dialogue fixtures.
+
 ## Build packages
 
 ```powershell

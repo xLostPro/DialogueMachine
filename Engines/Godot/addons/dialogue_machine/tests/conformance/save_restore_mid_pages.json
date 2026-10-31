@@ -1,0 +1,364 @@
+{
+  "name": "save_restore_mid_pages",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022start\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022One.\\nTwo.\\nThree.\\nFour.\\nFive.\u0022,\n      \u0022DefaultNextId\u0022: \u0022talk\u0022,\n      \u0022SayItAll\u0022: false,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022start\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022talk\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022First page for {player_name}.\\nSecond page, trust {aff:trust}.\\nThird page.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Onward\u0022,\n          \u0022NextStateId\u0022: \u0022omen\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022talk\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022omen\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Red sky.\\nGrey sky.\\nBlue sky.\\nGold sky.\\nBlack sky.\\nWhite sky.\\nGreen sky.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: false,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022omen\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "336671cb3e77f17c4a5bd81dee2a0210eb730cd97e2abd61bd0f59455f656be5",
+    "StartingScene": "start",
+    "Seed": 42,
+    "NumericValues": {
+      "aff:trust": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "setText",
+      "key": "player_name",
+      "value": "Ada"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:trust",
+      "value": 2
+    },
+    {
+      "op": "save"
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:trust",
+      "value": 9
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "restore"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "start",
+      "ended": false,
+      "page": "Four.",
+      "plain": "Four.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "First page for Traveller.",
+      "plain": "First page for Traveller.",
+      "pageIndex": 0,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "First page for Ada.",
+      "plain": "First page for Ada.",
+      "pageIndex": 0,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 0
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Second page, trust 0.",
+      "plain": "Second page, trust 0.",
+      "pageIndex": 1,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 0
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Second page, trust 2.",
+      "plain": "Second page, trust 2.",
+      "pageIndex": 1,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 2
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Second page, trust 2.",
+      "plain": "Second page, trust 2.",
+      "pageIndex": 1,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 2
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Second page, trust 9.",
+      "plain": "Second page, trust 9.",
+      "pageIndex": 1,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 9
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Third page.",
+      "plain": "Third page.",
+      "pageIndex": 2,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 9
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "omen",
+      "ended": false,
+      "page": "White sky.",
+      "plain": "White sky.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 9
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 9
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Second page, trust 2.",
+      "plain": "Second page, trust 2.",
+      "pageIndex": 1,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 2
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "talk",
+      "ended": false,
+      "page": "Third page.",
+      "plain": "Third page.",
+      "pageIndex": 2,
+      "pageCount": 3,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Onward",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 2
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "omen",
+      "ended": false,
+      "page": "White sky.",
+      "plain": "White sky.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:trust": 2
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:trust": 2
+      },
+      "text": {
+        "player_name": "Ada"
+      },
+      "events": []
+    }
+  ]
+}
