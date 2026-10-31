@@ -15,7 +15,7 @@ namespace DialogueMachine.Editor
 {
     public class LiveLinkClient : IDisposable
     {
-        public const string PluginVersion = "1.3.0";
+        public static string PluginVersion { get; } = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(LiveLinkClient).Assembly)?.version ?? DialogueRunnerBehaviour.PluginVersion;
         private const int ProtocolVersion = 1;
         private const int SchemaVersion = 1;
 

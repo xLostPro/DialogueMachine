@@ -21,6 +21,9 @@ namespace DialogueMachine.Runtime.Unity
     [AddComponentMenu("Dialogue Machine/Dialogue Runner")]
     public class DialogueRunnerBehaviour : MonoBehaviour
     {
+        // A build cannot read package.json; the test harness checks this matches it.
+        public const string PluginVersion = "1.3.0";
+
         [Header("Configuration")]
         [SerializeField] private DialogueAsset story;
         [SerializeField] private bool playOnStart = true;
@@ -360,7 +363,7 @@ namespace DialogueMachine.Runtime.Unity
                                 ["token"] = token,
                                 ["engine"] = "unity",
                                 ["engineVersion"] = Application.unityVersion,
-                                ["pluginVersion"] = "1.3.0",
+                                ["pluginVersion"] = PluginVersion,
                                 ["protocol"] = 1,
                                 ["schemaVersion"] = 1
                             }
