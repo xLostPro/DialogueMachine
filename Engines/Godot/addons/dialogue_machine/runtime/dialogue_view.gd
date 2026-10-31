@@ -8,10 +8,7 @@ const DialogueRunner = preload("dialogue_runner.gd")
 @export var runner: Node = null:
 	set(value):
 		if runner != value:
-			if runner and runner.is_connected("line_shown", _on_line_shown):
-				runner.disconnect("line_shown", _on_line_shown)
-				runner.disconnect("choices_shown", _on_choices_shown)
-				runner.disconnect("ended", _on_ended)
+			_unbind_runner()
 			runner = value
 			if is_inside_tree() and runner:
 				_bind_runner()
@@ -23,6 +20,7 @@ var _speaker_label: Label = null
 var _dialogue_label: RichTextLabel = null
 var _choices_box: VBoxContainer = null
 var _continue_button: Button = null
+var _refresh_queued: bool = false
 
 static func to_bbcode(text: String) -> String:
 	var result = ""
@@ -62,13 +60,18 @@ func _ready():
 		_bind_runner()
 
 func _bind_runner():
-	if not runner.is_connected("line_shown", _on_line_shown):
+	if not runner.line_shown.is_connected(_on_line_shown):
 		runner.line_shown.connect(_on_line_shown)
-		runner.choices_shown.connect(_on_choices_shown)
 		runner.ended.connect(_on_ended)
-	if not runner.is_ended and not runner.current_page.is_empty():
+		runner.variable_changed.connect(_on_variable_changed)
+	if not runner.is_ended and runner.current_page != null:
 		_on_line_shown(runner.current_page)
-		_on_choices_shown(runner.get_choices())
+
+func _unbind_runner():
+	if runner and runner.line_shown.is_connected(_on_line_shown):
+		runner.line_shown.disconnect(_on_line_shown)
+		runner.ended.disconnect(_on_ended)
+		runner.variable_changed.disconnect(_on_variable_changed)
 
 func _build_ui_if_needed():
 	if _panel:
@@ -130,37 +133,36 @@ func _on_line_shown(line: String) -> void:
 	if not _panel:
 		_build_ui_if_needed()
 	_panel.visible = true
-	if runner:
-		_speaker_label.text = runner.speaker
-		_continue_button.visible = runner.can_continue
 	_dialogue_label.text = to_bbcode(line)
+	_sync_controls()
 
-	# Choices are only shown on the last page of a scene
-	if runner and runner.page_index < runner.page_count - 1:
-		_clear_choices()
-	else:
-		if runner:
-			_update_choices(runner.get_choices())
+# A variable can change which choices are enabled without changing the line, so the controls refresh too.
+func _on_variable_changed(_key: String, _before: Variant, _after: Variant) -> void:
+	if not _refresh_queued:
+		_refresh_queued = true
+		_refresh_controls.call_deferred()
 
-func _on_choices_shown(choices: Array) -> void:
-	if not _panel:
-		_build_ui_if_needed()
-	if runner and runner.page_index < runner.page_count - 1:
-		_clear_choices()
+func _refresh_controls() -> void:
+	_refresh_queued = false
+	if runner and not runner.is_ended and _panel:
+		_sync_controls()
+
+func _sync_controls() -> void:
+	if not runner or runner.is_ended:
 		return
-	_update_choices(choices)
-
-func _update_choices(choices: Array) -> void:
+	_speaker_label.text = runner.speaker
+	_continue_button.visible = runner.can_continue
 	_clear_choices()
 	var first_enabled_btn: Button = null
 
-	for c in choices:
-		if c is Dictionary:
+	# Choices are only shown on the last page of a scene.
+	if runner.page_index >= runner.page_count - 1:
+		for c in runner.get_choices():
 			var btn = Button.new()
 			btn.text = DialogueRules.plain_text(str(c.get("text", "")))
 			var is_enabled = bool(c.get("enabled", false))
 			btn.disabled = not is_enabled
-			if not is_enabled and c.has("disabled_reason") and c["disabled_reason"] != null:
+			if not is_enabled and c.get("disabled_reason", null) != null:
 				btn.tooltip_text = str(c["disabled_reason"])
 
 			var choice_id = str(c.get("id", ""))
@@ -170,15 +172,18 @@ func _update_choices(choices: Array) -> void:
 			if is_enabled and not first_enabled_btn:
 				first_enabled_btn = btn
 
-	if first_enabled_btn and not Engine.is_editor_hint():
+	if Engine.is_editor_hint() or not is_inside_tree():
+		return
+	if first_enabled_btn:
 		first_enabled_btn.grab_focus()
-	elif _continue_button.visible and not Engine.is_editor_hint():
+	elif _continue_button.visible:
 		_continue_button.grab_focus()
 
 func _clear_choices() -> void:
 	if not _choices_box:
 		return
 	for child in _choices_box.get_children():
+		_choices_box.remove_child(child)
 		child.queue_free()
 
 func _on_choice_pressed(choice_id: String) -> void:
