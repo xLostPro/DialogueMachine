@@ -11,7 +11,7 @@
    - Phase 4: Unity (priority 1). Done.
    - Phase 5: Unreal (priority 2). Done.
    - Phase 6: Godot (priority 3). Done.
-   - Phase 7: Release wiring for all engines. Done when: release packaging and version synchronization checks pass.
+   - Phase 7: Release wiring for all engines. Merged; the release is pending. Move this item to Done when the release is cut.
 2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
    - Unity headless pass on `Examples/salt-ledger.dialogue.json` (69 scenes) and a scripted live-link session are done; fixed: play-from overrides now apply before the first scene resolves, and the follow pane/Unity window match projects by name slug. Done by hand on Unity 6000.6.7f1: Engine Export Folder, `DefaultDialogueView` (now renders without a theme) and the Live Link window with the real app. Later: Unity 6.6 flags `UIDocument` as superseded by Panel Renderer; migrate only once the oldest supported Unity has it.

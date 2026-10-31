@@ -238,3 +238,35 @@ jobs:
           fi
           echo "Attempting artifact download if available..."
           gh release view "$RELEASE_TAG" || true
+      # Zips are built from tracked files only, so no .godot, .uid, .import, Intermediate or Binaries output can leak in.
+      - name: Attach engine plugins
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          mkdir -p engine-zips
+          git archive --format=zip --prefix=addons/dialogue_machine/ -o "engine-zips/DialogueMachine-Godot-$version.zip" HEAD:Engines/Godot/addons/dialogue_machine
+          git archive --format=zip --prefix=DialogueMachine/ -o "engine-zips/DialogueMachine-Unreal-$version.zip" HEAD:Engines/Unreal/DialogueMachine
+          godot="$(unzip -Z1 "engine-zips/DialogueMachine-Godot-$version.zip")"
+          unreal="$(unzip -Z1 "engine-zips/DialogueMachine-Unreal-$version.zip")"
+          grep -qx 'addons/dialogue_machine/plugin.cfg' <<< "$godot"
+          grep -qx 'DialogueMachine/DialogueMachine.uplugin' <<< "$unreal"
+          grep -q '^DialogueMachine/Resources/Conformance/.*\.json$' <<< "$unreal"
+          if grep -E '(^|/)(\.godot|Intermediate|Binaries)/|\.(uid|import)$' <<< "$godot $unreal"; then
+            echo 'Engine zips contain build leftovers.'; exit 1
+          fi
+          if draft="$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [ "$draft" != true ]; then
+              echo "Release $RELEASE_TAG is already published; leaving it unchanged."
+              exit 0
+            fi
+          else
+            flags=(--draft)
+            [[ "$version" == *-* ]] && flags+=(--prerelease)
+            gh release create "$RELEASE_TAG" "${flags[@]}" --verify-tag --title "Dialogue Machine $version" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" engine-zips/*.zip --clobber

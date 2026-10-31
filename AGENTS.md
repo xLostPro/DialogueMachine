@@ -28,4 +28,4 @@ dotnet run --project tests/DialogueMachine.Tests.csproj -c Release -- artifacts
 
 ## Releases
 
-Only when asked. Bump the version in `DialogueMachine.csproj`, `Packaging/Info.plist`, the About text and `RELEASE_NOTES.md`, merge, then push tag `v<Version>`. The tag workflow publishes the release. Never commit build output, ZIPs, `.packages` or `.dotnet`.
+Only when asked. Bump the version in `DialogueMachine.csproj`, `Packaging/Info.plist`, `Engines/Unity/com.xlostpro.dialoguemachine/package.json`, `Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs` (`PluginVersion`), `Engines/Unreal/DialogueMachine/DialogueMachine.uplugin`, `Engines/Godot/addons/dialogue_machine/plugin.cfg`, the About text and `RELEASE_NOTES.md`, merge, then push tag `v<Version>`. The tag workflow publishes the release and attaches the Godot and Unreal plugin ZIPs. Never commit build output, ZIPs, `.packages` or `.dotnet`.

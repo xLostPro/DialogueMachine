@@ -142,6 +142,14 @@ internal static class RuntimeChecks
         throws(() => saved.RestoreState("""{"sceneId":"missing"}"""), "restoring into a missing scene is refused");
     }
 
+    // The version in DialogueMachine.csproj; every engine plugin has to match it.
+    private static string ProjectVersion(Action<bool, string> check)
+    {
+        var match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText("DialogueMachine.csproj"), @"<Version>([^<]+)</Version>");
+        check(match.Success, "DialogueMachine.csproj has a <Version>");
+        return match.Success ? match.Groups[1].Value : "";
+    }
+
     private static void UnityPackageChecks(Action<bool, string> check, Action<Action, string> throws)
     {
         var pkgPath = "Engines/Unity/com.xlostpro.dialoguemachine/package.json";
@@ -149,10 +157,10 @@ internal static class RuntimeChecks
         var pkg = JsonNode.Parse(File.ReadAllText(pkgPath))!.AsObject();
         check(pkg["name"]?.GetValue<string>() == "com.xlostpro.dialoguemachine", "Unity package name is com.xlostpro.dialoguemachine");
         check(pkg["unity"]?.GetValue<string>() == "2022.3", "Unity package targets Unity 2022.3");
-        var csproj = File.ReadAllText("DialogueMachine.csproj");
-        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>([^<]+)</Version>");
-        var expectedVersion = match.Success ? match.Groups[1].Value : "1.3.0";
+        var expectedVersion = ProjectVersion(check);
         check(pkg["version"]?.GetValue<string>() == expectedVersion, "Unity package version matches DialogueMachine.csproj");
+        var runtimeVersion = System.Text.RegularExpressions.Regex.Match(File.ReadAllText("Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs"), @"PluginVersion = ""([^""]+)""");
+        check(runtimeVersion.Success && runtimeVersion.Groups[1].Value == expectedVersion, "Unity runtime PluginVersion matches DialogueMachine.csproj");
 
         // RichText checks
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity(null) == "", "RichText converts null to empty");
@@ -168,9 +176,7 @@ internal static class RuntimeChecks
         var upluginPath = "Engines/Unreal/DialogueMachine/DialogueMachine.uplugin";
         check(File.Exists(upluginPath), "Unreal DialogueMachine.uplugin exists");
         var uplugin = JsonNode.Parse(File.ReadAllText(upluginPath))!.AsObject();
-        var csproj = File.ReadAllText("DialogueMachine.csproj");
-        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>([^<]+)</Version>");
-        var expectedVersion = match.Success ? match.Groups[1].Value : "1.3.0";
+        var expectedVersion = ProjectVersion(check);
         check(uplugin["VersionName"]?.GetValue<string>() == expectedVersion, "Unreal plugin VersionName matches DialogueMachine.csproj");
 
         var ueConformance = "Engines/Unreal/DialogueMachine/Resources/Conformance";
@@ -189,9 +195,7 @@ internal static class RuntimeChecks
         var pluginCfgPath = "Engines/Godot/addons/dialogue_machine/plugin.cfg";
         check(File.Exists(pluginCfgPath), "Godot plugin.cfg exists");
         var cfgContent = File.ReadAllText(pluginCfgPath);
-        var csproj = File.ReadAllText("DialogueMachine.csproj");
-        var match = System.Text.RegularExpressions.Regex.Match(csproj, @"<Version>([^<]+)</Version>");
-        var expectedVersion = match.Success ? match.Groups[1].Value : "1.3.0";
+        var expectedVersion = ProjectVersion(check);
         var versionMatch = System.Text.RegularExpressions.Regex.Match(cfgContent, @"version=""([^""]+)""");
         check(versionMatch.Success && versionMatch.Groups[1].Value == expectedVersion, "Godot plugin.cfg version matches DialogueMachine.csproj");
 
