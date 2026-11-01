@@ -8,7 +8,6 @@
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
    - Unity headless pass on `Examples/salt-ledger.dialogue.json` (69 scenes) and a scripted live-link session are done; fixed: play-from overrides now apply before the first scene resolves, and the follow pane/Unity window match projects by name slug. Done by hand on Unity 6000.6.7f1: Engine Export Folder, `DefaultDialogueView` (now renders without a theme) and the Live Link window with the real app. Later: Unity 6.6 flags `UIDocument` as superseded by Panel Renderer; migrate only once the oldest supported Unity has it.
 2. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
-   - Split `tests/Program.cs` (136 KB) into area files like the existing `tests/*Checks.cs`.
    - Move `MainWindow` panes into their own views as they're touched.
    - Decide whether saved test scenarios earn their size (~120 KB of code and tests). Keep them if real use relies on them; otherwise remove them.
 
