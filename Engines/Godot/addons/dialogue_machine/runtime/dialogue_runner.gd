@@ -622,10 +622,10 @@ func _apply_actions(actions: Array) -> void:
 			var amount = int(a.get("Amount", 0))
 			var parameter = a.get("Parameter", null)
 
-			if type == "Affinity" or type == "Inventory":
+			if DialogueRules.is_variable_action(type):
 				var act_key = DialogueRules.key(type, target_id)
 				var before_val = variables.get_number(act_key)
-				var after_val = DialogueRules.apply_amount(type, before_val, amount)
+				var after_val = DialogueRules.apply_action(type, before_val, amount)
 				# Written quietly: the scene is about to change, so the old one must not refresh.
 				variables.write_number(act_key, after_val)
 				if after_val != before_val:

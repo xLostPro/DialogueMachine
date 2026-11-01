@@ -52,9 +52,9 @@ Every engine parser must preserve website compatibility and **ignore unknown fie
   - `Operator` (`string`): `"=="`, `"!="`, `"<"`, `"<="`, `">"`, `">="`.
   - `Value` (`string`): Integer threshold, written as a string. A requirement with any other type, an empty target or a non-integer value is unmet.
 - **Actions:**
-  - `Type` (`string`): `"Affinity"`, `"Inventory"`, `"Event"`, or `"Script"`. Runners ignore any other type, because newer exports may add them. Core's validation rejects them, so they only reach a runner from a newer exporter.
+  - `Type` (`string`): `"Affinity"`, `"Inventory"`, `"Set"`, `"Toggle"`, `"Event"`, or `"Script"`. Runners ignore any other type, because newer exports may add them. Core's validation rejects them, so they only reach a runner from a newer exporter.
   - `TargetId` (`string`): Target variable name, event name, or script function identifier.
-  - `Amount` (`int`): Value to add (for numeric variables).
+  - `Amount` (`int`): Value to add (for numeric variables); for `Set`, the value to write (flags use 0 or 1). `Set` and `Toggle` target `aff:<TargetId>`; `Toggle` writes 1 if the value is 0, otherwise 0.
   - `Parameter` (`string`): Argument string (for events and scripts).
 
 ---

@@ -253,11 +253,11 @@ namespace DialogueMachine.Runtime
             {
                 if (action.Type == "Event" || action.Type == "Script") ActionRaised?.Invoke(action.Type, action.TargetId, action.Parameter, action.Amount);
                 // Stories from newer versions can carry action types this runtime doesn't know.
-                else if (action.Type == "Affinity" || action.Type == "Inventory")
+                else if (DialogueRules.IsVariableAction(action.Type))
                 {
                     var key = DialogueRules.Key(action.Type, action.TargetId);
                     var before = store.GetNumber(key);
-                    var after = DialogueRules.ApplyAmount(action.Type, before, action.Amount);
+                    var after = DialogueRules.ApplyAction(action.Type, before, action.Amount);
                     store.SetNumber(key, after);
                     if (after != before) VariableChanged?.Invoke(key, before, after);
                 }

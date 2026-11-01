@@ -56,7 +56,7 @@ Core never references Avalonia. The UI uses code-built controls with explicit ca
 
 ## Playtest semantics
 
-Choosing a response checks its conditions, runs the response's actions, then the scene's exit actions, then enters the destination. Inventory never goes below zero and arithmetic saturates. Inline conditions resolve innermost-first; substitutions apply afterwards. Random lines use a seeded SplitMix64 stream, so the same seed and choices reproduce the same run, and Back restores it. Event/Script/Shop hooks are only logged; the website or game implements them.
+Choosing a response checks its conditions, runs the response's actions, then the scene's exit actions, then enters the destination. Inventory never goes below zero and arithmetic saturates. Inline conditions resolve innermost-first; substitutions apply afterwards. Random lines use a seeded SplitMix64 stream, so the same seed and choices reproduce the same run, and Back restores it. `Set` writes its Amount and `Toggle` flips a flag between 0 and 1; website exports omit both, engine handoffs keep them. Event/Script/Shop hooks are only logged; the website or game implements them.
 
 Saved scenarios reference scenes by ID and responses by GUID. Each recorded step stores a fingerprint, so editing a response's text, logic or destination flags the recording as stale. Replay and dead-end analysis are bounded and never claim to check every path of a cyclic story. CLI exit codes: 0 pass, 1 validation errors, 2 bad input, 3 replay/assertion failure, 4 limit reached, 5 cancelled. See [STORY_TESTING.md](STORY_TESTING.md).
 

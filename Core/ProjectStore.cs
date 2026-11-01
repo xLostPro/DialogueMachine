@@ -79,8 +79,21 @@ public static class ProjectStore
         }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
-    public static string WebExport(DialogueProject project)
+    /// <summary>
+    /// The website only knows relative Affinity/Inventory amounts, so it can't run Set or Toggle.
+    /// Those actions are left out of the website file; engine handoffs keep them (<paramref name="forEngine"/>).
+    /// </summary>
+    public static string WebExport(DialogueProject project, bool forEngine = false)
     {
+        if (!forEngine && project.ListOfCharacterStates.Any(s => s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)).Any(a => a.Type is "Set" or "Toggle")))
+        {
+            project = Clone(project);
+            foreach (var s in project.ListOfCharacterStates)
+            {
+                s.DefaultAfterActions.RemoveAll(a => a.Type is "Set" or "Toggle");
+                foreach (var c in s.Choices) c.AfterChoiceActions.RemoveAll(a => a.Type is "Set" or "Toggle");
+            }
+        }
         // The web player starts at the first scene; honour the desktop entry selection.
         var states = project.ListOfCharacterStates.OrderBy(s => s.State == project.Entry ? 0 : 1).ToList();
         return JsonSerializer.Serialize(new { ListOfCharacterStates = states }, new JsonSerializerOptions { WriteIndented = true });

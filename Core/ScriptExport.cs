@@ -72,6 +72,8 @@ public static class ScriptExport
         {
             var action = actions[i];
             var detail = action.Type is "Event" or "Script" ? "parameter: " + (action.Parameter ?? "(none)")
+                : action.Type == "Toggle" ? "flip between 0 and 1"
+                : action.Type == "Set" ? "set to " + action.Amount.ToString(CultureInfo.InvariantCulture)
                 : "add " + action.Amount.ToString("+0;-0;0", CultureInfo.InvariantCulture);
             var continuation = indent + new string(' ', (i + 1).ToString(CultureInfo.InvariantCulture).Length + 2);
             sb.Append(indent).Append(i + 1).Append(". ").Append(Escape(action.Type + " " + action.TargetId + " — " + detail).Replace("\n", "\n" + continuation)).Append('\n');

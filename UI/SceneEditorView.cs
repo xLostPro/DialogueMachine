@@ -42,10 +42,10 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
         var t = Ui.Input(text, v => { apply(v); actions.Edited(); }, multiline);
         t.LostFocus += (_, _) => actions.TextCommitted(); return t;
     }
-    private AutoCompleteBox VariableInput(string type, string id, Action<string> apply)
+    private AutoCompleteBox VariableInput(string type, string id, Action<string> apply, bool flags = false)
     {
         var prefix = type == "Inventory" ? "inv:" : "aff:";
-        var input = new AutoCompleteBox { Text = id, ItemsSource = DialogueEngine.DiscoverVariables(project).Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).Select(k => k[4..]).ToList(), MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = "Choose or type a variable ID", PlaceholderForeground = Ui.Brush("Muted") };
+        var input = new AutoCompleteBox { Text = id, ItemsSource = flags ? VariableStore.DiscoverFlags(project) : DialogueEngine.DiscoverVariables(project).Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).Select(k => k[4..]).ToList(), MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = flags ? "Choose or type a flag ID" : "Choose or type a variable ID", PlaceholderForeground = Ui.Brush("Muted") };
         var previous = id;
         input.TextChanged += (_, _) => { var current = input.Text ?? ""; if (current != previous) { previous = current; apply(current); actions.Edited(); } };
         input.LostFocus += (_, _) => actions.Commit(); return input;
@@ -169,15 +169,23 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             card.Children.Add(Ui.Field("When conditions fail", visibility));
             card.Children.Add(Ui.Text("Disable = visible but locked · Hide = invisible · Always = ignore conditions", 11, true));
             card.Children.Add(Ui.Text("Conditions · all must pass", 13));
+            var flagIds = VariableStore.DiscoverFlags(project);
             foreach (var requirement in choice.Requirements.ToArray())
             {
                 var r = requirement;
+                if (VariableStore.IsFlagCondition(r, flagIds))
+                {
+                    var state = Ui.Select(["is set", "is not set"], (r.Operator == "==") == (r.Value == "1") ? "is set" : "is not set", v => { r.Operator = "=="; r.Value = v == "is set" ? "1" : "0"; actions.Edited(); });
+                    card.Children.Add(Ui.Card(Ui.Stack(Ui.Field("Flag", VariableInput("Affinity", r.TargetId, v => r.TargetId = v, true)), Ui.Field("Flag state", state), Ui.Button("Remove condition", () => actions.Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
+                    continue;
+                }
                 var type = Ui.Select(["Affinity", "Inventory"], r.Type, v => { r.Type = v; actions.Edited(); actions.Commit(); Refresh(); });
                 var op = Ui.Select(["==", "!=", ">", "<", ">=", "<="], r.Operator, v => { r.Operator = v; actions.Edited(); });
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,8,80") }; row.Children.Add(type); Grid.SetColumn(op, 2); row.Children.Add(op);
                 card.Children.Add(Ui.Card(Ui.Stack(row, Ui.Field("Variable ID", VariableInput(r.Type, r.TargetId, v => r.TargetId = v)), Ui.Field("Compare with (integer)", EditText(r.Value, v => r.Value = v)), Ui.Button("Remove condition", () => actions.Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
             }
-            card.Children.Add(Ui.Button("＋ Add condition", () => actions.Mutate(() => choice.Requirements.Add(new Requirement { TargetId = "trust" })), "subtle"));
+            card.Children.Add(Ui.Row(Ui.Button("＋ Add condition", () => actions.Mutate(() => choice.Requirements.Add(new Requirement { TargetId = "trust" })), "subtle"),
+                Ui.Button("＋ Add flag condition", () => actions.Mutate(() => choice.Requirements.Add(new Requirement { TargetId = flagIds.FirstOrDefault() ?? "flag", Operator = "==", Value = "1" })), "subtle")));
             card.Children.Add(Ui.Text("After this response", 13));
             AddActions(card, choice.AfterChoiceActions);
             var border = Ui.Card(card, 12); panel.Children.Add(border);
@@ -195,9 +203,12 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
         foreach (var action in list.ToArray())
         {
             var a = action;
-            var type = Ui.Select(["Affinity", "Inventory", "Event", "Script"], a.Type, v => { a.Type = v; actions.Edited(); actions.Commit(); Refresh(); });
-            var group = Ui.Stack(Ui.Field("Action type", type), Ui.Field(a.Type is "Event" or "Script" ? "Event / method ID" : "Variable ID", a.Type is "Event" or "Script" ? EditText(a.TargetId, v => a.TargetId = v) : VariableInput(a.Type, a.TargetId, v => a.TargetId = v)));
+            var flag = a.Type is "Set" or "Toggle";
+            var type = Ui.Select(["Affinity", "Inventory", "Set flag", "Toggle flag", "Event", "Script"], a.Type switch { "Set" => "Set flag", "Toggle" => "Toggle flag", _ => a.Type }, v => { a.Type = v switch { "Set flag" => "Set", "Toggle flag" => "Toggle", _ => v }; if (a.Type == "Set") a.Amount = a.Amount == 0 ? 0 : 1; actions.Edited(); actions.Commit(); Refresh(); });
+            var group = Ui.Stack(Ui.Field("Action type", type), Ui.Field(a.Type is "Event" or "Script" ? "Event / method ID" : flag ? "Flag ID" : "Variable ID", a.Type is "Event" or "Script" ? EditText(a.TargetId, v => a.TargetId = v) : VariableInput(a.Type, a.TargetId, v => a.TargetId = v, flag)));
             if (a.Type is "Event" or "Script") group.Children.Add(Ui.Field("Parameter", EditText(a.Parameter ?? "", v => a.Parameter = v)));
+            else if (a.Type == "Set") group.Children.Add(Ui.Field("Set flag to", Ui.Select(["On (1)", "Off (0)"], a.Amount == 0 ? "Off (0)" : "On (1)", v => { a.Amount = v == "On (1)" ? 1 : 0; actions.Edited(); })));
+            else if (a.Type == "Toggle") group.Children.Add(Ui.Text("Flips the flag between off (0) and on (1).", 12, true));
             else
             {
                 var amount = new NumericUpDown { Value = a.Amount, Minimum = int.MinValue, Maximum = int.MaxValue, Increment = 1, FormatString = "0" };
@@ -205,7 +216,8 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             }
             group.Children.Add(Ui.Button("Remove action", () => actions.Mutate(() => list.Remove(a)), "subtle")); target.Children.Add(Ui.Card(group, 10));
         }
-        target.Children.Add(Ui.Button("＋ Add action", () => actions.Mutate(() => list.Add(new DialogueAction { TargetId = "trust", Amount = 1 })), "subtle"));
+        target.Children.Add(Ui.Row(Ui.Button("＋ Add action", () => actions.Mutate(() => list.Add(new DialogueAction { TargetId = "trust", Amount = 1 })), "subtle"),
+            Ui.Button("＋ Add flag action", () => actions.Mutate(() => list.Add(new DialogueAction { Type = "Set", TargetId = VariableStore.DiscoverFlags(project).FirstOrDefault() ?? "flag", Amount = 1 })), "subtle")));
     }
     private void BuildNotes(DialogueState s)
     {

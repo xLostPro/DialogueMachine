@@ -201,7 +201,8 @@ public sealed class Simulation
                 if (record) Events.Add($"{a.Type}: {a.TargetId}({a.Parameter}) — logged only"); continue;
             }
             var key = DialogueEngine.Key(a.Type, a.TargetId); var before = Variables.GetValueOrDefault(key);
-            var amount = DialogueRules.ApplyAmount(a.Type, before, a.Amount);
+            if (!DialogueRules.IsVariableAction(a.Type)) continue;
+            var amount = DialogueRules.ApplyAction(a.Type, before, a.Amount);
             Variables[key] = amount; Add("VariableChange", key: key, before: before, after: amount, text: "Action");
         }
     }

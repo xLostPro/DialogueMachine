@@ -311,6 +311,16 @@ static func apply_amount(type: String, before: int, amount: int) -> int:
 	var max_val = INT32_MAX
 	return clampi(sum_val, min_val, max_val)
 
+static func is_variable_action(type: String) -> bool:
+	return type == "Affinity" or type == "Inventory" or type == "Set" or type == "Toggle"
+
+static func apply_action(type: String, before: int, amount: int) -> int:
+	if type == "Set":
+		return amount
+	if type == "Toggle":
+		return 1 if before == 0 else 0
+	return apply_amount(type, before, amount)
+
 static func clamp_number(num_key: String, value: int) -> int:
 	return maxi(0, value) if num_key.begins_with("inv:") else value
 

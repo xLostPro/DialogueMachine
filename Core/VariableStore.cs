@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using DialogueMachine.Runtime;
 
 namespace DialogueMachine.Core;
 
@@ -27,7 +28,7 @@ public static class VariableStore
         foreach (var s in p.ListOfCharacterStates)
         {
             foreach (var a in Actions(s))
-                if (a.Type is "Affinity" or "Inventory" && !string.IsNullOrWhiteSpace(a.TargetId)) keys.Add(DialogueEngine.Key(a.Type, a.TargetId));
+                if (DialogueRules.IsVariableAction(a.Type) && !string.IsNullOrWhiteSpace(a.TargetId)) keys.Add(DialogueEngine.Key(a.Type, a.TargetId));
             foreach (var r in s.Choices.SelectMany(c => c.Requirements))
                 if (r.Type is "Affinity" or "Inventory" && !string.IsNullOrWhiteSpace(r.TargetId)) keys.Add(DialogueEngine.Key(r.Type, r.TargetId));
             foreach (var text in s.Choices.Select(c => c.ButtonText).Prepend(s.Text))
@@ -44,6 +45,16 @@ public static class VariableStore
         foreach (var id in bareConditions) keys.Add(ResolveConditionKey(id, keys));
         return keys.Order(StringComparer.Ordinal);
     }
+
+    /// <summary>Flag IDs (no prefix): every variable a Set or Toggle action writes. A flag is an ordinary 0/1 affinity variable.</summary>
+    public static IReadOnlyList<string> DiscoverFlags(DialogueProject p)
+        => p.ListOfCharacterStates.Concat(p.SceneTemplates.Select(t => t.Scene)).Concat(p.ChoiceTemplates.Select(t => new DialogueState { Choices = [t.Choice] }))
+            .SelectMany(Actions).Where(a => a.Type is "Set" or "Toggle" && !string.IsNullOrWhiteSpace(a.TargetId))
+            .Select(a => a.TargetId).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+
+    /// <summary>A requirement the editor shows as "flag is set / not set": affinity ==/!= 0 or 1 on a known flag.</summary>
+    public static bool IsFlagCondition(Requirement r, IReadOnlyCollection<string> flags)
+        => r.Type == "Affinity" && r.Operator is "==" or "!=" && r.Value is "0" or "1" && flags.Contains(r.TargetId);
 
     public static List<VariableReference> References(DialogueProject p, string key, bool textVariable = false)
     {
@@ -62,7 +73,7 @@ public static class VariableStore
             Text(s.State, s.Text, "Dialogue");
             if (!textVariable)
                 foreach (var a in s.DefaultAfterActions)
-                    if (a.Type is "Affinity" or "Inventory" && DialogueEngine.Key(a.Type, a.TargetId) == key) references.Add(new(s.State, "Scene exit action"));
+                    if (DialogueRules.IsVariableAction(a.Type) && DialogueEngine.Key(a.Type, a.TargetId) == key) references.Add(new(s.State, "Scene exit action"));
             for (var i = 0; i < s.Choices.Count; i++)
             {
                 var c = s.Choices[i]; Text(s.State, c.ButtonText, $"Choice {i + 1} response");
@@ -70,7 +81,7 @@ public static class VariableStore
                 foreach (var r in c.Requirements)
                     if (r.Type is "Affinity" or "Inventory" && DialogueEngine.Key(r.Type, r.TargetId) == key) references.Add(new(s.State, $"Choice {i + 1} condition"));
                 foreach (var a in c.AfterChoiceActions)
-                    if (a.Type is "Affinity" or "Inventory" && DialogueEngine.Key(a.Type, a.TargetId) == key) references.Add(new(s.State, $"Choice {i + 1} action"));
+                    if (DialogueRules.IsVariableAction(a.Type) && DialogueEngine.Key(a.Type, a.TargetId) == key) references.Add(new(s.State, $"Choice {i + 1} action"));
             }
         }
         foreach (var (scene, label) in TemplateScenes(p))
@@ -127,7 +138,7 @@ public static class VariableStore
             if (textVariable) continue;
             var target = newKey[4..];
             foreach (var a in Actions(s))
-                if (a.Type is "Affinity" or "Inventory" && DialogueEngine.Key(a.Type, a.TargetId) == oldKey) a.TargetId = target;
+                if (DialogueRules.IsVariableAction(a.Type) && DialogueEngine.Key(a.Type, a.TargetId) == oldKey) a.TargetId = target;
             foreach (var r in s.Choices.SelectMany(c => c.Requirements))
                 if (r.Type is "Affinity" or "Inventory" && DialogueEngine.Key(r.Type, r.TargetId) == oldKey) r.TargetId = target;
         }
