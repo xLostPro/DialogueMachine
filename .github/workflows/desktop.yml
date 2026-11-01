@@ -223,23 +223,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Publish release assets
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ github.ref_name }}
-        run: |
-          if draft="$(gh release view "$RELEASE_TAG" --json isDraft --jq .isDraft 2>/dev/null)"; then
-            if [ "$draft" != true ]; then
-              echo "Release $RELEASE_TAG is already published; leaving it unchanged."
-              exit 0
-            fi
-          fi
-          echo "Attempting artifact download if available..."
-          gh release view "$RELEASE_TAG" || true
+      - name: Download Windows package
+        continue-on-error: true
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: windows-package
+          path: windows-package
+
       # Zips are built from tracked files only, so no .godot, .uid, .import, Intermediate or Binaries output can leak in.
-      - name: Attach engine plugins
+      - name: Attach engine plugins and release assets
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -267,6 +259,20 @@ jobs:
           else
             flags=(--draft)
             [[ "$version" == *-* ]] && flags+=(--prerelease)
-            gh release create "$RELEASE_TAG" "${flags[@]}" --verify-tag --title "Dialogue Machine $version" --generate-notes
+            python3 -c "
+import sys, re
+content = open('RELEASE_NOTES.md', 'r', encoding='utf-8').read()
+match = re.search(r'## ' + re.escape('$version') + r'(?:\r?\n)+(.*?)(?=\r?\n## |\Z)', content, re.DOTALL)
+if match and match.group(1).strip():
+    open('release-notes.txt', 'w', encoding='utf-8').write(match.group(1).strip() + '\n')
+" || true
+            if [ -s release-notes.txt ]; then
+              gh release create "$RELEASE_TAG" "${flags[@]}" --verify-tag --title "Dialogue Machine $version" --notes-file release-notes.txt
+            else
+              gh release create "$RELEASE_TAG" "${flags[@]}" --verify-tag --title "Dialogue Machine $version" --generate-notes
+            fi
           fi
           gh release upload "$RELEASE_TAG" engine-zips/*.zip --clobber
+          if [ -d "windows-package" ] && [ -n "$(ls -A windows-package 2>/dev/null)" ]; then
+            gh release upload "$RELEASE_TAG" windows-package/* --clobber
+          fi
