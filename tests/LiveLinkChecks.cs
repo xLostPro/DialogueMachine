@@ -17,7 +17,7 @@ using System.Text.Json.Nodes;
 
 internal static class LiveLinkChecks
 {
-    private const string AppVersion = "1.3.0";
+    private const string AppVersion = "1.4.0";
 
     // A scripted engine. It reads on a background thread so tests can pump the UI meanwhile.
     private sealed class ScriptedEngine : IDisposable

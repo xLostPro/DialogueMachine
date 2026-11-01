@@ -4,18 +4,10 @@
 
 ## Now
 
-1. **Engine integration (Unity → Unreal → Godot).** See [Engines/CONTRACT.md](Engines/CONTRACT.md).
-   - Phase 1: Shared C# runtime + conformance fixtures. Done.
-   - Phase 2: Data pipeline in Dialogue Machine. Done.
-   - Phase 3: Live link (localhost WebSocket bridge). Done.
-   - Phase 4: Unity (priority 1). Done.
-   - Phase 5: Unreal (priority 2). Done.
-   - Phase 6: Godot (priority 3). Done.
-   - Phase 7: Release wiring for all engines. Merged; the release is pending. Move this item to Done when the release is cut.
-2. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
+1. **Real-story pass.** Write or import one complete story (50+ scenes) and fix the friction that turns up.
    - Done when: the friction found is fixed or listed here, and features nobody needed are flagged for removal.
    - Unity headless pass on `Examples/salt-ledger.dialogue.json` (69 scenes) and a scripted live-link session are done; fixed: play-from overrides now apply before the first scene resolves, and the follow pane/Unity window match projects by name slug. Done by hand on Unity 6000.6.7f1: Engine Export Folder, `DefaultDialogueView` (now renders without a theme) and the Live Link window with the real app. Later: Unity 6.6 flags `UIDocument` as superseded by Panel Renderer; migrate only once the oldest supported Unity has it.
-3. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
+2. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
    - Split `tests/Program.cs` (136 KB) into area files like the existing `tests/*Checks.cs`.
    - Move `MainWindow` panes into their own views as they're touched.
    - Decide whether saved test scenarios earn their size (~120 KB of code and tests). Keep them if real use relies on them; otherwise remove them.
@@ -36,3 +28,4 @@ Accounts, cloud sync, collaboration, and auto-update. The website JSON export is
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.
 - **1.2.0:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
 - **1.3.0:** runtime companion export, speaker roster and project-wide rename, virtualized script view, RFC 4180 translation CSV export/import, and continuous cross-platform CI verification.
+- **1.4.0:** engine integration for Unity, Unreal and Godot (runtime companion JSON export, desktop-parity dialogue runner, live link hot-reload, scene focus and graph follow).

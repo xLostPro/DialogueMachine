@@ -221,7 +221,7 @@ The live link is a local WebSocket bridge between Dialogue Machine (desktop serv
     - Windows: `%LOCALAPPDATA%\DialogueMachine\livelink.json`
     - macOS: `~/Library/Application Support/DialogueMachine/livelink.json`
     - Linux: `~/.local/share/DialogueMachine/livelink.json`
-  - Payload: `{ "port": 47615, "token": "...", "pid": 1234, "appVersion": "1.3.0", "protocol": 1 }`
+  - Payload: `{ "port": 47615, "token": "...", "pid": 1234, "appVersion": "1.4.0", "protocol": 1 }`
   - The token is a secret. On macOS and Linux only the current user can read the file. A file left by a crash just fails to connect, so treat that like Dialogue Machine not running.
 - **Non-blocking:** Gameplay never stalls on socket operations; sends are fire-and-forget.
 

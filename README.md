@@ -72,7 +72,7 @@ Dialogue Machine includes an official package for Unity (2022.3 LTS and Unity 6)
 
 - **Install via UPM:** In Unity's Package Manager, choose **Add package from git URL...** and enter:
   ```text
-  https://github.com/xLostPro/DialogueMachine.git?path=/Engines/Unity/com.xlostpro.dialoguemachine#v1.3.0
+  https://github.com/xLostPro/DialogueMachine.git?path=/Engines/Unity/com.xlostpro.dialoguemachine#v1.4.0
   ```
 - **Importing:** Point Dialogue Machine's auto-export folder inside your Unity project's `Assets/` directory. Unity's `ScriptedImporter` automatically creates a `DialogueAsset` for each `*.runtime.json` file on change.
 - **Runner:** Add `DialogueRunnerBehaviour` to a GameObject and assign the `DialogueAsset`. It exposes C# and Unity events (`OnLine`, `OnChoices`, `OnAction`, `OnEnded`) and supports custom `IDialogueVariables` providers.
@@ -125,6 +125,6 @@ dotnet run --project tests/DialogueMachine.Tests.csproj -c Release -- artifacts
 
 GitHub Actions runs the harness across Windows, Linux (x64) and macOS (ARM64) on pull requests and pushes to `master`, packages binaries for all platforms, and smoke-tests native Windows startup. To save Actions storage, the ZIP is only stored for release tags, and screenshots/logs only for failed runs (kept 3 days).
 
-**Releasing:** bump `Version` in `DialogueMachine.csproj`, `Packaging/Info.plist` and `RELEASE_NOTES.md`, merge after CI passes, then push a matching tag (`git tag -a v1.3.0 -m "Dialogue Machine 1.3.0" && git push origin v1.3.0`). The tag workflow publishes the GitHub Release; prerelease versions such as `v1.3.0-beta.1` are marked as prereleases.
+**Releasing:** bump `Version` in `DialogueMachine.csproj`, `Packaging/Info.plist` and `RELEASE_NOTES.md`, merge after CI passes, then push a matching tag (`git tag -a v1.4.0 -m "Dialogue Machine 1.4.0" && git push origin v1.4.0`). The tag workflow publishes the GitHub Release; prerelease versions such as `v1.4.0-beta.1` are marked as prereleases.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for how the code is organized and [ROADMAP.md](ROADMAP.md) for what's next.

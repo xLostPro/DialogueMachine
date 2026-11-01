@@ -1,13 +1,13 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
-## Next release (unreleased)
+## 1.4.0
 
 ### Engine integration
 
 Dialogue Machine can now drive Unity, Unreal and Godot games. One version number covers the app and all three plugins.
 
 - **Engine export folder**: choose a folder per project and every successful Save writes `<project>.runtime.json` there.
-- **Plugins**: a Unity package (install from the git URL pinned to the release tag), an Unreal plugin (`DialogueMachine-Unreal-<version>.zip`) and a Godot addon (`DialogueMachine-Godot-<version>.zip`, unzip into your project). Each imports `*.runtime.json`, runs the story with the same rules as the desktop playtest and includes a default dialogue view.
+- **Plugins**: a Unity package (install from the git URL pinned to the release tag), an Unreal plugin (`DialogueMachine-Unreal-1.4.0.zip`) and a Godot addon (`DialogueMachine-Godot-1.4.0.zip`, unzip into your project). Each imports `*.runtime.json`, runs the story with the same rules as the desktop playtest and includes a default dialogue view.
 - **Live link**: turn it on in the app to hot-reload stories in the editor, play from a scene and follow a running game on the graph.
 
 Known behaviours:
