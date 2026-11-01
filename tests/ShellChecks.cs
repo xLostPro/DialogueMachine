@@ -46,6 +46,13 @@ internal static class ShellChecks
         var gated = new Choice { ButtonText = "Gated", NextStateId = "keeper", Visibility = VisibilityMode.Hide, Requirements = { new Requirement { TargetId = "clues", Operator = ">=", Value = "2" } } };
         Check(MainWindow.ScriptChoiceLine(main.Project.ListOfCharacterStates[0], gated).EndsWith("[if clues >= 2; hide otherwise]"), "script view shows choice conditions");
         Click("UndoButton"); Check(main.Project.ListOfCharacterStates[0].Choices.Count == 3, "undo restores choice creation"); Click("RedoButton"); Check(main.Project.ListOfCharacterStates[0].Choices.Count == 4, "redo restores choice creation"); Click("UndoButton");
+        for (var n = 0; n < 3; n++) { Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<Button>().First(b => b.Content is string s && s.Contains("Add a player choice")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs(); }
+        Check(Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBox>().Count(t => AutomationProperties.GetName(t)?.StartsWith("Player response") == true) == 3, "in a many-choice scene only the choices added this session are expanded");
+        Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<Button>().First(b => AutomationProperties.GetName(b) == "Expand choice 1").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
+        Check(Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBox>().Count(t => AutomationProperties.GetName(t)?.StartsWith("Player response") == true) == 4, "expanding a collapsed choice shows its response field");
+        Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<Button>().First(b => AutomationProperties.GetName(b) == "Edit choice 1 conditions").RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
+        Check(Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text?.StartsWith("Choice 1:") == true), "a choice's conditions button opens the Logic tab");
+        Click("ContentTab"); Click("UndoButton"); Click("UndoButton"); Click("UndoButton");
         var titleBox = Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBox>().First(); titleBox.Focus(); titleBox.Text = "Edited opening";
         main.KeyPress(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, "z"); main.KeyRelease(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, "z");
         Check(main.Project.ListOfCharacterStates[0].Title == "A light in the fog", "global undo commits current typing and restores it");

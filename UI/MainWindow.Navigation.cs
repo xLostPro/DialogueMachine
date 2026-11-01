@@ -35,12 +35,13 @@ public sealed partial class MainWindow
         C<TextBox>("SearchBox").Text = ""; C<ComboBox>("SpeakerFilter").SelectedIndex = 0; C<ComboBox>("TagFilter").SelectedIndex = 0; C<ComboBox>("IssueFilter").SelectedIndex = 0; C<ComboBox>("GroupFilter").SelectedIndex = 0;
         updatingOutlineFilters = false; RefreshOutline();
     }
+    private string DestinationLabel(string? value) => string.IsNullOrWhiteSpace(value) ? "No continue destination"
+        : value == "[EXIT]" ? "End conversation" : navigation.Resolve(value) is { } resolved ? resolved.Title + " [" + resolved.Id + "]" : "Missing: " + value;
+    private string ChoiceDestinationLabel(DialogueState scene, Choice choice) => DestinationLabel(string.IsNullOrWhiteSpace(choice.NextStateId) ? scene.DefaultNextId : choice.NextStateId);
     private Control Destination(DialogueState scene, string? value, Action<string?> apply, int? choiceIndex = null)
     {
         var label = choiceIndex is { } i ? $"Choice {i + 1} destination" : "Continue destination";
-        var resolved = navigation.Resolve(value);
-        var currentLabel = string.IsNullOrWhiteSpace(value) ? choiceIndex is not null ? "Use scene's continue destination" : "No continue destination"
-            : value == "[EXIT]" ? "End conversation" : resolved is not null ? resolved.Title + " [" + resolved.Id + "]" : "Missing: " + value;
+        var currentLabel = string.IsNullOrWhiteSpace(value) && choiceIndex is not null ? "Use scene's continue destination" : DestinationLabel(value);
         var choose = Ui.AsyncButton("Choose…", async () =>
         {
             Commit();
