@@ -1,0 +1,193 @@
+{
+  "name": "flags_set_toggle",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022flags\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Door [if aff:door == 1]open[else]shut[/if], lamp [if aff:lamp == 1]lit[else]dark[/if].\u0022,\n      \u0022DefaultNextId\u0022: \u0022flags_exit\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Open the door\u0022,\n          \u0022NextStateId\u0022: null,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [\n            {\n              \u0022Type\u0022: \u0022Set\u0022,\n              \u0022TargetId\u0022: \u0022door\u0022,\n              \u0022Amount\u0022: 1,\n              \u0022Parameter\u0022: null\n            },\n            {\n              \u0022Type\u0022: \u0022Toggle\u0022,\n              \u0022TargetId\u0022: \u0022lamp\u0022,\n              \u0022Amount\u0022: 0,\n              \u0022Parameter\u0022: null\n            },\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022lamp\u0022,\n              \u0022Amount\u0022: 4,\n              \u0022Parameter\u0022: null\n            }\n          ],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Toggle\u0022,\n          \u0022TargetId\u0022: \u0022door\u0022,\n          \u0022Amount\u0022: 0,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Set\u0022,\n          \u0022TargetId\u0022: \u0022never\u0022,\n          \u0022Amount\u0022: 0,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022flags\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022flags_exit\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Door [if aff:door == 1]open[else]shut[/if], lamp {aff:lamp}, never {aff:never}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [\n        {\n          \u0022Type\u0022: \u0022Toggle\u0022,\n          \u0022TargetId\u0022: \u0022lamp\u0022,\n          \u0022Amount\u0022: 0,\n          \u0022Parameter\u0022: null\n        },\n        {\n          \u0022Type\u0022: \u0022Set\u0022,\n          \u0022TargetId\u0022: \u0022never\u0022,\n          \u0022Amount\u0022: 7,\n          \u0022Parameter\u0022: null\n        }\n      ],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022flags_exit\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "66122e1a723152537deecec3b44f3e18a564f3212e68221d7f8e95eac5c257f0",
+    "StartingScene": "flags",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:door": 0,
+      "aff:lamp": 0,
+      "aff:never": 3
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:door",
+      "value": 1
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "flags",
+      "ended": false,
+      "page": "Door shut, lamp dark.",
+      "plain": "Door shut, lamp dark.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Open the door",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:door": 0,
+        "aff:lamp": 0,
+        "aff:never": 3
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "flags_exit",
+      "ended": false,
+      "page": "Door shut, lamp 5, never 0.",
+      "plain": "Door shut, lamp 5, never 0.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:door": 0,
+        "aff:lamp": 5,
+        "aff:never": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:door": 0,
+        "aff:lamp": 0,
+        "aff:never": 7
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "flags",
+      "ended": false,
+      "page": "Door shut, lamp dark.",
+      "plain": "Door shut, lamp dark.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Open the door",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:door": 0,
+        "aff:lamp": 0,
+        "aff:never": 3
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "flags_exit",
+      "ended": false,
+      "page": "Door open, lamp 0, never 0.",
+      "plain": "Door open, lamp 0, never 0.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:door": 1,
+        "aff:lamp": 0,
+        "aff:never": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "flags_exit",
+      "ended": false,
+      "page": "Door open, lamp 0, never 0.",
+      "plain": "Door open, lamp 0, never 0.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {
+        "aff:door": 1,
+        "aff:lamp": 0,
+        "aff:never": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:door": 1,
+        "aff:lamp": 1,
+        "aff:never": 7
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

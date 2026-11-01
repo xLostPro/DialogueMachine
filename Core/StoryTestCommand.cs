@@ -206,6 +206,13 @@ public static class ConformanceFixtures
         var clamp = Project(drain, refill); clamp.InitialVariables = new() { ["inv:coin"] = -3, ["inv:big"] = int.MaxValue - 1, ["aff:high"] = int.MaxValue - 1, ["aff:low"] = int.MinValue + 1 };
         Case("inventory_clamp_and_saturation", clamp, [Begin, SetNumber("inv:coin", 3), SetNumber("inv:coin", -4), SetNumber("inv:coin", 1), Next, Next]);
 
+        var flags = Scene("flags", "Door [if aff:door == 1]open[else]shut[/if], lamp [if aff:lamp == 1]lit[else]dark[/if].", "flags_exit");
+        flags.Choices = [Reply(1, "Open the door", null)]; flags.Choices[0].AfterChoiceActions = [Add("Set", "door", 1), Add("Toggle", "lamp", 0), Add("Affinity", "lamp", 4)];
+        flags.DefaultAfterActions = [Add("Toggle", "door", 0), Add("Set", "never", 0)];
+        var flagsExit = Scene("flags_exit", "Door [if aff:door == 1]open[else]shut[/if], lamp {aff:lamp}, never {aff:never}."); flagsExit.DefaultAfterActions = [Add("Toggle", "lamp", 0), Add("Set", "never", 7)];
+        var flagProject = Project(flags, flagsExit); flagProject.InitialVariables = new() { ["aff:never"] = 3 };
+        Case("flags_set_toggle", flagProject, [Begin, Pick(Id(1)), Next, Begin, Next, SetNumber("aff:door", 1), Next]);
+
         var exit = Scene("exit", "Choices and a default exit."); exit.DefaultAfterActions = [Add("Affinity", "seen", 1), Raise("Event", "finished", null)];
         exit.Choices = [Reply(1, "Uses the default", null)];
         Case("exit_via_default", Project(exit), [Begin, Next, Next, Begin, Pick(Id(1))]);
@@ -253,7 +260,7 @@ public static class ConformanceFixtures
     {
         var handoff = RuntimeExport.Create(project, seed);
         // WebExport indents with the platform newline; fixtures must be identical on every OS.
-        var story = (futureStory is null ? handoff.StoryJson : ProjectStore.WebExport(futureStory)).Replace("\r\n", "\n");
+        var story = (futureStory is null ? handoff.StoryJson : ProjectStore.WebExport(futureStory, forEngine: true)).Replace("\r\n", "\n");
         var node = JsonSerializer.SerializeToNode(handoff with { StoryJson = story, StorySha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(story))) })!.AsObject();
         if (futureStory is not null) node["FutureHandoffField"] = new JsonObject { ["retained"] = 42 };
 

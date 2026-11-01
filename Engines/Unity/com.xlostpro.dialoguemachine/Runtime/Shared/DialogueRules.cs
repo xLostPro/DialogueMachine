@@ -78,6 +78,16 @@ namespace DialogueMachine.Runtime
 
         public static int ApplyAmount(string type, int before, int amount) => (int)Math.Clamp((long)before + amount, type == "Inventory" ? 0 : int.MinValue, int.MaxValue);
 
+        // Set and Toggle write flags (0/1) in the affinity namespace; Amount is the value Set writes.
+        public static bool IsVariableAction(string type) => type == "Affinity" || type == "Inventory" || type == "Set" || type == "Toggle";
+
+        public static int ApplyAction(string type, int before, int amount)
+        {
+            if (type == "Set") return amount;
+            if (type == "Toggle") return before == 0 ? 1 : 0;
+            return ApplyAmount(type, before, amount);
+        }
+
         public static int ClampNumber(string key, int value) => key.StartsWith("inv:", StringComparison.Ordinal) ? Math.Max(0, value) : value;
 
         public static string[] SplitPages(string text) => text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);

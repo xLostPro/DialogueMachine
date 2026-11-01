@@ -396,6 +396,18 @@ FString FDialogueRules::PlainText(const FString& Text)
     return Result;
 }
 
+bool FDialogueRules::IsVariableAction(const FString& Type)
+{
+    return Type == TEXT("Affinity") || Type == TEXT("Inventory") || Type == TEXT("Set") || Type == TEXT("Toggle");
+}
+
+int32 FDialogueRules::ApplyAction(const FString& Type, int32 Before, int32 Amount)
+{
+    if (Type == TEXT("Set")) return Amount;
+    if (Type == TEXT("Toggle")) return Before == 0 ? 1 : 0;
+    return ApplyAmount(Type, Before, Amount);
+}
+
 int32 FDialogueRules::ApplyAmount(const FString& Type, int32 Before, int32 Amount)
 {
     int64 Sum = (int64)Before + (int64)Amount;

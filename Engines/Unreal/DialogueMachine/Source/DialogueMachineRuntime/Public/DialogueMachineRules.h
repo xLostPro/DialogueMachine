@@ -16,6 +16,8 @@ public:
     static FString ResolveText(const FString& Text, const TMap<FString, int32>& Vars, const TMap<FString, FString>& TextVars);
     static FString PlainText(const FString& Text);
     static int32 ApplyAmount(const FString& Type, int32 Before, int32 Amount);
+    static bool IsVariableAction(const FString& Type);
+    static int32 ApplyAction(const FString& Type, int32 Before, int32 Amount);
     static int32 ClampNumber(const FString& Key, int32 Value);
     static TArray<FString> SplitPages(const FString& Text);
     static TArray<FString> BuildPages(const FString& Text, bool bSayItAll, uint64& InOutRandomState, int32& InOutRandomLine);

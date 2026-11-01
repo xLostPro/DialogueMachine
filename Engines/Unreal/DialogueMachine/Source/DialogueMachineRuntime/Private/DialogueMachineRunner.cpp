@@ -490,11 +490,11 @@ void FDialogueRunner::ApplyActions(const TArray<FDialogueAction>& Actions)
         {
             OnActionRaised.Broadcast(Action.Type, Action.TargetId, Action.Parameter, Action.Amount);
         }
-        else if (Action.Type == TEXT("Affinity") || Action.Type == TEXT("Inventory"))
+        else if (FDialogueRules::IsVariableAction(Action.Type))
         {
             FString Key = FDialogueRules::Key(Action.Type, Action.TargetId);
             int32 Before = Store->GetNumber(Key);
-            int32 After = FDialogueRules::ApplyAmount(Action.Type, Before, Action.Amount);
+            int32 After = FDialogueRules::ApplyAction(Action.Type, Before, Action.Amount);
             Store->SetNumber(Key, After);
             if (After != Before)
             {

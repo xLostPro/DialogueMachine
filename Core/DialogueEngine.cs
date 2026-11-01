@@ -62,7 +62,7 @@ public static class DialogueEngine
                     if (r.Type is not ("Affinity" or "Inventory") || string.IsNullOrWhiteSpace(r.TargetId) || !Operators.Contains(r.Operator) || !int.TryParse(r.Value, out _)) Error(s.State, "A choice condition needs a valid variable, comparison and integer value.");
             }
             foreach (var a in s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)))
-                if (string.IsNullOrWhiteSpace(a.TargetId) || a.Type is not ("Affinity" or "Inventory" or "Event" or "Script")) Error(s.State, "An action needs a supported type and target ID.");
+                if (string.IsNullOrWhiteSpace(a.TargetId) || a.Type is not ("Affinity" or "Inventory" or "Event" or "Script" or "Set" or "Toggle")) Error(s.State, "An action needs a supported type and target ID.");
         }
         var reachable = new HashSet<string>(); var queue = new Queue<string>(); queue.Enqueue(p.Entry);
         while (queue.TryDequeue(out var id)) if (reachable.Add(id) && edges.TryGetValue(id, out var next)) foreach (var n in next) queue.Enqueue(n);

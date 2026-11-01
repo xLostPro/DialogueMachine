@@ -139,6 +139,8 @@ internal static class EditorPerformanceRegressions
         PickerStep(C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => c.Items.Count == 2 && c.Items.Contains("Affinity")), "Inventory", "condition type picker");
         C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<Button>().First(b => Equals(b.Content, "＋ Add action")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
         PickerStep(C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => AutomationProperties.GetName(c) == "Action type"), "Inventory", "action type picker");
+        C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => AutomationProperties.GetName(c) == "Action type").SelectedItem = "Set flag"; Dispatcher.UIThread.RunJobs();
+        check(window.Project.ListOfCharacterStates[953].DefaultAfterActions.Concat(window.Project.ListOfCharacterStates[953].Choices.SelectMany(c => c.AfterChoiceActions)).Any(a => a.Type == "Set") && C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text == "Set flag to"), "choosing Set flag stores a Set action and shows the on/off picker instead of a raw integer"); Press("UndoButton");
         Press("UndoButton"); list.SelectedItems!.Clear(); list.SelectedItem = list.Items.Cast<NavigationScene>().Single(s => s.Index == 950); Dispatcher.UIThread.RunJobs(); Press("ContentTab");
         foreach (var theme in new[] { "Dark", "Light", "High contrast" })
             foreach (var scale in new[] { 1d, 1.15, 1.3 })
