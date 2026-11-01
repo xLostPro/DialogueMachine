@@ -216,7 +216,7 @@ internal static class ScenarioChecks
         check(graph.Selected!.VisualX == oldX + 10 && graph.SelectedScenes.Count == set.Length, "coverage overlays preserve keyboard graph movement and authored selection"); Undo();
         check(window.TestCoverage is null, "authored changes and history replacement invalidate transient test coverage");
         manager = Manager(); Press(Named<Button>(manager, "RecordScenarioPath")); var player = manager.OwnedWindows.OfType<PlaytestWindow>().Single(w => w.IsVisible);
-        Press(player.GetVisualDescendants().OfType<Button>().Single(b => b.Content is TextBlock t && t.Text == "↳  Go home")); Press(Button(player, "End conversation →"));
+        Press(player.GetVisualDescendants().OfType<Button>().Single(b => b.Content is TextBlock t && t.Text!.EndsWith("Go home"))); Press(Button(player, "End conversation →"));
         Press(Named<Button>(player, "UseRecordedPath")); check(Named<ListBox>(manager, "ScenarioSteps").Items.Count == 2 && ProjectStore.Serialize(window.Project) == before, "interactive recording captures a replay path without mutating the authored story before save");
         Press(Named<Button>(manager, "SaveScenario")); Close(manager); var recorded = window.Project.PlaytestScenarios[0];
         check(recorded.Steps.Count == 2 && ScenarioReplay.Run(window.Project, recorded).Diagnostics.Any(d => d.Code == "AssertionFailed"), "recording saves a new stable path while preserving assertions that now detect changed outcomes"); Undo();

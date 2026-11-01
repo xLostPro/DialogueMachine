@@ -280,7 +280,7 @@ public sealed partial class MainWindow : Window
             var sub = Ui.Text(s.Speaker + "  ·  " + (s.Choices.Count > 0 ? $"{s.Choices.Count} choices" : s.DefaultNextId == "[EXIT]" ? "Ending" : "Continue"), 11, true);
             return Ui.Stack(head, sub);
         });
-        list.ItemsSource = items;
+        list.SelectedItems!.Clear(); list.ItemsSource = items;
         foreach (var item in items.Where(i => selectedScenes.Contains(project.ListOfCharacterStates[i.Index]))) list.SelectedItems!.Add(item);
         C<TextBlock>("SceneCount").Text = items.Count == project.ListOfCharacterStates.Count ? items.Count.ToString() : $"{items.Count}/{project.ListOfCharacterStates.Count}";
         C<TextBlock>("OutlineEmpty").IsVisible = hasProject && items.Count == 0;
