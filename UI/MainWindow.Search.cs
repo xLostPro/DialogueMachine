@@ -98,6 +98,7 @@ public sealed partial class MainWindow
     private void GoToMatch(TextMatch match)
     {
         var scene = project.ListOfCharacterStates[match.SceneIndex]; sceneEditor.Tab = match.Field == SearchFields.Notes ? "Notes" : "Content";
+        if (match.Field == SearchFields.Responses) sceneEditor.Expand(scene, match.ChoiceIndex ?? 0);
         ClearOutlineFilters(); SelectScene(scene, true);
         var name = match.Field switch { SearchFields.Dialogue => "Dialogue text", SearchFields.Responses => "Player response", SearchFields.Titles => "Scene title", _ => "Writer's notes" };
         var inputs = Editor.GetVisualDescendants().OfType<TextBox>().Where(t => AutomationProperties.GetName(t) == name).ToList();

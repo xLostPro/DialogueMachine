@@ -10,7 +10,7 @@ public sealed partial class MainWindow
 {
     private SceneEditorView sceneEditor = null!;
     private void WireSceneEditor() => sceneEditor = new SceneEditorView(C<StackPanel>("EditorPanel"), C<ScrollViewer>("EditorScroll"), new SceneEditorActions(
-        Edited, Commit, () => { Commit(); C<TextBlock>("EditorTitle").Text = selected?.Title; }, Mutate, SwitchTab, Destination, AddSceneConnections, PickVariable,
+        Edited, Commit, () => { Commit(); C<TextBlock>("EditorTitle").Text = selected?.Title; }, Mutate, SwitchTab, Destination, ChoiceDestinationLabel, AddSceneConnections, PickVariable,
         CreateSceneFromChoice, SaveChoiceTemplate, SaveSceneTemplate, ShowTemplates, RenameScene, SetStart, DuplicateScene, DeleteScene, Play));
     private void RefreshEditor()
     {

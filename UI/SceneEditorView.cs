@@ -9,7 +9,7 @@ namespace DialogueMachine.UI;
 /// <summary>What the scene editor needs from its host window. Operations stay in Core and MainWindow; the view only builds controls.</summary>
 internal sealed record SceneEditorActions(
     Action Edited, Action Commit, Action TextCommitted, Action<Action> Mutate, Action<string> SwitchTab,
-    Func<DialogueState, string?, Action<string?>, int?, Control> Destination, Action<StackPanel, DialogueState> Connections,
+    Func<DialogueState, string?, Action<string?>, int?, Control> Destination, Func<DialogueState, Choice, string> DestinationLabel, Action<StackPanel, DialogueState> Connections,
     Func<Task<string?>> PickVariable, Func<DialogueState, Choice, Task> NewSceneFromChoice, Func<Choice, Task> SaveChoiceTemplate,
     Func<DialogueState, Task> SaveSceneTemplate, Func<bool, Task> ShowTemplates, Func<Task> Rename, Action SetStart,
     Action Duplicate, Func<Task> Delete, Func<bool, Task> Play);
@@ -18,19 +18,24 @@ internal sealed record SceneEditorActions(
 internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, SceneEditorActions actions)
 {
     private DialogueProject project = new();
+    private const int CollapseAbove = 4;
     private DialogueState? shownScene; private string? shownTab; private Choice? focusChoice;
+    private readonly Dictionary<Choice, bool> open = [];
     public string Tab { get; set; } = "Content";
 
     public void Refresh(DialogueState? scene, DialogueProject current)
     {
         project = current;
         var keep = shownScene == scene && shownTab == Tab ? scroll.Offset : default;
-        shownScene = scene; shownTab = Tab;
+        shownScene = scene; shownTab = Tab; var reveal = focusChoice is not null;
         panel.Children.Clear();
         if (scene is null) { panel.Children.Add(Ui.Text("Choose a scene in the outline, or add one to start writing.", 14, true)); return; }
         switch (Tab) { case "Logic": BuildLogic(scene); break; case "Notes": BuildNotes(scene); break; default: BuildContent(scene); break; }
-        if (focusChoice is null) Avalonia.Threading.Dispatcher.UIThread.Post(() => { scroll.UpdateLayout(); scroll.Offset = keep; }, Avalonia.Threading.DispatcherPriority.Loaded);
+        if (!reveal) Avalonia.Threading.Dispatcher.UIThread.Post(() => { scroll.UpdateLayout(); scroll.Offset = keep; }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
+    private bool IsOpen(DialogueState s, Choice c) => open.TryGetValue(c, out var v) ? v : s.Choices.Count <= CollapseAbove;
+    public void Expand(DialogueState scene, int index) { if (index < scene.Choices.Count) focusChoice = scene.Choices[index]; }
+    private void ShowConditions(Choice c) { focusChoice = c; actions.SwitchTab("Logic"); }
     private void Refresh() => Refresh(shownScene, project);
     private TextBox EditText(string text, Action<string> apply, bool multiline = false)
     {
@@ -94,22 +99,41 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
         panel.Children.Add(Ui.Field("Continue destination", actions.Destination(s, s.DefaultNextId, v => s.DefaultNextId = v, null)));
         panel.Children.Add(Ui.Text("Choices inherit this destination when their own target is unset.", 11, true));
         var heading = Ui.Text("PLAYER CHOICES", 11, true); heading.LetterSpacing = 1.2; heading.Margin = new Thickness(0,12,0,0); panel.Children.Add(heading);
+        if (s.Choices.Count > CollapseAbove)
+        {
+            var all = s.Choices.Any(c => !IsOpen(s, c));
+            panel.Children.Add(Ui.Button(all ? "Expand all choices" : "Collapse all choices", () => { foreach (var c in s.Choices) open[c] = all; Refresh(); }, "subtle"));
+        }
         for (var i = 0; i < s.Choices.Count; i++)
         {
             var choice = s.Choices[i]; var index = i;
+            var isOpen = IsOpen(s, choice) || choice == focusChoice;
             var label = EditText(choice.ButtonText, v => choice.ButtonText = v, true); label.MinHeight = 65;
             AutomationProperties.SetName(label, $"Player response {i + 1}");
             label.AddHandler(InputElement.KeyDownEvent, (_, e) => { if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control)) { AddChoice(s); e.Handled = true; } }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
             if (choice == focusChoice)
             {
-                focusChoice = null;
+                focusChoice = null; open[choice] = true;
                 Avalonia.Threading.Dispatcher.UIThread.Post(() => { label.Focus(); label.BringIntoView(); }, Avalonia.Threading.DispatcherPriority.Loaded);
             }
-            var top = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
-            top.Children.Add(Ui.Text($"Choice {i + 1}" + (choice.Requirements.Count > 0 ? " · conditional" : ""), 12, true));
-            var up = Ui.Button("↑", () => actions.Mutate(() => { if (index > 0) (s.Choices[index - 1], s.Choices[index]) = (s.Choices[index], s.Choices[index - 1]); }), "subtle"); up.IsEnabled = i > 0; AutomationProperties.SetName(up, $"Move choice {i + 1} up"); Grid.SetColumn(up, 1); top.Children.Add(up);
-            var down = Ui.Button("↓", () => actions.Mutate(() => { if (index < s.Choices.Count - 1) (s.Choices[index + 1], s.Choices[index]) = (s.Choices[index], s.Choices[index + 1]); }), "subtle"); down.IsEnabled = i < s.Choices.Count - 1; AutomationProperties.SetName(down, $"Move choice {i + 1} down"); Grid.SetColumn(down, 2); top.Children.Add(down);
-            var remove = Ui.Button("×", () => actions.Mutate(() => s.Choices.Remove(choice)), "subtle"); AutomationProperties.SetName(remove, $"Remove choice {i + 1}"); Grid.SetColumn(remove, 3); top.Children.Add(remove);
+            var top = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*,Auto,Auto,Auto") };
+            var toggle = Ui.Button((isOpen ? "▾  " : "▸  ") + $"Choice {i + 1}", () => { open[choice] = !isOpen; Refresh(); }, "subtle");
+            AutomationProperties.SetName(toggle, (isOpen ? "Collapse" : "Expand") + $" choice {i + 1}"); top.Children.Add(toggle);
+            if (choice.Requirements.Count > 0 || isOpen)
+            {
+                var conditions = Ui.Button(choice.Requirements.Count > 0 ? "◆ If  ›" : "If  ›", () => ShowConditions(choice), "subtle");
+                AutomationProperties.SetName(conditions, $"Edit choice {i + 1} conditions"); ToolTip.SetTip(conditions, "Open this choice's conditions in the Logic tab"); Grid.SetColumn(conditions, 1); top.Children.Add(conditions);
+            }
+            var up = Ui.Button("↑", () => actions.Mutate(() => { if (index > 0) (s.Choices[index - 1], s.Choices[index]) = (s.Choices[index], s.Choices[index - 1]); }), "subtle"); up.IsEnabled = i > 0; AutomationProperties.SetName(up, $"Move choice {i + 1} up"); Grid.SetColumn(up, 2); top.Children.Add(up);
+            var down = Ui.Button("↓", () => actions.Mutate(() => { if (index < s.Choices.Count - 1) (s.Choices[index + 1], s.Choices[index]) = (s.Choices[index], s.Choices[index + 1]); }), "subtle"); down.IsEnabled = i < s.Choices.Count - 1; AutomationProperties.SetName(down, $"Move choice {i + 1} down"); Grid.SetColumn(down, 3); top.Children.Add(down);
+            var remove = Ui.Button("×", () => actions.Mutate(() => s.Choices.Remove(choice)), "subtle"); AutomationProperties.SetName(remove, $"Remove choice {i + 1}"); Grid.SetColumn(remove, 4); top.Children.Add(remove);
+            if (!isOpen)
+            {
+                var text = DialogueEngine.PlainText(choice.ButtonText).ReplaceLineEndings(" ").Trim();
+                var summary = Ui.Text((text.Length > 0 ? text : "(no response text)") + "  →  " + actions.DestinationLabel(s, choice), 13, true);
+                summary.TextWrapping = Avalonia.Media.TextWrapping.NoWrap; summary.TextTrimming = Avalonia.Media.TextTrimming.CharacterEllipsis;
+                panel.Children.Add(Ui.Card(Ui.Stack(top, summary), 12)); continue;
+            }
             var create = Ui.AsyncButton("New scene…", () => actions.NewSceneFromChoice(s, choice), "subtle"); AutomationProperties.SetName(create, $"Create scene from choice {i + 1}");
             var saveTemplate = Ui.AsyncButton("Save template…", () => actions.SaveChoiceTemplate(choice), "subtle"); AutomationProperties.SetName(saveTemplate, $"Save choice {i + 1} template");
             ToolTip.SetTip(label, "Ctrl+Enter adds the next choice");
@@ -141,7 +165,8 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             var choice = s.Choices[i];
             var card = new StackPanel { Spacing = 10 };
             card.Children.Add(Ui.Text($"Choice {i + 1}: " + DialogueEngine.PlainText(choice.ButtonText), 15));
-            card.Children.Add(Ui.Field("When conditions fail", Ui.Select(["Disable", "Hide", "Always"], choice.Visibility.ToString(), v => { choice.Visibility = Enum.Parse<VisibilityMode>(v); actions.Edited(); })));
+            var visibility = Ui.Select(["Disable", "Hide", "Always"], choice.Visibility.ToString(), v => { choice.Visibility = Enum.Parse<VisibilityMode>(v); actions.Edited(); });
+            card.Children.Add(Ui.Field("When conditions fail", visibility));
             card.Children.Add(Ui.Text("Disable = visible but locked · Hide = invisible · Always = ignore conditions", 11, true));
             card.Children.Add(Ui.Text("Conditions · all must pass", 13));
             foreach (var requirement in choice.Requirements.ToArray())
@@ -154,7 +179,13 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             }
             card.Children.Add(Ui.Button("＋ Add condition", () => actions.Mutate(() => choice.Requirements.Add(new Requirement { TargetId = "trust" })), "subtle"));
             card.Children.Add(Ui.Text("After this response", 13));
-            AddActions(card, choice.AfterChoiceActions); panel.Children.Add(Ui.Card(card, 12));
+            AddActions(card, choice.AfterChoiceActions);
+            var border = Ui.Card(card, 12); panel.Children.Add(border);
+            if (choice == focusChoice)
+            {
+                focusChoice = null;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => { border.BringIntoView(); visibility.Focus(); }, Avalonia.Threading.DispatcherPriority.Loaded);
+            }
         }
         if (s.Choices.Count == 0) panel.Children.Add(Ui.Text("Add choices in Content to give a response conditions and actions.", 12, true));
         panel.Children.Add(Ui.Text("Known variables: " + string.Join(", ", DialogueEngine.DiscoverVariables(project)), 11, true));
