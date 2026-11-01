@@ -149,9 +149,11 @@ public static class VariableStore
         if (textVariable) p.TextVariables.Remove(key); else p.InitialVariables.Remove(key);
     }
 
+    /// <summary>Roster names plus every speaker used by a scene, for autocomplete and the manager.</summary>
     public static IReadOnlyList<string> DiscoverSpeakers(DialogueProject p)
         => p.ListOfCharacterStates
             .Select(s => s.Speaker)
+            .Concat(p.Characters.Select(c => c.Name))
             .Where(sp => !string.IsNullOrWhiteSpace(sp))
             .Distinct(StringComparer.Ordinal)
             .Order(StringComparer.Ordinal)
@@ -173,8 +175,9 @@ public static class VariableStore
         var trimmed = newSpeaker?.Trim() ?? "";
         if (string.IsNullOrWhiteSpace(trimmed)) throw new ArgumentException("Speaker name cannot be blank.");
         var references = SpeakerReferences(p, oldSpeaker);
-        if (references.Count == 0) throw new ArgumentException($"Speaker ‘{oldSpeaker}’ is not used in this project.");
+        if (references.Count == 0 && CharacterRoster.Find(p, oldSpeaker) is null) throw new ArgumentException($"Speaker ‘{oldSpeaker}’ is not used in this project.");
         if (oldSpeaker == trimmed) return;
+        CharacterRoster.Rename(p, oldSpeaker, trimmed);
         var rebind = ScenarioStore.CaptureValidReferences(p);
         foreach (var s in p.ListOfCharacterStates)
             if (s.Speaker == oldSpeaker) s.Metadata["speaker"] = trimmed;

@@ -195,6 +195,7 @@ public sealed class GraphCanvas : Control
         if (liveTrail.Contains(s.State) && s.State != LiveScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphLiveTrail"), 2), rect.Inflate(3), 13, 13);
         if (s.State == LiveScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphLive"), 3.5), rect.Inflate(4), 14, 14);
         if (IsFocused && s == keyboardScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphIncoming"), 1.5 / Zoom, new DashStyle([3, 3], 0)), rect.Inflate(5), 13, 13);
+        if (CharacterRoster.ColorFor(Project, s.Speaker) is { } accent) dc.DrawRectangle(AccentBrush(accent), null, new Rect(rect.X + 1, rect.Y + 1, 6, 64), 10, 10);
         if (Zoom < OverviewZoom) { DrawOverviewNode(dc, s, rect, isEntry); return; }
         DrawText(dc, (isEntry ? "◆  START  /  " : "●  ") + s.Speaker.ToUpperInvariant(), new(rect.X + 16, rect.Y + 12), 10, isEntry ? "MintInk" : "Muted", 236, 16);
         DrawText(dc, s.Title, new(rect.X + 16, rect.Y + 31), 15, "Ink", 236, 24, true);
@@ -218,6 +219,8 @@ public sealed class GraphCanvas : Control
         DrawText(dc, s.DefaultNextId == "[EXIT]" ? "○  End conversation" : string.IsNullOrWhiteSpace(s.DefaultNextId) ? "Continue destination not set" : "→  " + s.DefaultNextId, new(rect.X + 16, bottom + 8), 10, "Muted", 230, 18);
         dc.DrawEllipse(Ui.Brush("Muted"), new Pen(Ui.Brush("Panel"), 2), new(rect.Right, rect.Bottom - 17), 5, 5);
     }
+    private readonly Dictionary<string, IBrush> accentBrushes = [];
+    private IBrush AccentBrush(string hex) => accentBrushes.TryGetValue(hex, out var brush) ? brush : accentBrushes[hex] = new SolidColorBrush(Color.Parse(hex)).ToImmutable();
     // Below this zoom, previews and choice rows are sub-pixel noise: draw only the identifying header at a size that stays legible.
     private const double OverviewZoom = .55;
     private void DrawOverviewNode(DrawingContext dc, DialogueState s, Rect rect, bool isEntry)

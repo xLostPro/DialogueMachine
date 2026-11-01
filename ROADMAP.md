@@ -9,7 +9,6 @@
 
 ## Later, only when a real story needs it
 
-- Character roster (speakers are plain text today).
 - Richer logic: flags, OR conditions, set/toggle actions. The exported JSON must stay website-compatible.
 - Mac/Linux releases: the builds exist but need a native smoke test first.
 - Localization or voice references, once the website/game side is defined.
@@ -20,6 +19,7 @@ Accounts, cloud sync, collaboration, and auto-update. The website JSON export is
 
 ## Done
 
+- **Character roster.** `Characters` (name + optional `#RRGGBB` swatch) is desktop-only project data, managed in Variables & characters. Roster names join speaker autocomplete, speaker rename carries the entry, and graph nodes show the colour as an accent. Scenes and website exports still carry the plain speaker string.
 - **Zoomed-out graph readability.** Below 55% zoom nodes draw only a large speaker, title, entry and end marker plus ports.
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.
 - **1.2.0:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.

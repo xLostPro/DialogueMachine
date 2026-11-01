@@ -75,5 +75,25 @@ internal static class VariableChecks
         Check(speakerStory.ListOfCharacterStates.Where(s => s.State is "start" or "s3").All(s => s.Speaker == "Captain Mara"), "speaker rename updates scenes");
         Check(speakerStory.SceneTemplates[0].Scene.Speaker == "Captain Mara", "speaker rename updates scene templates");
         Check(!VariableStore.DiscoverSpeakers(speakerStory).Contains("Mara") && VariableStore.DiscoverSpeakers(speakerStory).Contains("Captain Mara"), "discovered speakers reflect project-wide speaker rename");
+
+        var roster = Templates.Blank(); roster.ListOfCharacterStates[0].Metadata["speaker"] = "Mara";
+        CharacterRoster.SetColor(roster, "mara", "#E07A5F");
+        CharacterRoster.Add(roster, "Guard");
+        Check(roster.Characters.Count == 2 && CharacterRoster.ColorFor(roster, "Mara") == "#E07A5F" && CharacterRoster.ColorFor(roster, "Guard") is null, "roster colours match speakers case-insensitively and swatches are optional");
+        Check(VariableStore.DiscoverSpeakers(roster).Contains("Guard"), "roster characters are offered for autocomplete before any scene uses them");
+        Throws(() => CharacterRoster.SetColor(roster, "Mara", "red"), "roster rejects non-hex colours");
+        Throws(() => CharacterRoster.Add(roster, " guard "), "roster rejects duplicate names");
+        VariableStore.RenameSpeaker(roster, "Guard", "Sentry");
+        VariableStore.RenameSpeaker(roster, "Mara", "Captain Mara");
+        Check(CharacterRoster.ColorFor(roster, "Captain Mara") == "#E07A5F" && CharacterRoster.Find(roster, "Sentry") is not null && roster.Characters.Count == 2, "speaker rename carries the roster entry, including unused characters");
+        roster.Characters[0].Extra = new() { ["Voice"] = JsonDocument.Parse("\"low\"").RootElement.Clone() };
+        var rosterJson = ProjectStore.Serialize(roster);
+        var reloaded = ProjectStore.Parse(rosterJson);
+        Check(ProjectStore.Serialize(reloaded) == rosterJson && rosterJson.Contains("\"Voice\""), "roster and unknown character fields round-trip");
+        using (var web = JsonDocument.Parse(ProjectStore.WebExport(roster)))
+            Check(!web.RootElement.TryGetProperty("Characters", out _) && web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Metadata").GetProperty("speaker").GetString() == "Captain Mara", "website export omits the roster and keeps the plain speaker string");
+        var damaged = ProjectStore.Parse(rosterJson.Replace("\"Characters\": [", "\"Characters\": [null, {\"Name\": \" \"}, {\"Name\": \"captain mara\"}, "));
+        Check(damaged.Characters.Count == 2, "load drops null, blank and duplicate roster entries");
+        Check(ProjectStore.Parse("{\"ListOfCharacterStates\": []}").Characters.Count == 0, "projects without a roster still open");
     }
 }

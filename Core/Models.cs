@@ -17,6 +17,7 @@ public sealed class DialogueProject
     public List<SceneTemplate> SceneTemplates { get; set; } = [];
     public List<ChoiceTemplate> ChoiceTemplates { get; set; } = [];
     public List<SceneGroup> SceneGroups { get; set; } = [];
+    public List<Character> Characters { get; set; } = [];
     public List<PlaytestScenario> PlaytestScenarios { get; set; } = [];
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     [JsonIgnore] public string Entry => EntryStateId ?? ListOfCharacterStates.FirstOrDefault()?.State ?? "";
@@ -74,6 +75,13 @@ public sealed class Requirement
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 public enum VisibilityMode { Hide, Disable, Always }
+/// <summary>Desktop-only roster entry. Scenes still store the speaker as a plain string; the name links them.</summary>
+public sealed class Character
+{
+    public string Name { get; set; } = "";
+    public string? Color { get; set; }
+    [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
+}
 public sealed class SceneGroup
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
