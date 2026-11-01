@@ -6,7 +6,7 @@
 
 1. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
    - Scene editor moved to `SceneEditorView`. Still in `MainWindow`: Playtest launch, Search, Scenarios, Variables, Exports. Move each into its own view as it's touched.
-2. **Zoomed-out graph readability.** Separate design task.
+2. **Zoomed-out graph readability.** Done: below 55% zoom nodes draw only a large speaker, title, entry and end marker plus ports.
 
 ## Later, only when a real story needs it
 

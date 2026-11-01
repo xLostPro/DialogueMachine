@@ -85,6 +85,9 @@ internal static class EditorPerformanceRegressions
         var stress = new GraphCanvas { Project = Fixture(1000), ExportPlan = new(new Rect(0, 0, 800, 400), new PixelSize(800, 400), .02, true) };
         stress.Measure(new Size(800, 400)); stress.Arrange(new Rect(0, 0, 800, 400)); bitmap.Render(stress);
         check(stress.RenderedNodes == 1000 && stress.CachedTextLayouts <= GraphTextCache.Capacity && stress.CachedTextCharacters <= GraphTextCache.CharacterBudget, "graph text caches stay bounded while drawing a complete 1,000-scene overview");
+        var salt = new GraphCanvas { Project = ProjectStore.Load("Examples/salt-ledger.dialogue.json"), Width = 1400, Height = 860 }; salt.Measure(new Size(1400, 860)); salt.Arrange(new Rect(0, 0, 1400, 860)); salt.Fit();
+        using var overview = new RenderTargetBitmap(new PixelSize(1400, 860)); overview.Render(salt); overview.Save(Path.Combine(output, "graph-zoomed-out.png"));
+        check(salt.Zoom < .55 && salt.RenderedNodes == salt.Project.ListOfCharacterStates.Count, "a fitted large story renders every scene in zoomed-out overview mode");
         canvas.Project = stress.Project; stress.ClearTextLayouts();
         canvas.SetZoom(1); canvas.Centre(canvas.Project.ListOfCharacterStates[0]);
         byte[] Pixels() { bitmap.Render(canvas); using var stream = new MemoryStream(); bitmap.Save(stream, PngBitmapEncoderOptions.Default); return SHA256.HashData(stream.ToArray()); }
