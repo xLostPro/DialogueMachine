@@ -5,8 +5,7 @@
 ## Now
 
 1. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
-   - Scene editor moved to `SceneEditorView`, Find & replace to `SearchView`. Still in `MainWindow`: Playtest launch, Scenarios, Variables, Exports. Move each into its own view as it's touched.
-2. **Zoomed-out graph readability.** Done: below 55% zoom nodes draw only a large speaker, title, entry and end marker plus ports.
+   - Scene editor moved to `SceneEditorView`, Find & replace to `SearchView`, Variables to `VariablesView`. Still in `MainWindow`: Playtest launch, Scenarios, Exports. Move each into its own view as it's touched.
 
 ## Later, only when a real story needs it
 
@@ -21,6 +20,7 @@ Accounts, cloud sync, collaboration, and auto-update. The website JSON export is
 
 ## Done
 
+- **Zoomed-out graph readability.** Below 55% zoom nodes draw only a large speaker, title, entry and end marker plus ports.
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.
 - **1.2.0:** variables manager, find & replace, destination search, templates and scene copy/paste, multi-select, groups, minimap, PNG/Markdown export, conflict-safe saving, large-story performance and saved test scenarios.
 - **1.3.0:** runtime companion export, speaker roster and project-wide rename, virtualized script view, RFC 4180 translation CSV export/import, and continuous cross-platform CI verification.
