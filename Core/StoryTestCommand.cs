@@ -211,6 +211,10 @@ public static class ConformanceFixtures
         flags.DefaultAfterActions = [Add("Toggle", "door", 0), Add("Set", "never", 0)];
         var flagsExit = Scene("flags_exit", "Door [if aff:door == 1]open[else]shut[/if], lamp {aff:lamp}, never {aff:never}."); flagsExit.DefaultAfterActions = [Add("Toggle", "lamp", 0), Add("Set", "never", 7)];
         var flagProject = Project(flags, flagsExit); flagProject.InitialVariables = new() { ["aff:never"] = 3 };
+        var either = Scene("either", "Pick a way in.");
+        either.Choices = [Reply(1, "Show coin or key", null, VisibilityMode.Disable, Needs("Inventory", "coin", ">=", 1), Needs("Inventory", "key", ">=", 1)), Reply(2, "Trusted or bold", null, VisibilityMode.Hide, Needs("Affinity", "trust", ">=", 2), Needs("Affinity", "bold", ">=", 2))];
+        either.Choices[0].RequirementMatch = either.Choices[1].RequirementMatch = RequirementMatch.Any;
+        Case("or_conditions", Project(either), [Begin, SetNumber("inv:key", 1), SetNumber("aff:bold", 3), SetNumber("inv:key", 0), SetNumber("aff:bold", 0), SetNumber("aff:trust", 2), Pick(Id(2))]);
         Case("flags_set_toggle", flagProject, [Begin, Pick(Id(1)), Next, Begin, Next, SetNumber("aff:door", 1), Next]);
 
         var exit = Scene("exit", "Choices and a default exit."); exit.DefaultAfterActions = [Add("Affinity", "seen", 1), Raise("Event", "finished", null)];

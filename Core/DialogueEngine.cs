@@ -10,9 +10,15 @@ public static class DialogueEngine
     public static string Key(string type, string id) => DialogueRules.Key(type, id);
     public static bool RequirementsMet(Choice c, IReadOnlyDictionary<string, int> vars, out string reason)
     {
+        var any = c.RequirementMatch == RequirementMatch.Any && c.Requirements.Count > 0;
+        string? first = null;
         foreach (var r in c.Requirements)
-            if (!DialogueRules.RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out reason)) return false;
-        reason = ""; return true;
+        {
+            if (DialogueRules.RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out var why)) { if (any) { reason = ""; return true; } }
+            else if (!any) { reason = why; return false; }
+            else first ??= why;
+        }
+        reason = first ?? ""; return !any;
     }
     public static IEnumerable<string> DiscoverVariables(DialogueProject p) => VariableStore.DiscoverNumeric(p);
     public static string ResolveText(string text, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars) => DialogueRules.ResolveText(text, vars, textVars);

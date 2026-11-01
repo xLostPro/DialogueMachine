@@ -168,7 +168,9 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             var visibility = Ui.Select(["Disable", "Hide", "Always"], choice.Visibility.ToString(), v => { choice.Visibility = Enum.Parse<VisibilityMode>(v); actions.Edited(); });
             card.Children.Add(Ui.Field("When conditions fail", visibility));
             card.Children.Add(Ui.Text("Disable = visible but locked · Hide = invisible · Always = ignore conditions", 11, true));
-            card.Children.Add(Ui.Text("Conditions · all must pass", 13));
+            var match = Ui.Select(["ALL (AND)", "ANY (OR)"], choice.RequirementMatch == RequirementMatch.Any ? "ANY (OR)" : "ALL (AND)", v => { choice.RequirementMatch = v == "ANY (OR)" ? RequirementMatch.Any : RequirementMatch.All; actions.Edited(); actions.Commit(); });
+            AutomationProperties.SetName(match, $"Choice {i + 1} condition match");
+            card.Children.Add(Ui.Field("Conditions · choice is available when", match));
             var flagIds = VariableStore.DiscoverFlags(project);
             foreach (var requirement in choice.Requirements.ToArray())
             {

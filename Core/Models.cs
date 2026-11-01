@@ -48,6 +48,8 @@ public sealed class Choice
     public string? NextStateId { get; set; }
     public VisibilityMode Visibility { get; set; } = VisibilityMode.Disable;
     public List<Requirement> Requirements { get; set; } = [];
+    /// <summary>All = every requirement must pass (the website rule). Any = one is enough; website exports split such a choice into one per requirement.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault), JsonConverter(typeof(JsonStringEnumConverter))] public RequirementMatch RequirementMatch { get; set; }
     public List<DialogueAction> AfterChoiceActions { get; set; } = [];
     public double VisualX { get; set; } = 150;
     public double VisualY { get; set; } = 150;
@@ -75,6 +77,7 @@ public sealed class Requirement
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
 }
 public enum VisibilityMode { Hide, Disable, Always }
+public enum RequirementMatch { All, Any }
 /// <summary>Desktop-only roster entry. Scenes still store the speaker as a plain string; the name links them.</summary>
 public sealed class Character
 {

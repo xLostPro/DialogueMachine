@@ -32,6 +32,7 @@ struct DIALOGUEMACHINERUNTIME_API FDialogueChoice
     FString ButtonText;
     FString NextStateId;
     int32 Visibility = Disable;
+    bool bAnyRequirement = false;
     TArray<FDialogueRequirement> Requirements;
     TArray<FDialogueAction> AfterChoiceActions;
 };
