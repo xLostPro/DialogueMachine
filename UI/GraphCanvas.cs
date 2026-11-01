@@ -195,6 +195,7 @@ public sealed class GraphCanvas : Control
         if (liveTrail.Contains(s.State) && s.State != LiveScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphLiveTrail"), 2), rect.Inflate(3), 13, 13);
         if (s.State == LiveScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphLive"), 3.5), rect.Inflate(4), 14, 14);
         if (IsFocused && s == keyboardScene) dc.DrawRectangle(null, new Pen(Ui.Brush("GraphIncoming"), 1.5 / Zoom, new DashStyle([3, 3], 0)), rect.Inflate(5), 13, 13);
+        if (Zoom < OverviewZoom) { DrawOverviewNode(dc, s, rect, isEntry); return; }
         DrawText(dc, (isEntry ? "◆  START  /  " : "●  ") + s.Speaker.ToUpperInvariant(), new(rect.X + 16, rect.Y + 12), 10, isEntry ? "MintInk" : "Muted", 236, 16);
         DrawText(dc, s.Title, new(rect.X + 16, rect.Y + 31), 15, "Ink", 236, 24, true);
         var preview = DialogueEngine.PlainText(s.Text).Replace('\n', ' ');
@@ -215,6 +216,19 @@ public sealed class GraphCanvas : Control
         var bottom = rect.Bottom - 30;
         dc.DrawLine(new Pen(Ui.Brush("Line"), 1), new(rect.X + 12, bottom), new(rect.Right - 12, bottom));
         DrawText(dc, s.DefaultNextId == "[EXIT]" ? "○  End conversation" : string.IsNullOrWhiteSpace(s.DefaultNextId) ? "Continue destination not set" : "→  " + s.DefaultNextId, new(rect.X + 16, bottom + 8), 10, "Muted", 230, 18);
+        dc.DrawEllipse(Ui.Brush("Muted"), new Pen(Ui.Brush("Panel"), 2), new(rect.Right, rect.Bottom - 17), 5, 5);
+    }
+    // Below this zoom, previews and choice rows are sub-pixel noise: draw only the identifying header at a size that stays legible.
+    private const double OverviewZoom = .55;
+    private void DrawOverviewNode(DrawingContext dc, DialogueState s, Rect rect, bool isEntry)
+    {
+        var scale = Math.Min(2.2, OverviewZoom / Zoom);
+        DrawText(dc, (isEntry ? "◆ START · " : "") + s.Speaker.ToUpperInvariant(), new(rect.X + 14, rect.Y + 6), 10 * scale, isEntry ? "MintInk" : "Muted", 224, 10 * scale + 6);
+        DrawText(dc, s.Title, new(rect.X + 14, rect.Y + 8 + 10 * scale + 4), 15 * scale, "Ink", 224, 15 * scale + 8, true);
+        dc.DrawEllipse(Ui.Brush("Panel"), new Pen(Ui.Brush("Line"), 2), new(rect.X, rect.Y + 35), 5, 5);
+        for (var i = 0; i < s.Choices.Count; i++)
+            dc.DrawEllipse(Ui.Brush("MintInk"), new Pen(Ui.Brush("Panel"), 2), new(rect.Right, rect.Y + 135 + i * 34), 5, 5);
+        if (s.DefaultNextId == "[EXIT]") DrawText(dc, "○ END", new(rect.Right - 14 - 40 * scale, rect.Bottom - 12 - 10 * scale - 6), 10 * scale, "Muted", 40 * scale, 10 * scale + 6);
         dc.DrawEllipse(Ui.Brush("Muted"), new Pen(Ui.Brush("Panel"), 2), new(rect.Right, rect.Bottom - 17), 5, 5);
     }
     private void DrawText(DrawingContext dc, string text, Point position, double size, string brush, double width, double height, bool bold = false)
