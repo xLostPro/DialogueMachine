@@ -259,13 +259,7 @@ jobs:
           else
             flags=(--draft)
             [[ "$version" == *-* ]] && flags+=(--prerelease)
-            python3 -c "
-import sys, re
-content = open('RELEASE_NOTES.md', 'r', encoding='utf-8').read()
-match = re.search(r'## ' + re.escape('$version') + r'(?:\r?\n)+(.*?)(?=\r?\n## |\Z)', content, re.DOTALL)
-if match and match.group(1).strip():
-    open('release-notes.txt', 'w', encoding='utf-8').write(match.group(1).strip() + '\n')
-" || true
+            python3 -c "import sys, re; c = open('RELEASE_NOTES.md', encoding='utf-8').read(); m = re.search(r'## ' + re.escape('$version') + r'(?:\r?\n)+(.*?)(?=\r?\n## |\Z)', c, re.DOTALL); open('release-notes.txt', 'w', encoding='utf-8').write(m.group(1).strip() + '\n') if (m and m.group(1).strip()) else None" || true
             if [ -s release-notes.txt ]; then
               gh release create "$RELEASE_TAG" "${flags[@]}" --verify-tag --title "Dialogue Machine $version" --notes-file release-notes.txt
             else
