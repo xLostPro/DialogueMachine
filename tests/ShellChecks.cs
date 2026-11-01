@@ -34,7 +34,14 @@ internal static class ShellChecks
         var editor = Find<StackPanel>("EditorPanel");
         var addChoice = editor.GetVisualDescendants().OfType<Button>().First(b => b.Content is string s && s.Contains("Add a player choice"));
         addChoice.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-        Check(main.Project.ListOfCharacterStates[0].Choices.Count == 4, "choice creation changes the document"); Click("UndoButton"); Check(main.Project.ListOfCharacterStates[0].Choices.Count == 3, "undo restores choice creation"); Click("RedoButton"); Check(main.Project.ListOfCharacterStates[0].Choices.Count == 4, "redo restores choice creation"); Click("UndoButton");
+        Check(main.Project.ListOfCharacterStates[0].Choices.Count == 4, "choice creation changes the document"); Dispatcher.UIThread.RunJobs();
+        var newBox = Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBox>().Last(t => AutomationProperties.GetName(t) == "Player response");
+        Check(newBox.IsFocused, "a new player choice takes focus so the writer can type at once");
+        newBox.RaiseEvent(new KeyEventArgs { RoutedEvent = InputElement.KeyDownEvent, Key = Key.Enter, KeyModifiers = KeyModifiers.Control }); Dispatcher.UIThread.RunJobs();
+        Check(main.Project.ListOfCharacterStates[0].Choices.Count == 5, "Ctrl+Enter in a response adds the next choice"); Click("UndoButton");
+        var gated = new Choice { ButtonText = "Gated", NextStateId = "keeper", Visibility = VisibilityMode.Hide, Requirements = { new Requirement { TargetId = "clues", Operator = ">=", Value = "2" } } };
+        Check(MainWindow.ScriptChoiceLine(main.Project.ListOfCharacterStates[0], gated).EndsWith("[if clues >= 2; hide otherwise]"), "script view shows choice conditions");
+        Click("UndoButton"); Check(main.Project.ListOfCharacterStates[0].Choices.Count == 3, "undo restores choice creation"); Click("RedoButton"); Check(main.Project.ListOfCharacterStates[0].Choices.Count == 4, "redo restores choice creation"); Click("UndoButton");
         var titleBox = Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBox>().First(); titleBox.Focus(); titleBox.Text = "Edited opening";
         main.KeyPress(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, "z"); main.KeyRelease(Key.Z, RawInputModifiers.Control, PhysicalKey.Z, "z");
         Check(main.Project.ListOfCharacterStates[0].Title == "A light in the fog", "global undo commits current typing and restores it");

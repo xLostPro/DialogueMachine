@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
+using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
 using DialogueMachine.Core;
@@ -10,14 +11,19 @@ namespace DialogueMachine.UI;
 
 public sealed partial class MainWindow
 {
+    private DialogueState? editorScene; private string? editorSceneTab; private Choice? focusChoice;
     private void RefreshEditor()
     {
+        var scroll = C<ScrollViewer>("EditorScroll");
+        var keep = editorScene == selected && editorSceneTab == editorTab ? scroll.Offset : default;
+        editorScene = selected; editorSceneTab = editorTab;
         Editor.Children.Clear();
         C<TextBlock>("EditorTitle").Text = selected?.Title ?? "Select a scene";
         C<TextBlock>("EditorSubtitle").Text = selected is null ? "Your scene's content and connections live here." : selected.State + (selected.State == project.Entry ? "  ·  Story start" : "") + (selectedScenes.Count > 1 ? $"  ·  Editing 1 of {selectedScenes.Count} selected" : "");
         foreach (var tab in new[] { "Content", "Logic", "Notes" }) C<Button>(tab + "Tab").Background = Ui.Brush(tab == editorTab ? "Selection" : "Panel");
         if (selected is null) { Editor.Children.Add(Ui.Text("Choose a scene in the outline, or add one to start writing.", 14, true)); return; }
         switch (editorTab) { case "Logic": BuildLogicEditor(selected); break; case "Notes": BuildNotesEditor(selected); break; default: BuildContentEditor(selected); break; }
+        if (keep != default && focusChoice is null) Avalonia.Threading.Dispatcher.UIThread.Post(() => { scroll.UpdateLayout(); scroll.Offset = keep; }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
     private TextBox EditText(string text, Action<string> apply, bool multiline = false)
     {
@@ -85,6 +91,13 @@ public sealed partial class MainWindow
         {
             var choice = s.Choices[i]; var index = i;
             var label = EditText(choice.ButtonText, v => choice.ButtonText = v, true); label.MinHeight = 65;
+            AutomationProperties.SetName(label, $"Player response {i + 1}");
+            label.AddHandler(KeyDownEvent, (_, e) => { if (e.Key == Key.Enter && e.KeyModifiers.HasFlag(KeyModifiers.Control)) { AddChoice(s); e.Handled = true; } }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+            if (choice == focusChoice)
+            {
+                focusChoice = null;
+                Avalonia.Threading.Dispatcher.UIThread.Post(() => { label.Focus(); label.BringIntoView(); }, Avalonia.Threading.DispatcherPriority.Loaded);
+            }
             var top = new Grid { ColumnDefinitions = new ColumnDefinitions("*,Auto,Auto,Auto") };
             top.Children.Add(Ui.Text($"Choice {i + 1}" + (choice.Requirements.Count > 0 ? " · conditional" : ""), 12, true));
             var up = Ui.Button("↑", () => Mutate(() => { if (index > 0) (s.Choices[index - 1], s.Choices[index]) = (s.Choices[index], s.Choices[index - 1]); }), "subtle"); up.IsEnabled = i > 0; AutomationProperties.SetName(up, $"Move choice {i + 1} up"); Grid.SetColumn(up, 1); top.Children.Add(up);
@@ -92,11 +105,18 @@ public sealed partial class MainWindow
             var remove = Ui.Button("×", () => Mutate(() => s.Choices.Remove(choice)), "subtle"); AutomationProperties.SetName(remove, $"Remove choice {i + 1}"); Grid.SetColumn(remove, 3); top.Children.Add(remove);
             var create = Ui.AsyncButton("New scene…", () => CreateSceneFromChoice(s, choice), "subtle"); AutomationProperties.SetName(create, $"Create scene from choice {i + 1}");
             var saveTemplate = Ui.AsyncButton("Save template…", () => SaveChoiceTemplate(choice), "subtle"); AutomationProperties.SetName(saveTemplate, $"Save choice {i + 1} template");
+            ToolTip.SetTip(label, "Ctrl+Enter adds the next choice");
             Editor.Children.Add(Ui.Card(Ui.Stack(top, Ui.Field("Player response", label), Ui.Field("Go to", Destination(s, choice.NextStateId, v => choice.NextStateId = v, index)), Ui.Row(create, saveTemplate)), 12));
         }
-        Editor.Children.Add(Ui.Button("＋  Add a player choice", () => Mutate(() => s.Choices.Add(new Choice())), "primary"));
+        Editor.Children.Add(Ui.Button("＋  Add a player choice", () => AddChoice(s), "primary"));
         Editor.Children.Add(Ui.AsyncButton("Add choice from template…", () => ShowTemplates(true), "subtle"));
         Editor.Children.Add(Ui.Text("Tip: connect scenes by dragging an output dot onto another scene in the graph.", 11, true));
+    }
+    private void AddChoice(DialogueState s)
+    {
+        var choice = new Choice();
+        Mutate(() => s.Choices.Add(choice));
+        focusChoice = choice; RefreshEditor();
     }
     private void BuildLogicEditor(DialogueState s)
     {
@@ -163,6 +183,13 @@ public sealed partial class MainWindow
         Editor.Children.Add(Ui.AsyncButton("▶  Play from this scene", () => Play(true), "play"));
         AddSceneConnections(Editor, s);
     }
+    internal static string ScriptChoiceLine(DialogueState s, Choice c)
+    {
+        var line = "↳  " + DialogueEngine.PlainText(c.ButtonText) + "  →  " + (c.NextStateId ?? s.DefaultNextId ?? "(unset)");
+        if (c.Requirements.Count == 0) return line;
+        var when = string.Join(" and ", c.Requirements.Select(r => $"{r.TargetId} {r.Operator} {r.Value}"));
+        return line + $"   [if {when}; {c.Visibility.ToString().ToLowerInvariant()} otherwise]";
+    }
     private bool scriptDirty = true;
     internal sealed record ScriptRow(int Index, string State, string Title, string Speaker, bool IsEntry, string Dialogue, IReadOnlyList<string> Choices, string ContinueTarget);
 
@@ -200,7 +227,7 @@ public sealed partial class MainWindow
             s.Speaker,
             s.State == project.Entry,
             DialogueEngine.PlainText(s.Text),
-            s.Choices.Select(c => "↳  " + DialogueEngine.PlainText(c.ButtonText) + "  →  " + (c.NextStateId ?? s.DefaultNextId ?? "(unset)")).ToList(),
+            s.Choices.Select(c => ScriptChoiceLine(s, c)).ToList(),
             s.DefaultNextId ?? "(unset)"
         )).ToList();
     }
