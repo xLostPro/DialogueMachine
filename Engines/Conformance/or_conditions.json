@@ -1,0 +1,248 @@
+{
+  "name": "or_conditions",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.website.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022either\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022Pick a way in.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Show coin or key\u0022,\n          \u0022NextStateId\u0022: null,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            },\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022key\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022RequirementMatch\u0022: \u0022Any\u0022,\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000002\u0022,\n          \u0022ButtonText\u0022: \u0022Trusted or bold\u0022,\n          \u0022NextStateId\u0022: null,\n          \u0022Visibility\u0022: 0,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022trust\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00222\u0022\n            },\n            {\n              \u0022Type\u0022: \u0022Affinity\u0022,\n              \u0022TargetId\u0022: \u0022bold\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00222\u0022\n            }\n          ],\n          \u0022RequirementMatch\u0022: \u0022Any\u0022,\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022either\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "df02dbfc054fd7dc96c18573161a275e2876777c538c3053182bd5bea1092327",
+    "StartingScene": "either",
+    "Seed": 0,
+    "NumericValues": {
+      "aff:bold": 0,
+      "aff:trust": 0,
+      "inv:coin": 0,
+      "inv:key": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:key",
+      "value": 1
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:bold",
+      "value": 3
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:key",
+      "value": 0
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:bold",
+      "value": 0
+    },
+    {
+      "op": "setNumber",
+      "key": "aff:trust",
+      "value": 2
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000002"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "either",
+      "ended": false,
+      "page": "Pick a way in.",
+      "plain": "Pick a way in.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Show coin or key",
+          "enabled": false
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:bold": 0,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:key": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "either",
+      "ended": false,
+      "page": "Pick a way in.",
+      "plain": "Pick a way in.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Show coin or key",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:bold": 0,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:key": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "either",
+      "ended": false,
+      "page": "Pick a way in.",
+      "plain": "Pick a way in.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Show coin or key",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Trusted or bold",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:bold": 3,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:key": 1
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "either",
+      "ended": false,
+      "page": "Pick a way in.",
+      "plain": "Pick a way in.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Show coin or key",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Trusted or bold",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:bold": 3,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:key": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "either",
+      "ended": false,
+      "page": "Pick a way in.",
+      "plain": "Pick a way in.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Show coin or key",
+          "enabled": false
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "aff:bold": 0,
+        "aff:trust": 0,
+        "inv:coin": 0,
+        "inv:key": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "either",
+      "ended": false,
+      "page": "Pick a way in.",
+      "plain": "Pick a way in.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Show coin or key",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Trusted or bold",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "aff:bold": 0,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:key": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "aff:bold": 0,
+        "aff:trust": 2,
+        "inv:coin": 0,
+        "inv:key": 0
+      },
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

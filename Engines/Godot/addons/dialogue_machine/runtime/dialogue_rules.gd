@@ -59,7 +59,8 @@ static func requirement_met(type: String, target_id: String, op: String, value: 
 		return [false, "Requires %s %s %d · current %d" % [req_key, op, target, actual]]
 	return [true, ""]
 
-static func requirements_met(requirements: Array, vars: Dictionary) -> Array:
+static func requirements_met(requirements: Array, vars: Dictionary, any: bool = false) -> Array:
+	var first_reason = null
 	for req in requirements:
 		if req is Dictionary:
 			var res = requirement_met(
@@ -69,9 +70,14 @@ static func requirements_met(requirements: Array, vars: Dictionary) -> Array:
 				str(req.get("Value", "")),
 				vars
 			)
-			if not res[0]:
+			if res[0] and any:
 				return res
-	return [true, ""]
+			if not res[0]:
+				if not any:
+					return res
+				if first_reason == null:
+					first_reason = res
+	return first_reason if first_reason != null else [true, ""]
 
 static func _is_key_char(c: int) -> bool:
 	if c < 128:

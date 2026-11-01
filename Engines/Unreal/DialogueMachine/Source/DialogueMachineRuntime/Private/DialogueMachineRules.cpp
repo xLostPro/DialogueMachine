@@ -66,15 +66,33 @@ bool FDialogueRules::RequirementMet(const FString& Type, const FString& TargetId
 
 bool FDialogueRules::RequirementsMet(const FDialogueChoice& Choice, const TMap<FString, int32>& Vars, FString& OutReason)
 {
+    const bool bAny = Choice.bAnyRequirement && Choice.Requirements.Num() > 0;
+    FString FirstReason;
+    bool bHasReason = false;
     for (const FDialogueRequirement& Req : Choice.Requirements)
     {
-        if (!RequirementMet(Req.Type, Req.TargetId, Req.Operator, Req.Value, Vars, OutReason))
+        FString Why;
+        if (RequirementMet(Req.Type, Req.TargetId, Req.Operator, Req.Value, Vars, Why))
         {
+            if (bAny)
+            {
+                OutReason = TEXT("");
+                return true;
+            }
+        }
+        else if (!bAny)
+        {
+            OutReason = Why;
             return false;
         }
+        else if (!bHasReason)
+        {
+            FirstReason = Why;
+            bHasReason = true;
+        }
     }
-    OutReason = TEXT("");
-    return true;
+    OutReason = FirstReason;
+    return !bAny;
 }
 
 static bool IsKeyChar(TCHAR C)

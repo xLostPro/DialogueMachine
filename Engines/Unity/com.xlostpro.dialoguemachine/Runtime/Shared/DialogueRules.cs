@@ -48,10 +48,16 @@ namespace DialogueMachine.Runtime
 
         public static bool RequirementsMet(StoryChoice choice, IReadOnlyDictionary<string, int> vars, out string reason)
         {
+            var any = choice.AnyRequirement && choice.Requirements.Count > 0;
+            string first = null;
             foreach (var r in choice.Requirements)
-                if (!RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out reason)) return false;
-            reason = "";
-            return true;
+            {
+                if (RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out var why)) { if (any) { reason = ""; return true; } }
+                else if (!any) { reason = why; return false; }
+                else if (first == null) first = why;
+            }
+            reason = first ?? "";
+            return !any;
         }
 
         public static string ResolveText(string text, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars)

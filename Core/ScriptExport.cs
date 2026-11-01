@@ -52,7 +52,7 @@ public static class ScriptExport
                 {
                     var visibility = choice.Visibility switch { VisibilityMode.Hide => "Hide (0)", VisibilityMode.Disable => "Disable (1)", VisibilityMode.Always => "Always (2)", _ => "Unknown (" + ((int)choice.Visibility).ToString(CultureInfo.InvariantCulture) + ")" };
                     sb.Append('\n').Append(indent).Append("Visibility: ").Append(visibility).Append("\n");
-                    sb.Append('\n').Append(indent).Append("Conditions (all must pass): ").Append(choice.Requirements.Count == 0 ? "None" : string.Join("; ", choice.Requirements.Select(r => Inline(r.Type + " " + r.TargetId + " " + r.Operator + " " + r.Value)))).Append("\n");
+                    sb.Append('\n').Append(indent).Append(choice.RequirementMatch == RequirementMatch.Any ? "Conditions (any may pass): " : "Conditions (all must pass): ").Append(choice.Requirements.Count == 0 ? "None" : string.Join("; ", choice.Requirements.Select(r => Inline(r.Type + " " + r.TargetId + " " + r.Operator + " " + r.Value)))).Append("\n");
                 }
                 if (options.IncludeResponseActions) Actions(sb, choice.AfterChoiceActions, "Response actions (in order)", indent);
                 sb.Append('\n');

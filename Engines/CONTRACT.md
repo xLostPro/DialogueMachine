@@ -45,6 +45,7 @@ Every engine parser must preserve website compatibility and **ignore unknown fie
   - `NextStateId` (`string`): Destination scene ID. If empty, falls back to the scene's `DefaultNextId`.
   - `Visibility` (`int`): Visibility mode enum (`Hide = 0`, `Disable = 1`, `Always = 2`).
   - `Requirements` (`array`): Conditions required to enable the choice.
+  - `RequirementMatch` (`string`, optional): `"Any"` makes one passing requirement enough; anything else (or absent) means all must pass. An `"Any"` choice with no requirements is available. Engine handoffs keep it; the website file never carries it (Core splits such a choice into one choice per requirement).
   - `AfterChoiceActions` (`array`): Actions executed immediately upon selecting this choice.
 - **Requirements:**
   - `Type` (`string`): `"Affinity"` or `"Inventory"`.

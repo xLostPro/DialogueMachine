@@ -30,6 +30,7 @@ namespace DialogueMachine.Runtime
         public string ButtonText = "";
         public string NextStateId;
         public int Visibility = Disable;
+        public bool AnyRequirement;
         public List<StoryRequirement> Requirements = new List<StoryRequirement>();
         public List<StoryAction> AfterChoiceActions = new List<StoryAction>();
     }
@@ -99,6 +100,7 @@ namespace DialogueMachine.Runtime
             ButtonText = Text(source, "ButtonText", "") ?? "",
             NextStateId = Text(source, "NextStateId", null),
             Visibility = Number(source, "Visibility", StoryChoice.Disable),
+            AnyRequirement = Text(source, "RequirementMatch", "All") == "Any",
             Requirements = Objects(source, "Requirements").Select(ReadRequirement).ToList(),
             AfterChoiceActions = Actions(source, "AfterChoiceActions")
         };

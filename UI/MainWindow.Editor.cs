@@ -23,7 +23,7 @@ public sealed partial class MainWindow
     {
         var line = "↳  " + DialogueEngine.PlainText(c.ButtonText) + "  →  " + (c.NextStateId ?? s.DefaultNextId ?? "(unset)");
         if (c.Requirements.Count == 0) return line;
-        var when = string.Join(" and ", c.Requirements.Select(r => $"{r.TargetId} {r.Operator} {r.Value}"));
+        var when = string.Join(c.RequirementMatch == RequirementMatch.Any ? " or " : " and ", c.Requirements.Select(r => $"{r.TargetId} {r.Operator} {r.Value}"));
         return line + $"   [if {when}; {c.Visibility.ToString().ToLowerInvariant()} otherwise]";
     }
     private bool scriptDirty = true;

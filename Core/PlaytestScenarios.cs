@@ -96,6 +96,7 @@ public static class ScenarioStore
             ResponseActions = choice?.AfterChoiceActions.Select(a => new { a.Type, a.TargetId, a.Amount, a.Parameter }),
             ExitActions = scene.DefaultAfterActions.Select(a => new { a.Type, a.TargetId, a.Amount, a.Parameter })
         });
+        if (choice?.RequirementMatch == RequirementMatch.Any) json += "|any";
         return "v1:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(json))).ToLowerInvariant();
     }
     public static ReplayStep Reference(DialogueState scene, string kind, Choice? choice = null)

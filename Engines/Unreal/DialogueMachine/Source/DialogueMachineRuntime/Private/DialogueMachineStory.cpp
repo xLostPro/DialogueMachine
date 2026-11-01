@@ -122,6 +122,10 @@ FDialogueChoice FDialogueStory::ReadChoice(const TSharedPtr<FJsonObject>& Source
         Choice.Visibility = Visibility;
     }
 
+    FString Match;
+    Source->TryGetStringField(TEXT("RequirementMatch"), Match);
+    Choice.bAnyRequirement = Match == TEXT("Any");
+
     const TArray<TSharedPtr<FJsonValue>>* ReqArray = nullptr;
     if (Source->TryGetArrayField(TEXT("Requirements"), ReqArray) && ReqArray)
     {

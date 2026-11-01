@@ -42,6 +42,7 @@ ProjectEditingChecks.Core(Check, Throws);
 RecoveryChecks.Core(Check, Throws);
 AuthoringChecks.Core(Check, Throws);
 FlagChecks.Core(Check, Throws);
+OrConditionChecks.Core(Check, Throws);
 
 AppBuilder.Configure<App>().UseSkia().WithInterFont().UseHeadless(new AvaloniaHeadlessPlatformOptions { UseHeadlessDrawing = false }).SetupWithoutStarting();
 var main = new MainWindow(null, testMode: true); main.Show(); Dispatcher.UIThread.RunJobs();
