@@ -24,7 +24,6 @@ public sealed partial class MainWindow : Window
     private bool pendingEdits;
     private int wordCount, choiceCount;
     private readonly Dictionary<DialogueState, int> sceneWords = [];
-    private string editorTab = "Content";
     private readonly DispatcherTimer editTimer = new() { Interval = TimeSpan.FromMilliseconds(700) };
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromSeconds(10) };
     private readonly string dataDir;
@@ -48,7 +47,7 @@ public sealed partial class MainWindow : Window
         dataDir = dataDirectory ?? (IsTestMode ? Path.Combine(AppContext.BaseDirectory, "test-data") : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DialogueMachine"));
         persistWorkspace = !IsTestMode || dataDirectory is not null;
         projectFilePicker = filePicker ?? new NativeProjectFilePicker();
-        InitializeComponent();
+        InitializeComponent(); WireSceneEditor();
         ReadPreferences();
         history.Reset(project); savedSnapshot = ProjectStore.Serialize(project);
         WireActions(); WireWelcome(); WireLiveLink(); BuildMenu(); Refresh(); RefreshWelcome();
@@ -187,7 +186,7 @@ public sealed partial class MainWindow : Window
         Graph.SetSelection(selectedScenes, selected); SyncOutlineSelection(); RefreshEditor(); UpdateGraphSelection(); BuildMenu();
         if (centre && selected is not null) Graph.Centre(selected);
     }
-    private void SwitchTab(string tab) { Commit(); editorTab = tab; RefreshEditor(); }
+    private void SwitchTab(string tab) { Commit(); sceneEditor.Tab = tab; RefreshEditor(); }
     private void Edited()
     {
         ClearScenarioResults();
