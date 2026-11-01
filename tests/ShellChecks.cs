@@ -26,6 +26,10 @@ internal static class ShellChecks
         main.LoadExampleAsync().GetAwaiter().GetResult(); Dispatcher.UIThread.RunJobs();
         Check(main.HasProject && !main.HasUnsavedChanges && main.CurrentFilePath is null, "optional example opens as a clean copy without a file location");
         Check(main.ClientSize.Width > 1000 && main.Project.ListOfCharacterStates.Count == 5, "desktop window lays out the example story"); Capture(main,"workspace-dark");
+        var outline = Find<ListBox>("SceneList"); var second = outline.GetVisualDescendants().OfType<ListBoxItem>().ElementAt(1);
+        var itemPoint = second.TranslatePoint(new Point(20, 10), main)!.Value; main.MouseDown(itemPoint, MouseButton.Left); main.MouseUp(itemPoint, MouseButton.Left); Dispatcher.UIThread.RunJobs();
+        Check(outline.SelectedItems!.Count == 1 && Find<GraphCanvas>("Graph").SelectedScenes.Count == 1, "a plain outline click right after opening replaces the selection");
+        outline.SelectedItems!.Clear(); outline.SelectedItems.Add(outline.Items[0]); Dispatcher.UIThread.RunJobs();
         Find<TextBox>("SearchBox").Text = "keeper"; Dispatcher.UIThread.RunJobs();
         Check(Find<ListBox>("SceneList").Items.Count == 1, "outline searches both title and dialogue"); Find<TextBox>("SearchBox").Text = "";
         Click("NotesTab"); Check(Find<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBox>().Any(), "notes editor is reachable through native buttons");
