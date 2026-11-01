@@ -18,6 +18,8 @@ public sealed class PlaytestWindow : Window
     private readonly StackPanel eventPanel = new() { Spacing = 8 };
     private readonly TextBlock location = Ui.Text("", 12, true);
     private readonly Button back;
+    private Action? advance;
+    private readonly List<Action> picks = [];
     public Simulation Session => simulation;
     public PlaytestWindow(DialogueProject project, string? startId, double scale = 1) : this(project, startId, null, scale, false) { }
     public PlaytestWindow(DialogueProject project, PlaytestScenario scenario, double scale, bool recordPath) : this(project, scenario.StartStateId, scenario, scale, recordPath) { }
@@ -36,17 +38,28 @@ public sealed class PlaytestWindow : Window
         var viewport = new ScrollViewer { Content = story, Margin = new Thickness(38,28) }; Grid.SetRow(viewport, 1); grid.Children.Add(viewport);
         var sidebar = Ui.Stack(Ui.Text("LIVE VARIABLES", 11, true), Ui.Text("Adjust values to test different paths.", 12, true), variablePanel, Ui.Text("INTEGRATION EVENTS", 11, true), Ui.Text("Events, scripts and shops are logged here. Game code is not executed.", 11, true), eventPanel);
         var right = new Border { Background = Ui.Brush("Panel"), BorderBrush = Ui.Brush("Line"), BorderThickness = new Thickness(1,0,0,0), Padding = new Thickness(22), Child = new ScrollViewer { Content = sidebar } }; Grid.SetColumn(right, 1); Grid.SetRow(right, 1); grid.Children.Add(right);
-        var footer = new Border { Background = Ui.Brush("Panel"), Padding = new Thickness(22,12), Child = Ui.Stack(location, Ui.Text("Back restores the path and random state · Escape closes playtest", 11, true)) }; Grid.SetRow(footer, 2); Grid.SetColumnSpan(footer, 2); grid.Children.Add(footer);
+        var footer = new Border { Background = Ui.Brush("Panel"), Padding = new Thickness(22,12), Child = Ui.Stack(location, Ui.Text("Enter continues · 1-9 choose · Backspace goes back · Escape closes", 11, true)) }; Grid.SetRow(footer, 2); Grid.SetColumnSpan(footer, 2); grid.Children.Add(footer);
         Content = scale == 1 ? grid : new LayoutTransformControl { Child = grid, LayoutTransform = new Avalonia.Media.ScaleTransform(scale, scale) };
-        KeyDown += (_, e) => { if (e.Key == Key.Escape) { Close(); e.Handled = true; } }; Refresh();
+        KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape) { Close(); e.Handled = true; return; }
+            if (e.Source is TextBox || e.KeyModifiers != KeyModifiers.None) return;
+            if (e.Key is Key.Enter or Key.Space && advance is not null) advance();
+            else if (e.Key is >= Key.D1 and <= Key.D9 && e.Key - Key.D1 < picks.Count) picks[e.Key - Key.D1]();
+            else if (e.Key == Key.Back && back.IsEnabled) { simulation.Back(); Refresh(); }
+            else return;
+            e.Handled = true;
+        };
+        Refresh();
     }
     private void Refresh(bool rebuildVariables = true)
     {
-        story.Children.Clear(); back.IsEnabled = simulation.CanBack;
+        story.Children.Clear(); back.IsEnabled = simulation.CanBack; advance = null; picks.Clear();
         if (simulation.Current is not { } current)
         {
             story.Children.Add(Ui.Text("○", 50, true)); story.Children.Add(Ui.Text("The conversation ends here.", 28)); story.Children.Add(Ui.Text("Try another path, change the starting values, or return to your story to keep writing.", 15, true));
-            story.Children.Add(Ui.Button("Restart story", () => { simulation.Restart(); Refresh(); }, "play")); location.Text = "Conversation complete · " + simulation.Trace.Count + " trace entries";
+            advance = () => { simulation.Restart(); Refresh(); };
+            story.Children.Add(Ui.Button("Restart story", advance, "play")); location.Text = "Conversation complete · " + simulation.Trace.Count + " trace entries";
         }
         else
         {
@@ -55,7 +68,7 @@ public sealed class PlaytestWindow : Window
             story.Children.Add(RichDialogue.Create(simulation.Pages[simulation.PageIndex]));
             if (!current.SayItAll) story.Children.Add(Ui.Button("Reroll line", () => { simulation.RerollLine(); Refresh(); }, "subtle"));
             if (current.Type == "Shop") story.Children.Add(Ui.Card(Ui.Text("Shop preview · " + current.ShopData.ShopId + "\nYour game handles this shop after export.", 13, true)));
-            if (simulation.MorePages) story.Children.Add(Ui.Button("Continue →", () => { simulation.NextPage(); Refresh(); }, "primary"));
+            if (simulation.MorePages) { advance = () => { simulation.NextPage(); Refresh(); }; story.Children.Add(Ui.Button("Continue →", advance, "primary")); }
             else
             {
                 var available = 0;
@@ -67,12 +80,13 @@ public sealed class PlaytestWindow : Window
                     var c = choice;
                     var label = DialogueEngine.PlainText(DialogueEngine.ResolveText(choice.ButtonText, simulation.Variables, simulation.TextVariables));
                     var button = Ui.Button("↳  " + label, () => Transition(() => simulation.Choose(c)));
-                    button.HorizontalAlignment = HorizontalAlignment.Stretch; button.HorizontalContentAlignment = HorizontalAlignment.Left; button.Content = Ui.Text("↳  " + label, 15); button.IsEnabled = met;
+                    if (met) { picks.Add(() => Transition(() => simulation.Choose(c))); label = picks.Count + ".  " + label; }
+                    button.HorizontalAlignment = HorizontalAlignment.Stretch; button.HorizontalContentAlignment = HorizontalAlignment.Left; button.Content = Ui.Text(met ? label : "↳  " + label, 15); button.IsEnabled = met;
                     if (!met) ToolTip.SetTip(button, reason);
                     story.Children.Add(button); if (!met) story.Children.Add(Ui.Text(reason, 11, true));
                 }
                 if (current.Choices.Count == 0 || available == 0)
-                    if (simulation.CanContinue) story.Children.Add(Ui.Button(current.DefaultNextId == "[EXIT]" ? "End conversation →" : "Continue →", () => Transition(simulation.Continue), "primary"));
+                    if (simulation.CanContinue) { advance = () => Transition(simulation.Continue); story.Children.Add(Ui.Button(current.DefaultNextId == "[EXIT]" ? "End conversation →" : "Continue →", advance, "primary")); }
                 if (available == 0 && current.Choices.Count > 0 && !simulation.CanContinue) story.Children.Add(Ui.Text("No response is available with these values. Adjust the live variables or go back.", 13, true));
             }
         }

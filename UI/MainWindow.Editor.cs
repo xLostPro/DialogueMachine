@@ -23,7 +23,7 @@ public sealed partial class MainWindow
         foreach (var tab in new[] { "Content", "Logic", "Notes" }) C<Button>(tab + "Tab").Background = Ui.Brush(tab == editorTab ? "Selection" : "Panel");
         if (selected is null) { Editor.Children.Add(Ui.Text("Choose a scene in the outline, or add one to start writing.", 14, true)); return; }
         switch (editorTab) { case "Logic": BuildLogicEditor(selected); break; case "Notes": BuildNotesEditor(selected); break; default: BuildContentEditor(selected); break; }
-        if (keep != default && focusChoice is null) Avalonia.Threading.Dispatcher.UIThread.Post(() => { scroll.UpdateLayout(); scroll.Offset = keep; }, Avalonia.Threading.DispatcherPriority.Loaded);
+        if (focusChoice is null) Avalonia.Threading.Dispatcher.UIThread.Post(() => { scroll.UpdateLayout(); scroll.Offset = keep; }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
     private TextBox EditText(string text, Action<string> apply, bool multiline = false)
     {

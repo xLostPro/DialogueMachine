@@ -91,6 +91,12 @@ internal static class PlaytestChecks
         var response = playtest.GetVisualDescendants().OfType<Button>().First(b => b.Content is TextBlock t && t.Text!.Contains("I brought")); response.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
         Check(playtest.Session.Current!.State == "gift" && playtest.Session.Variables["inv:coin"] == 0, "playtest response button applies actions and follows its destination"); Capture(playtest,"playtest-choice");
         playtest.Close();
+        var keyed = new PlaytestWindow(Templates.Harbour(), null); keyed.Show(); Dispatcher.UIThread.RunJobs();
+        void Tap(Key k) { keyed.KeyPress(k, RawInputModifiers.None, PhysicalKey.None, null); keyed.KeyRelease(k, RawInputModifiers.None, PhysicalKey.None, null); Dispatcher.UIThread.RunJobs(); }
+        Tap(Key.Enter); Check(keyed.Session.PageIndex == 1, "playtest Enter continues");
+        Tap(Key.D1); Check(keyed.Session.Current!.State != "arrival", "playtest number key picks a response");
+        Tap(Key.Back); Check(keyed.Session.Current!.State == "arrival", "playtest Backspace goes back");
+        keyed.Close();
         var livePlaytest = new PlaytestWindow(previewStory, null); livePlaytest.Show(); Dispatcher.UIThread.RunJobs();
         var trustInput = livePlaytest.GetVisualDescendants().OfType<NumericUpDown>().Single(t => AutomationProperties.GetName(t) == "aff:trust");
         trustInput.Value = 1; Dispatcher.UIThread.RunJobs();
