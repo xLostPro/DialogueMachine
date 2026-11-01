@@ -83,6 +83,15 @@ internal static class VariableManagerChecks
         Check(variableWorkspace.Project.ListOfCharacterStates[0].Speaker == "Navigator", "speaker input updates selected scene speaker");
         UndoWorkspace();
         Check(variableWorkspace.Project.ListOfCharacterStates[0].Speaker == "Mara", "speaker edits are undoable");
+        OpenManager(); manager = Modal(variableWorkspace);
+        AddInManager(manager, "＋ Add character", "Ghost");
+        var maraColour = manager.GetVisualDescendants().OfType<TextBox>().Single(b => AutomationProperties.GetName(b) == "Colour for Mara"); maraColour.Text = "not a colour"; maraColour.Text = "#E07A5F";
+        PressAnswer(manager, "Apply changes");
+        Check(CharacterRoster.ColorFor(variableWorkspace.Project, "Mara") == "#E07A5F" && CharacterRoster.Find(variableWorkspace.Project, "Ghost") is not null, "manager adds characters and sets colours on Apply");
+        Capture(variableWorkspace, "character-colour-graph");
+        speakerInput = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.GetVisualDescendants().OfType<AutoCompleteBox>().Single(b => AutomationProperties.GetName(b) == "Speaker");
+        Check(speakerInput.ItemsSource!.Cast<string>().Contains("Ghost"), "speaker autocomplete suggests roster characters not yet used");
+        UndoWorkspace(); Check(variableWorkspace.Project.Characters.Count == 0, "one Undo removes the roster changes");
         Press(variableWorkspace.FindControl<Button>("LogicTab")!); var beforePickerEdit = ProjectStore.Serialize(variableWorkspace.Project);
         var variablePicker = variableWorkspace.FindControl<StackPanel>("EditorPanel")!.GetVisualDescendants().OfType<AutoCompleteBox>().First();
         Check(variablePicker.ItemsSource!.Cast<string>().Contains("coin") && !variablePicker.ItemsSource!.Cast<string>().Contains("trust") && AutomationProperties.GetName(variablePicker) == "Variable ID", "logic variable picker offers IDs for the selected numeric type and has a label");

@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Automation;
 using Avalonia.Controls;
+using Avalonia.Media;
 using DialogueMachine.Core;
 
 namespace DialogueMachine.UI;
@@ -97,8 +98,24 @@ internal sealed class VariablesView(Func<DialogueProject> getProject, Action<Dia
             var show = Ui.AsyncButton($"{references.Count} {(references.Count == 1 ? "scene" : "scenes")}", () => ShowSpeakerReferences(speaker), "subtle");
             AutomationProperties.SetName(show, "References for " + speaker);
             show.IsEnabled = references.Count > 0;
+            var swatch = new Border { Width = 22, Height = 22, CornerRadius = new CornerRadius(11), BorderBrush = Ui.Brush("Line"), BorderThickness = new Thickness(1), VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center };
+            void ShowSwatch(string? color) => swatch.Background = CharacterRoster.ValidColor(color) ? new Avalonia.Media.SolidColorBrush(Avalonia.Media.Color.Parse(color!)) : Brushes.Transparent;
+            var color = new TextBox { Text = CharacterRoster.ColorFor(draft, speaker) ?? "", PlaceholderText = "#RRGGBB", PlaceholderForeground = Ui.Brush("Muted"), Width = 120 };
+            AutomationProperties.SetName(color, "Colour for " + speaker);
+            ShowSwatch(color.Text);
+            color.TextChanged += (_, _) =>
+            {
+                var text = color.Text?.Trim();
+                if (string.IsNullOrEmpty(text)) { if (CharacterRoster.Find(draft, speaker) is not null) CharacterRoster.SetColor(draft, speaker, null); ShowSwatch(null); }
+                else if (CharacterRoster.ValidColor(text)) { CharacterRoster.SetColor(draft, speaker, text); ShowSwatch(text); }
+            };
             var actions = new WrapPanel(); foreach (var button in new[] { show, rename }) actions.Children.Add(button);
-            rows.Children.Add(Ui.Card(Ui.Stack(Ui.Text(speaker, 16, true), actions), 12));
+            if (references.Count == 0)
+            {
+                var remove = Ui.Button("Remove", () => { CharacterRoster.Remove(draft, speaker); Populate(); }, "subtle");
+                AutomationProperties.SetName(remove, "Remove " + speaker); actions.Children.Add(remove);
+            }
+            rows.Children.Add(Ui.Card(Ui.Stack(Ui.Text(speaker, 16, true), Ui.Row(swatch, color), actions), 12));
         }
         void Populate()
         {
@@ -122,10 +139,17 @@ internal sealed class VariablesView(Func<DialogueProject> getProject, Action<Dia
                 if (!VariableStore.ValidTextId(id) || draft.TextVariables.ContainsKey(id) || draft.InitialVariables.ContainsKey(id)) { await Ui.Ask(window!, "Choose another text ID", "Use a unique text ID made of letters, digits, dots, underscores or hyphens.", "Close"); return; }
                 draft.TextVariables[id] = ""; search.Text = ""; Populate();
             }));
-            rows.Children.Add(Ui.Text("Scene speakers", 19));
-            rows.Children.Add(Ui.Text("Rename a speaker across all scenes and templates in this project.", 12, true));
+            rows.Children.Add(Ui.Text("Characters", 19));
+            rows.Children.Add(Ui.Text("Give a character a colour for the graph, or rename them across all scenes and templates. Characters are suggested in the Speaker field; exports keep the plain name.", 12, true));
             foreach (var speaker in VariableStore.DiscoverSpeakers(draft).Where(sp => sp.Contains(filter, StringComparison.OrdinalIgnoreCase)))
                 SpeakerCard(speaker);
+            rows.Children.Add(Ui.AsyncButton("＋ Add character", async () =>
+            {
+                var name = await Ui.Prompt(window!, "Add a character", "Add a name to suggest in the Speaker field.", "", scale);
+                if (name is null) return;
+                try { CharacterRoster.Add(draft, name); search.Text = ""; Populate(); }
+                catch (ArgumentException ex) { await Ui.Ask(window!, "Cannot add character", ex.Message, "Close"); }
+            }));
         }
         search.TextChanged += (_, _) => Populate(); Populate();
         var content = new Grid { RowDefinitions = new RowDefinitions("Auto,Auto,*,Auto"), Margin = new Thickness(24) };

@@ -42,6 +42,7 @@ public static class ProjectStore
             }
             if (s.DefaultAfterActions.Any(a => a is null)) throw new InvalidDataException("Actions cannot be null.");
         }
+        CharacterRoster.Normalize(project);
         project.SceneGroups ??= [];
         var groupIds = new HashSet<string>(StringComparer.Ordinal);
         var sceneKeys = SceneGroups.Keys(project).Values.ToHashSet();
