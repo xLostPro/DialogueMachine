@@ -5,7 +5,7 @@
 ## Now
 
 1. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
-   - Scene editor moved to `SceneEditorView`, Find & replace to `SearchView`, Variables to `VariablesView`. Still in `MainWindow`: Playtest launch, Scenarios, Exports. Move each into its own view as it's touched.
+   - Scene editor moved to `SceneEditorView`, Find & replace to `SearchView`, Variables to `VariablesView`, export dialogs to `ExportView`. Still in `MainWindow`: Playtest launch, Scenarios. Move each into its own view as it's touched.
 
 ## Later, only when a real story needs it
 
