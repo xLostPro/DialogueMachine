@@ -2,7 +2,7 @@
   "name": "nested_if_else",
   "handoff": {
     "SchemaVersion": 1,
-    "Contract": "dialogue-machine.website.v1",
+    "Contract": "dialogue-machine.story.v1",
     "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022nested\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[if aff:a \\u003E= 1]A[if inv:b \\u003E 0]B[else]C[if aff:a == 2]D[/if][/if][else]E[/if] [IF aff:a \\u003C 0]negative[ELSE]not negative[/IF] [if aff:a != -1]not minus one[/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022[if inv:b \\u003E 0]Spend[else]Leave[/if]\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022nested\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
     "StorySha256": "59c3bf18f303f3d02786aa86d4828b51c0f8ce45e60665f7a97d0b67fb2e7863",
     "StartingScene": "nested",

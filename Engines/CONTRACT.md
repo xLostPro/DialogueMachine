@@ -15,7 +15,7 @@ Engine integrations receive compiled stories through `RuntimeHandoff` (serialize
 | Field | Type | Description |
 |---|---|---|
 | `SchemaVersion` | `int` | Integer schema version. Currently `1`. |
-| `Contract` | `string` | Target format identifier (`"dialogue-machine.website.v1"`). |
+| `Contract` | `string` | Target format identifier (`"dialogue-machine.story.v1"`). Legacy `"dialogue-machine.website.v1"` is also accepted by engine importers. |
 | `StoryJson` | `string` | Escaped JSON string containing the story definition `{ "ListOfCharacterStates": [...] }`. |
 | `StorySha256` | `string` | Lowercase hexadecimal SHA-256 hash of `StoryJson` (UTF-8 bytes). Used to detect story changes. |
 | `StartingScene` | `string` | ID of the entry scene. |

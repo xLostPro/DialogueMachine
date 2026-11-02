@@ -251,7 +251,7 @@ func _scene(id: String, text: String, extra: Dictionary = {}) -> Dictionary:
 
 func _handoff(scenes: Array, extra: Dictionary = {}) -> Dictionary:
 	var h = {
-		"SchemaVersion": 1, "Contract": "dialogue-machine.website.v1",
+		"SchemaVersion": 1, "Contract": "dialogue-machine.story.v1",
 		"StoryJson": JSON.stringify({"ListOfCharacterStates": scenes}), "StorySha256": "x",
 		"StartingScene": scenes[0]["State"], "Seed": 0, "NumericValues": {}, "TextValues": {}
 	}

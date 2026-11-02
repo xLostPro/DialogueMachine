@@ -2,7 +2,7 @@
   "name": "rich_text_tags",
   "handoff": {
     "SchemaVersion": 1,
-    "Contract": "dialogue-machine.website.v1",
+    "Contract": "dialogue-machine.story.v1",
     "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022rich\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[b]Bold[/b] [i]Italic[/i] [u]Under[/u] [colour=#ff8800]Amber[/colour] [COLOUR=red][B]Loud[/B][/COLOUR] [color=blue]left alone[/color] [if aff:x \\u003E= 0][b]inside[/b][/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022[i]Quietly[/i] [colour=red]leave[/colour]\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022rich\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
     "StorySha256": "2731e0d62befa07ab4ba3d5e1030898b6c470be68bd9689485206b18533ec505",
     "StartingScene": "rich",
