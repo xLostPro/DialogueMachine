@@ -79,42 +79,15 @@ public static class ProjectStore
         }
         finally { if (File.Exists(temp)) File.Delete(temp); }
     }
-    /// <summary>
-    /// The website only knows relative Affinity/Inventory amounts, so it can't run Set or Toggle.
-    /// Those actions are left out of the website file; engine handoffs keep them (<paramref name="forEngine"/>).
-    /// </summary>
-    public static string WebExport(DialogueProject project, bool forEngine = false)
+    /// <summary>Serializes the story scenes with the entry scene first for engine runtimes.</summary>
+    public static string StoryExport(DialogueProject project)
     {
-        if (!forEngine && project.ListOfCharacterStates.Any(s => s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)).Any(a => a.Type is "Set" or "Toggle") || s.Choices.Any(c => c.RequirementMatch == RequirementMatch.Any)))
-        {
-            project = Clone(project);
-            foreach (var s in project.ListOfCharacterStates)
-            {
-                s.DefaultAfterActions.RemoveAll(a => a.Type is "Set" or "Toggle");
-                foreach (var c in s.Choices) c.AfterChoiceActions.RemoveAll(a => a.Type is "Set" or "Toggle");
-                s.Choices = [.. s.Choices.SelectMany(SplitAny)];
-            }
-        }
-        // The web player starts at the first scene; honour the desktop entry selection.
         var states = project.ListOfCharacterStates.OrderBy(s => s.State == project.Entry ? 0 : 1).ToList();
         return JsonSerializer.Serialize(new { ListOfCharacterStates = states }, new JsonSerializerOptions { WriteIndented = true });
     }
-    // The website can only AND requirements, so an "any" choice becomes one ordinary choice per requirement.
-    private static IEnumerable<Choice> SplitAny(Choice choice)
-    {
-        var requirements = choice.Requirements;
-        var any = choice.RequirementMatch == RequirementMatch.Any;
-        choice.RequirementMatch = RequirementMatch.All;
-        if (!any || requirements.Count < 2) { yield return choice; yield break; }
-        var json = JsonSerializer.Serialize(choice, Options);
-        for (var i = 0; i < requirements.Count; i++)
-        {
-            var copy = JsonSerializer.Deserialize<Choice>(json, Options)!;
-            copy.Requirements = [copy.Requirements[i]];
-            if (i > 0) copy.InternalId = new Guid(System.Security.Cryptography.MD5.HashData(System.Text.Encoding.UTF8.GetBytes(choice.InternalId + ":" + i)));
-            yield return copy;
-        }
-    }
+
+    /// <summary>Deprecated alias for <see cref="StoryExport(DialogueProject)"/>.</summary>
+    public static string WebExport(DialogueProject project, bool forEngine = true) => StoryExport(project);
     public static DialogueProject Clone(DialogueProject p) => Parse(Serialize(p));
 }
 

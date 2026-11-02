@@ -24,7 +24,7 @@ internal static class WorkspaceChecks
     {
         settingsRoot = Path.Combine(workflowRoot, "settings"); store = new WorkspaceStore(settingsRoot);
         sourceFile = Path.Combine(workflowRoot, "website-story.json"); savedFile = Path.Combine(workflowRoot, "my-story.dialogue.json");
-        sourceJson = ProjectStore.WebExport(Templates.Harbour()); File.WriteAllText(sourceFile, sourceJson);
+        sourceJson = ProjectStore.StoryExport(Templates.Harbour()); File.WriteAllText(sourceFile, sourceJson);
         missingFile = Path.Combine(workflowRoot, "moved-story.json");
         ProjectStore.AtomicWrite(Path.Combine(settingsRoot, "preferences.json"), JsonSerializer.Serialize(new { Theme = "Light", Scale = 1.15, RecoveryEnabled = false, RecentFiles = new[] { sourceFile, sourceFile, missingFile } }, ProjectStore.Options));
         prefs = store.Load();

@@ -123,8 +123,8 @@ internal static class GraphSelectionChecks
         multiGraph.Focus(); GraphKey(Key.Escape); multiGraph.Fit(); GraphClick(0);
         Check(multiGraph.ConnectionHighlight(GraphScenes()[0], GraphScenes()[1]) == "GraphSelection" && multiGraph.ConnectionHighlight(GraphScenes()[1], GraphScenes()[0]) == "GraphIncoming" && multiGraph.ConnectionHighlight(GraphScenes()[1], GraphScenes()[2]) is null, "connection emphasis distinguishes outgoing, incoming and unrelated links");
         GraphClick(1, RawInputModifiers.Control); Check(multiGraph.ConnectionHighlight(GraphScenes()[1], GraphScenes()[0]) == "GraphSelection", "connections internal to a selected set use the outgoing highlight");
-        using (var graphWeb = JsonDocument.Parse(ProjectStore.WebExport(graphWorkspace.Project)))
-            Check(graphWeb.RootElement.EnumerateObject().Count() == 1 && graphWeb.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Choices")[1].GetProperty("Visibility").ValueKind == JsonValueKind.Number && graphWeb.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("FutureScene").GetString() == "keep", "graph selection introduces no JSON fields and preserves numeric website visibility and extensions");
+        using (var graphWeb = JsonDocument.Parse(ProjectStore.StoryExport(graphWorkspace.Project)))
+            Check(graphWeb.RootElement.EnumerateObject().Count() == 1 && graphWeb.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Choices")[1].GetProperty("Visibility").ValueKind == JsonValueKind.Number && graphWeb.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("FutureScene").GetString() == "keep", "graph selection introduces no JSON fields and preserves numeric visibility and extensions");
         foreach (var theme in new[] { "Dark", "Light", "High contrast" })
             foreach (var scale in new[] { 1.0, 1.15, 1.3 })
             {

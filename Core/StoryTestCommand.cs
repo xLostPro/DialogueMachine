@@ -263,8 +263,8 @@ public static class ConformanceFixtures
     private static string Fixture(string name, DialogueProject project, int seed, Step[] steps, DialogueProject? futureStory)
     {
         var handoff = RuntimeExport.Create(project, seed);
-        // WebExport indents with the platform newline; fixtures must be identical on every OS.
-        var story = (futureStory is null ? handoff.StoryJson : ProjectStore.WebExport(futureStory, forEngine: true)).Replace("\r\n", "\n");
+        // StoryExport indents with the platform newline; fixtures must be identical on every OS.
+        var story = (futureStory is null ? handoff.StoryJson : ProjectStore.StoryExport(futureStory)).Replace("\r\n", "\n");
         var node = JsonSerializer.SerializeToNode(handoff with { StoryJson = story, StorySha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(story))) })!.AsObject();
         if (futureStory is not null) node["FutureHandoffField"] = new JsonObject { ["retained"] = 42 };
 

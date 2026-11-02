@@ -27,9 +27,9 @@ internal static class ProjectEditingChecks
         var hist = new ProjectHistory(); hist.Reset(p); p.ProjectName = "Edited"; hist.Commit(p);
         Check(hist.Undo()!.ProjectName == "The last lighthouse" && hist.Redo()!.ProjectName == "Edited", "history preserves complete project snapshots");
         hist.Undo(); p.ProjectName = "Branch"; hist.Commit(p); Check(!hist.CanRedo, "editing after undo clears redo branch");
-        var exported = ProjectStore.WebExport(renamed); using var web = JsonDocument.Parse(exported);
-        Check(web.RootElement.EnumerateObject().Count() == 1 && web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("State").GetString() == "opening", "web export retains original root and starts at selected entry");
-        Check(web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Choices")[0].GetProperty("Visibility").ValueKind == JsonValueKind.Number, "web export uses original numeric enum format");
+        var exported = ProjectStore.StoryExport(renamed); using var web = JsonDocument.Parse(exported);
+        Check(web.RootElement.EnumerateObject().Count() == 1 && web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("State").GetString() == "opening", "story export retains original root and starts at selected entry");
+        Check(web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Choices")[0].GetProperty("Visibility").ValueKind == JsonValueKind.Number, "story export uses original numeric enum format");
         var cyclic = Templates.Blank(); cyclic.ListOfCharacterStates[0].Choices = [new() { NextStateId = "start" }, new() { NextStateId = "[EXIT]" }];
         Check(!DialogueEngine.Validate(cyclic).Any(d => d.Severity == "Error"), "intentional loops with an exit are playable");
         cyclic.ListOfCharacterStates[0].DefaultNextId = "missing";

@@ -72,8 +72,8 @@ internal static class AuthoringChecks
         savedSceneTemplate.Extra = new() { ["FutureTemplate"] = JsonSerializer.SerializeToElement(42) };
         var templateRoundtrip = ProjectStore.Parse(ProjectStore.Serialize(authoringStory));
         Check(templateRoundtrip.SceneTemplates[0].Extra!.ContainsKey("FutureTemplate") && templateRoundtrip.SceneTemplates[0].Scene.Extra!.ContainsKey("FutureScene") && templateRoundtrip.ChoiceTemplates[0].Choice.Extra!.ContainsKey("FutureChoice"), "desktop saves retain template definitions and unknown fields throughout them");
-        using (var webTemplates = JsonDocument.Parse(ProjectStore.WebExport(authoringStory)))
-            Check(!webTemplates.RootElement.TryGetProperty("SceneTemplates", out _) && !webTemplates.RootElement.TryGetProperty("ChoiceTemplates", out _) && webTemplates.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Choices")[1].GetProperty("Visibility").ValueKind == JsonValueKind.Number, "website exports omit desktop templates and retain numeric visibility");
+        using (var webTemplates = JsonDocument.Parse(ProjectStore.StoryExport(authoringStory)))
+            Check(!webTemplates.RootElement.TryGetProperty("SceneTemplates", out _) && !webTemplates.RootElement.TryGetProperty("ChoiceTemplates", out _) && webTemplates.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Choices")[1].GetProperty("Visibility").ValueKind == JsonValueKind.Number, "story exports omit desktop templates and retain numeric visibility");
         Check(ProjectStore.Parse("""{"ListOfCharacterStates":[],"SceneTemplates":null,"ChoiceTemplates":null}""").SceneTemplates.Count == 0, "null template collections normalize for compatible imports");
         Throws(() => ProjectStore.Parse("""{"ListOfCharacterStates":[],"SceneTemplates":[{"Name":"Broken","Scene":null}]}"""), "damaged scene templates are rejected before document replacement");
         Throws(() => ProjectStore.Parse("""{"ListOfCharacterStates":[],"ChoiceTemplates":[{"Name":"Broken","Choice":{"Requirements":[null]}}]}"""), "damaged template logic is rejected before document replacement");

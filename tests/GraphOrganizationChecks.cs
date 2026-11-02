@@ -15,7 +15,7 @@ internal static class GraphOrganizationChecks
     public static void Core(Action<bool, string> check, Action<Action, string> throws, string output)
     {
         var project = Templates.Harbour(); var scenes = project.ListOfCharacterStates;
-        var website = ProjectStore.WebExport(project);
+        var website = ProjectStore.StoryExport(project);
         var chapter = SceneGroups.Create(project, "  Chapter one  "); var subplot = SceneGroups.Create(project, "Subplot");
         check(chapter.Name == "Chapter one" && chapter.Id != subplot.Id, "group names trim and each group has a stable distinct identity");
         SceneGroups.Assign(project, chapter, [scenes[0], scenes[1], scenes[0]]);
@@ -37,7 +37,7 @@ internal static class GraphOrganizationChecks
         var recovery = new RecoveryStore(Path.Combine(output, "group-recovery-" + Guid.NewGuid().ToString("N"))); recovery.Save(Guid.NewGuid().ToString("N"), new RecoveryRecord(null, DateTimeOffset.UtcNow, project));
         var recovered = recovery.FindUnsaved().Single().Record.Project;
         check(recovered.SceneGroups[0].Name == chapter.Name && SceneGroups.Members(recovered, recovered.SceneGroups[0]).Count == 2, "recovery discovers and restores complete scene groups");
-        check(ProjectStore.WebExport(project) == website && !website.Contains("SceneGroups"), "groups do not alter the website JSON schema, scene metadata or numeric visibility");
+        check(ProjectStore.StoryExport(project) == website && !website.Contains("SceneGroups"), "groups do not alter the story JSON schema, scene metadata or numeric visibility");
         var nav = new SceneNavigation(project, []);
         check(nav.Filter(new OutlineFilter(GroupId: chapter.Id)).Select(s => s.Index).SequenceEqual(new[] { 0, 1 }) && nav.Filter(new OutlineFilter(GroupId: "")).Count == 2, "outline group and ungrouped filters use cached memberships");
         check(nav.Filter(new OutlineFilter(Query: scenes[1].State, Speaker: scenes[1].Speaker, GroupId: chapter.Id)).Single().Index == 1, "group filtering intersects the existing outline search and speaker filters");

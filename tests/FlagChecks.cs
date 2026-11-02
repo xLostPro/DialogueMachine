@@ -27,9 +27,9 @@ internal static class FlagChecks
         onTwo.Choose(onTwo.Current!.Choices[0]);
         Check(onTwo.Variables["aff:lit"] == 0, "Toggle turns any non-zero value off");
 
-        var web = ProjectStore.WebExport(project);
-        Check(!web.Contains("\"Set\"") && !web.Contains("\"Toggle\"") && web.Contains("\"Affinity\"") && ProjectStore.WebExport(project, forEngine: true).Contains("\"Toggle\""), "website export drops Set/Toggle; engine handoff keeps them");
-        Check(project.ListOfCharacterStates[0].Choices[0].AfterChoiceActions.Count == 3, "website export leaves the open project unchanged");
+        var story = ProjectStore.StoryExport(project);
+        Check(story.Contains("\"Set\"") && story.Contains("\"Toggle\"") && story.Contains("\"Affinity\""), "story export preserves Set and Toggle actions for engines");
+        Check(project.ListOfCharacterStates[0].Choices[0].AfterChoiceActions.Count == 3, "story export leaves the open project unchanged");
         var round = ProjectStore.Parse(ProjectStore.Serialize(project));
         Check(round.ListOfCharacterStates[0].Choices[0].AfterChoiceActions[0].Type == "Set" && round.ListOfCharacterStates[0].Choices[0].AfterChoiceActions[0].Extra!.ContainsKey("FutureAction"), "Set actions and their unknown fields round-trip");
 

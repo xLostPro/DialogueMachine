@@ -25,7 +25,7 @@ public static class RuntimeExport
         foreach (var scene in project.ListOfCharacterStates)
             if (scene.Choices.Any(c => c.InternalId == Guid.Empty) || scene.Choices.Select(c => c.InternalId).Distinct().Count() != scene.Choices.Count)
                 throw new InvalidDataException($"Scene ‘{scene.State}’ has empty or duplicate response identities. Duplicate/recreate the affected response and re-record scenarios before runtime export.");
-        var story = ProjectStore.WebExport(project, forEngine: true);
+        var story = ProjectStore.StoryExport(project);
         return new(1, Contract, story, Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(story))),
             project.Entry, seed, numeric, new(project.TextVariables, StringComparer.Ordinal), maxOperations);
     }

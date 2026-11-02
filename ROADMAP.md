@@ -1,6 +1,6 @@
 # Roadmap
 
-**Goal:** an offline editor where writers write, connect, check and playtest branching dialogue, then export it as JSON for the website or a game. Every task should make that loop better or simpler. Don't add infrastructure for its own sake.
+**Goal:** an offline editor where writers write, connect, check and playtest branching dialogue, then export it as JSON for game engines (Unity, Unreal, Godot). Every task should make that loop better or simpler. Don't add infrastructure for its own sake.
 
 ## Now
 
@@ -14,12 +14,13 @@
 
 ## Out of scope
 
-Accounts, cloud sync, collaboration, and auto-update. The website JSON export is the integration point.
+Accounts, cloud sync, collaboration, and auto-update. The game engine JSON export is the integration point.
 
 ## Done
 
-- **OR conditions.** A choice has `RequirementMatch` (All by default, Any), switched in the Logic tab as "ALL (AND)" / "ANY (OR)". It is stored only when Any. The website file never carries it: Core splits an Any choice into one ordinary choice per requirement (same text, actions and destination; the first keeps its ID), so a website player may show several copies when more than one requirement passes. Engine handoffs keep the field and the Unity, Godot and Unreal runners honour it (new `or_conditions` conformance fixture, not yet run in Godot or Unreal).
-- **Flags and Set/Toggle actions.** A flag is an ordinary 0/1 `aff:` variable; `Set` (Amount 0/1) and `Toggle` actions write it, and flag conditions are plain `Affinity ==/!= 0/1` requirements, so the Logic tab shows them as "flag is set / not set". The website file drops Set/Toggle (it only adds amounts); engine handoffs keep them and the Unity, Godot and Unreal runners implement them (new `flags_set_toggle` conformance fixture, not yet run in Godot or Unreal).
+- **Retired website lossy export.** The separate website export and its degradation workarounds (`SplitAny` splitting OR choices and stripping Set/Toggle actions) are removed. The game engine runtime companion is now the sole story export format. Legacy website JSON files remain importable.
+- **OR conditions.** A choice has `RequirementMatch` (All by default, Any), switched in the Logic tab as "ALL (AND)" / "ANY (OR)". It is stored only when Any. Story exports preserve `RequirementMatch: Any`. The Unity, Godot and Unreal runners honour it (new `or_conditions` conformance fixture, not yet run in Godot or Unreal).
+- **Flags and Set/Toggle actions.** A flag is an ordinary 0/1 `aff:` variable; `Set` (Amount 0/1) and `Toggle` actions write it, and flag conditions are plain `Affinity ==/!= 0/1` requirements, so the Logic tab shows them as "flag is set / not set". Story exports preserve Set and Toggle actions, and the Unity, Godot and Unreal runners implement them (new `flags_set_toggle` conformance fixture, not yet run in Godot or Unreal).
 - **Character roster.** `Characters` (name + optional `#RRGGBB` swatch) is desktop-only project data, managed in Variables & characters. Roster names join speaker autocomplete, speaker rename carries the entry, and graph nodes show the colour as an accent. Scenes and website exports still carry the plain speaker string.
 - **Zoomed-out graph readability.** Below 55% zoom nodes draw only a large speaker, title, entry and end marker plus ports.
 - **1.1.1:** recovery, validation, arrangement and playtest reliability.

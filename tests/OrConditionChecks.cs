@@ -34,15 +34,13 @@ internal static class OrConditionChecks
         var round = ProjectStore.Parse(saved).ListOfCharacterStates[0].Choices[0];
         Check(round.RequirementMatch == RequirementMatch.Any && round.Requirements[1].Extra!.ContainsKey("FutureRequirement"), "ANY and requirement unknown fields round-trip");
         choice.RequirementMatch = RequirementMatch.All;
-        Check(!ProjectStore.Serialize(project).Contains("RequirementMatch") && !ProjectStore.WebExport(project, forEngine: true).Contains("RequirementMatch"), "ALL leaves the desktop file unchanged");
+        Check(!ProjectStore.Serialize(project).Contains("RequirementMatch") && !ProjectStore.StoryExport(project).Contains("RequirementMatch"), "ALL leaves the desktop file unchanged");
         choice.RequirementMatch = RequirementMatch.Any;
 
-        var web = ProjectStore.WebExport(project);
-        var webChoices = ProjectStore.Parse(web).ListOfCharacterStates[0].Choices;
-        Check(!web.Contains("RequirementMatch") && webChoices.Count == 2 && webChoices.All(c => c.Requirements.Count == 1 && c.AfterChoiceActions.Count == 1 && c.Visibility == VisibilityMode.Hide), "website export splits ANY into one ordinary choice per requirement");
-        Check(webChoices[0].InternalId == choice.InternalId && webChoices[1].InternalId != choice.InternalId && web == ProjectStore.WebExport(project), "split choices keep the first identity and are stable between exports");
-        Check(webChoices[1].Requirements[0].Extra!.ContainsKey("FutureRequirement") && scene.Choices.Count == 1 && choice.RequirementMatch == RequirementMatch.Any, "website export keeps unknown fields and leaves the open project unchanged");
-        Check(ProjectStore.WebExport(project, forEngine: true).Contains("\"RequirementMatch\": \"Any\""), "engine handoff keeps ANY");
+        var story = ProjectStore.StoryExport(project);
+        var storyChoices = ProjectStore.Parse(story).ListOfCharacterStates[0].Choices;
+        Check(story.Contains("\"RequirementMatch\": \"Any\"") && storyChoices.Count == 1 && storyChoices[0].Requirements.Count == 2, "story export preserves ANY without splitting choices");
+        Check(storyChoices[0].Requirements[1].Extra!.ContainsKey("FutureRequirement") && scene.Choices.Count == 1 && choice.RequirementMatch == RequirementMatch.Any, "story export keeps unknown fields and leaves the open project unchanged");
 
         var fingerprint = ScenarioFingerprint(scene, choice);
         choice.RequirementMatch = RequirementMatch.All;
