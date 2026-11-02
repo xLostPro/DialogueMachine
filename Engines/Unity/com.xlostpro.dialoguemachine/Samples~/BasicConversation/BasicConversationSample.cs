@@ -22,7 +22,7 @@ namespace DialogueMachine.Samples
                 var sampleHandoffJson = @"
 {
   ""SchemaVersion"": 1,
-  ""Contract"": ""dialogue-machine.website.v1"",
+  ""Contract"": ""dialogue-machine.story.v1"",
   ""StorySha256"": ""sample"",
   ""StartingScene"": ""welcome"",
   ""Seed"": 42,

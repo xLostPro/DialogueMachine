@@ -144,10 +144,10 @@ internal sealed class ExportView(Func<DialogueProject> getProject, IProjectFileP
         Update();
 
         dialog = Dialog(owner, scale, "Export runtime companion", Ui.Stack(
-            Ui.Text("Creates a self-contained companion payload (dialogue-machine.website.v1) containing the game story, initial seed, starting numeric variables, and text substitutions.", 13, true),
+            Ui.Text("Creates a self-contained companion payload (dialogue-machine.story.v1) containing the game story, initial seed, starting numeric variables, and text substitutions.", 13, true),
             Ui.Row(Ui.Field("Random seed", seedInput), Ui.Field("Maximum operations", maxOpsInput)),
             summary,
-            Ui.Text("The companion contract decouples website and headless runners from editor format changes.", 13, true)),
+            Ui.Text("The companion contract decouples engine and headless runners from editor format changes.", 13, true)),
             cancel, export);
         dialog.Opened += (_, _) => seedInput.Focus();
         if (!await dialog.ShowDialog<bool>(owner)) return false;

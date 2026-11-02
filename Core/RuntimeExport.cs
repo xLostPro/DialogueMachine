@@ -11,7 +11,7 @@ public sealed record RuntimeHandoff(int SchemaVersion, string Contract, string S
 
 public static class RuntimeExport
 {
-    public const string Contract = "dialogue-machine.website.v1";
+    public const string Contract = "dialogue-machine.story.v1";
     public static RuntimeHandoff Build(DialogueProject project, int seed = 0, int maxOperations = 1000) => Create(project, seed, maxOperations);
     public static RuntimeHandoff Create(DialogueProject project, int seed = 0, int maxOperations = 1000)
     {

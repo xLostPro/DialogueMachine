@@ -2,7 +2,7 @@
   "name": "unicode_keys",
   "handoff": {
     "SchemaVersion": 1,
-    "Contract": "dialogue-machine.website.v1",
+    "Contract": "dialogue-machine.story.v1",
     "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022unicode_keys\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[if aff:caf\\u00E9 \\u003E= 1]yes[else]no[/if] {aff:caf\\u00E9} {na\\u00EFve} [if \\u043A\\u043B\\u044E\\u0447 == 2]two[else]not two[/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022[if aff:caf\\u00E9 \\u003E= 1]Caf\\u00E9[else]None[/if]\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022unicode_keys\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
     "StorySha256": "524369e1642cb260fc174eb71720833e73acbaa38cdac38bda71f6ab9c1125a9",
     "StartingScene": "unicode_keys",

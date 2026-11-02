@@ -52,7 +52,7 @@ func _import(source_file: String, save_path: String, _options: Dictionary, _plat
 		return ERR_FILE_CORRUPT
 
 	var contract = str(parsed.get("Contract", ""))
-	if contract != "dialogue-machine.website.v1":
+	if contract != "dialogue-machine.story.v1" and contract != "dialogue-machine.website.v1":
 		return ERR_FILE_UNRECOGNIZED
 
 	var schema_version = int(parsed.get("SchemaVersion", 1))

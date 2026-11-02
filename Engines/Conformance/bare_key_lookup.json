@@ -2,7 +2,7 @@
   "name": "bare_key_lookup",
   "handoff": {
     "SchemaVersion": 1,
-    "Contract": "dialogue-machine.website.v1",
+    "Contract": "dialogue-machine.story.v1",
     "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022bare\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[if coin \\u003E= 1]inventory set[else]inventory zero[/if] | [if trust \\u003E= 1]affinity set[else]affinity zero[/if] | [if missing == 0]defaults to zero[else]not zero[/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022bare\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
     "StorySha256": "5cac1b3cda1d7b75e2fcf71a041e43e391364841a09985b8c41519032963f71c",
     "StartingScene": "bare",
