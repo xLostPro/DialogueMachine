@@ -41,7 +41,7 @@ Core never references Avalonia. The UI uses code-built controls with explicit ca
 
 ## Rules that keep data safe
 
-- **Website compatibility.** Keep the website's PascalCase field names and numeric visibility order (Hide=0, Disable=1, Always=2). Website exports use numeric enums and put the entry scene first, since the website starts at index 0. Desktop-only data (groups, templates, scenarios, starting values) lives at the project root or in `Metadata` and is left out of website exports.
+- **Engine and legacy schema compatibility.** Keep the schema's PascalCase field names and numeric visibility order (Hide=0, Disable=1, Always=2). Engine story exports use numeric enums and put the entry scene first. Desktop-only data (groups, templates, scenarios, starting values) lives at the project root or in `Metadata` and is left out of runtime story exports. Bare `{ ListOfCharacterStates: [...] }` files remain importable.
 - **Unknown fields round-trip.** `JsonExtensionData` keeps unknown fields on every model object. Don't drop them.
 - **Format version.** Only desktop format 1 exists. Files without a version are treated as format 1; other versions are rejected before replacing the open document. New desktop features should be additive fields so no migration is needed.
 - **IDs are identity.** Scene IDs are graph links; titles are just metadata. Rename through `DialogueEngine.Rename` so every link follows. `[EXIT]` means "end conversation".

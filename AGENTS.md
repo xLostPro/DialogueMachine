@@ -1,12 +1,12 @@
 # Dialogue Machine: agent guide
 
-Offline C#/.NET 10 + Avalonia desktop dialogue editor. It's separate from the website, but exports the website's JSON. Remote: `origin` (`xLostPro/DialogueMachine`), primary branch `master`.
+Offline C#/.NET 10 + Avalonia desktop dialogue editor. Exports game engine runtime JSON (Unity, Unreal, Godot). Remote: `origin` (`xLostPro/DialogueMachine`), primary branch `master`.
 
 ## Principles
 
 - Pick work from `ROADMAP.md` → Now, and update it when an item is done. Read `ARCHITECTURE.md` before structural changes.
 - Keep it simple: build the smallest change that solves the real problem. No speculative abstractions, extra docs, benchmarks or "stage" reports. Prefer deleting code over adding it.
-- Keep website JSON field names, numeric visibility order (Hide=0, Disable=1, Always=2) and unknown-field round trips. Core must not reference UI.
+- Keep schema field names, numeric visibility order (Hide=0, Disable=1, Always=2) and unknown-field round trips. Core must not reference UI.
 
 ## Verify
 

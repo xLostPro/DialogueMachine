@@ -58,7 +58,7 @@ public sealed partial class MainWindow
             if (string.IsNullOrWhiteSpace(title.Text)) { error.Text = "Give your project a title before creating it."; title.Focus(); return; }
             window!.Close(true);
         }, "primary"); create.IsDefault = true;
-        var content = Ui.Stack(Ui.Text("Start your next story", 25), Ui.Text("Give your project a name. You can change these details later.", 13, true), Ui.Field("Project title", title), Ui.Field("Character ID (for website / game export)", character), error, Ui.Row(cancel, create));
+        var content = Ui.Stack(Ui.Text("Start your next story", 25), Ui.Text("Give your project a name. You can change these details later.", 13, true), Ui.Field("Project title", title), Ui.Field("Character ID (for game engine export)", character), error, Ui.Row(cancel, create));
         content.Margin = new Thickness(26); window = Ui.Dialog(this, "New project", content, 560, 410);
         window.Opened += (_, _) => { title.Focus(); title.SelectAll(); };
         if (!await window.ShowDialog<bool>(this) || !await ConfirmReplace()) return;

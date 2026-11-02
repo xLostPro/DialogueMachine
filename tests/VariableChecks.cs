@@ -90,8 +90,8 @@ internal static class VariableChecks
         var rosterJson = ProjectStore.Serialize(roster);
         var reloaded = ProjectStore.Parse(rosterJson);
         Check(ProjectStore.Serialize(reloaded) == rosterJson && rosterJson.Contains("\"Voice\""), "roster and unknown character fields round-trip");
-        using (var web = JsonDocument.Parse(ProjectStore.WebExport(roster)))
-            Check(!web.RootElement.TryGetProperty("Characters", out _) && web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Metadata").GetProperty("speaker").GetString() == "Captain Mara", "website export omits the roster and keeps the plain speaker string");
+        using (var web = JsonDocument.Parse(ProjectStore.StoryExport(roster)))
+            Check(!web.RootElement.TryGetProperty("Characters", out _) && web.RootElement.GetProperty("ListOfCharacterStates")[0].GetProperty("Metadata").GetProperty("speaker").GetString() == "Captain Mara", "story export omits the roster and keeps the plain speaker string");
         var damaged = ProjectStore.Parse(rosterJson.Replace("\"Characters\": [", "\"Characters\": [null, {\"Name\": \" \"}, {\"Name\": \"captain mara\"}, "));
         Check(damaged.Characters.Count == 2, "load drops null, blank and duplicate roster entries");
         Check(ProjectStore.Parse("{\"ListOfCharacterStates\": []}").Characters.Count == 0, "projects without a roster still open");

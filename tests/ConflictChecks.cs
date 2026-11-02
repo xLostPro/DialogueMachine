@@ -64,7 +64,7 @@ internal static class ConflictChecks
         var edited = ProjectStore.Clone(story); edited.ListOfCharacterStates[0].Text = "Local work";
         var written = ProjectFiles.Save(path, ProjectStore.Serialize(edited), baseline.Version);
         check(written == ProjectFiles.Read(path).Version && ProjectStore.Serialize(ProjectFiles.Read(path).Parse()) == ProjectStore.Serialize(edited), "successful guarded save returns its written baseline and preserves groups and unknown fields");
-        check((int)ProjectFiles.Read(path).Parse().ListOfCharacterStates[0].Choices[0].Visibility == 0 && ProjectStore.WebExport(edited).Contains("\"Visibility\": 0"), "conflict-safe persistence retains website numeric visibility ordering");
+        check((int)ProjectFiles.Read(path).Parse().ListOfCharacterStates[0].Choices[0].Visibility == 0 && ProjectStore.StoryExport(edited).Contains("\"Visibility\": 0"), "conflict-safe persistence retains numeric visibility ordering");
         if (OperatingSystem.IsWindows())
         {
             using var locked = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
