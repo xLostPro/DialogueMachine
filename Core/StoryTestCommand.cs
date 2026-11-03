@@ -257,6 +257,14 @@ public static class ConformanceFixtures
         unicode.Choices = [Reply(1, "→ Ça va, {player_name}?", "[EXIT]")];
         var unicodeProject = Project(unicode); unicodeProject.TextVariables["player_name"] = "Zoë 🚢";
         Case("unicode_text", unicodeProject, [Begin, Next, SetText("player_name", "李雷"), Next, Pick(Id(1))]);
+
+        var prop = Scene("prop", "First inspection of the bed.\n@Hero [hero_groggy]: Stop talking about my bed.\nFinal inspection as {player_calling}.", "prop_hub", false);
+        prop.Metadata["delivery"] = "escalate"; prop.Metadata["portrait"] = "narrator_calm";
+        var propHub = Scene("prop_hub", "You stand beside the bed as {player_calling}.", "[EXIT]");
+        propHub.Choices = [Reply(1, "Inspect again", "prop"), Reply(2, "Become Plumber", "prop")];
+        propHub.Choices[1].AfterChoiceActions = [Raise("SetText", "player_calling", "Plumber")];
+        var propProject = Project(prop, propHub); propProject.TextVariables["player_calling"] = "Noble Warrior";
+        Case("set_text_escalate_and_page_speakers", propProject, [Begin, Next, Pick(Id(1)), Next, Pick(Id(2)), Next, Pick(Id(1)), Next, Next]);
         return fixtures;
     }
 

@@ -46,24 +46,44 @@ public static class VariableStore
         return keys.Order(StringComparer.Ordinal);
     }
 
-    /// <summary>Flag IDs (no prefix): every variable a Set or Toggle action writes. A flag is an ordinary 0/1 affinity variable.</summary>
+    /// <summary>Flag IDs (no prefix): every variable a 0/1 Set or Toggle action writes. A flag is an ordinary 0/1 affinity variable.</summary>
     public static IReadOnlyList<string> DiscoverFlags(DialogueProject p)
         => p.ListOfCharacterStates.Concat(p.SceneTemplates.Select(t => t.Scene)).Concat(p.ChoiceTemplates.Select(t => new DialogueState { Choices = [t.Choice] }))
-            .SelectMany(Actions).Where(a => a.Type is "Set" or "Toggle" && !string.IsNullOrWhiteSpace(a.TargetId))
+            .SelectMany(Actions).Where(a => (a.Type == "Toggle" || (a.Type == "Set" && a.Amount is 0 or 1 && a.Parameter != "value")) && !string.IsNullOrWhiteSpace(a.TargetId))
             .Select(a => a.TargetId).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+
+    /// <summary>Every distinct non-empty portrait/expression ID used in scene metadata across the project.</summary>
+    public static IReadOnlyList<string> DiscoverPortraits(DialogueProject p)
+        => p.ListOfCharacterStates
+            .Select(s => s.Metadata.GetValueOrDefault("portrait", ""))
+            .Where(pt => !string.IsNullOrWhiteSpace(pt))
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .ToList();
 
     /// <summary>A requirement the editor shows as "flag is set / not set": affinity ==/!= 0 or 1 on a known flag.</summary>
     public static bool IsFlagCondition(Requirement r, IReadOnlyCollection<string> flags)
         => r.Type == "Affinity" && r.Operator is "==" or "!=" && r.Value is "0" or "1" && flags.Contains(r.TargetId);
 
+    /// <summary>Every text variable key declared in TextVariables or written by a SetText action.</summary>
+    public static IEnumerable<string> DiscoverText(DialogueProject p)
+    {
+        var keys = new HashSet<string>(p.TextVariables.Keys, StringComparer.Ordinal);
+        foreach (var s in p.ListOfCharacterStates)
+            foreach (var a in Actions(s))
+                if (a.Type == "SetText" && !string.IsNullOrWhiteSpace(a.TargetId)) keys.Add(a.TargetId);
+        return keys.Order(StringComparer.Ordinal);
+    }
+
     public static List<VariableReference> References(DialogueProject p, string key, bool textVariable = false)
     {
         var references = new List<VariableReference>();
         var known = DiscoverNumeric(p).ToHashSet(StringComparer.Ordinal);
+        var knownText = DiscoverText(p).ToHashSet(StringComparer.Ordinal);
         void Text(string state, string value, string field)
         {
             foreach (Match m in Substitutions.Matches(value))
-                if (m.Groups[1].Value == key && (textVariable || !p.TextVariables.ContainsKey(key))) references.Add(new(state, field));
+                if (m.Groups[1].Value == key && (textVariable || !knownText.Contains(key))) references.Add(new(state, field));
             if (!textVariable)
                 foreach (Match m in Conditions.Matches(value))
                     if (ResolveConditionKey(m.Groups[2].Value, known) == key) references.Add(new(state, field + " condition"));
@@ -71,13 +91,25 @@ public static class VariableStore
         foreach (var s in p.ListOfCharacterStates)
         {
             Text(s.State, s.Text, "Dialogue");
-            if (!textVariable)
+            if (textVariable)
+            {
+                foreach (var a in s.DefaultAfterActions)
+                    if (a.Type == "SetText" && a.TargetId == key) references.Add(new(s.State, "Scene exit action"));
+            }
+            else
+            {
                 foreach (var a in s.DefaultAfterActions)
                     if (DialogueRules.IsVariableAction(a.Type) && DialogueEngine.Key(a.Type, a.TargetId) == key) references.Add(new(s.State, "Scene exit action"));
+            }
             for (var i = 0; i < s.Choices.Count; i++)
             {
                 var c = s.Choices[i]; Text(s.State, c.ButtonText, $"Choice {i + 1} response");
-                if (textVariable) continue;
+                if (textVariable)
+                {
+                    foreach (var a in c.AfterChoiceActions)
+                        if (a.Type == "SetText" && a.TargetId == key) references.Add(new(s.State, $"Choice {i + 1} action"));
+                    continue;
+                }
                 foreach (var r in c.Requirements)
                     if (r.Type is "Affinity" or "Inventory" && DialogueEngine.Key(r.Type, r.TargetId) == key) references.Add(new(s.State, $"Choice {i + 1} condition"));
                 foreach (var a in c.AfterChoiceActions)
@@ -109,11 +141,12 @@ public static class VariableStore
         var templateScopes = TemplateScenes(p).Select(t => (t.Scene, Known: DiscoverNumeric(TemplateContext(p, t.Scene)).ToHashSet(StringComparer.Ordinal))).ToList();
         var scopes = p.ListOfCharacterStates.Select(s => (Scene: s, Known: liveKnown)).Concat(templateScopes).ToList();
         var known = templateScopes.SelectMany(s => s.Known).Concat(liveKnown).ToHashSet(StringComparer.Ordinal);
-        if (!(textVariable ? p.TextVariables.ContainsKey(oldKey) : known.Contains(oldKey))) throw new ArgumentException("The variable does not exist.");
+        var knownText = DiscoverText(p).ToHashSet(StringComparer.Ordinal);
+        if (!(textVariable ? knownText.Contains(oldKey) : known.Contains(oldKey))) throw new ArgumentException("The variable does not exist.");
         if (!(textVariable ? ValidTextId(newKey) : ValidNumericId(newKey))) throw new ArgumentException("Use a valid variable ID. Numeric IDs start with aff: or inv:; text IDs contain letters, digits, dots, underscores or hyphens.");
         if (!textVariable && (oldKey.StartsWith("aff:", StringComparison.Ordinal) || oldKey.StartsWith("inv:", StringComparison.Ordinal)) && oldKey[..4] != newKey[..4]) throw new ArgumentException("Renaming keeps the variable's affinity or inventory type.");
         if (oldKey == newKey) return;
-        if (known.Contains(newKey) || p.TextVariables.ContainsKey(newKey)) throw new ArgumentException("That variable ID already exists.");
+        if (known.Contains(newKey) || knownText.Contains(newKey)) throw new ArgumentException("That variable ID already exists.");
         var renamedScopes = scopes.Select(s => s.Known).Distinct().ToDictionary(keys => keys, keys =>
         {
             var renamed = new HashSet<string>(keys, StringComparer.Ordinal); renamed.Remove(oldKey); renamed.Add(newKey); return renamed;
@@ -135,14 +168,14 @@ public static class VariableStore
         {
             s.Text = Rewrite(s.Text, scopeKeys);
             foreach (var c in s.Choices) c.ButtonText = Rewrite(c.ButtonText, scopeKeys);
-            if (textVariable) continue;
+            if (textVariable) { foreach (var a in Actions(s)) if (a.Type == "SetText" && a.TargetId == oldKey) a.TargetId = newKey; continue; }
             var target = newKey[4..];
             foreach (var a in Actions(s))
                 if (DialogueRules.IsVariableAction(a.Type) && DialogueEngine.Key(a.Type, a.TargetId) == oldKey) a.TargetId = target;
             foreach (var r in s.Choices.SelectMany(c => c.Requirements))
                 if (r.Type is "Affinity" or "Inventory" && DialogueEngine.Key(r.Type, r.TargetId) == oldKey) r.TargetId = target;
         }
-        if (textVariable) { var value = p.TextVariables[oldKey]; p.TextVariables.Remove(oldKey); p.TextVariables[newKey] = value; }
+        if (textVariable) { var value = p.TextVariables.GetValueOrDefault(oldKey, ""); p.TextVariables.Remove(oldKey); p.TextVariables[newKey] = value; }
         else { var value = p.InitialVariables.GetValueOrDefault(oldKey); p.InitialVariables.Remove(oldKey); p.InitialVariables[newKey] = value; }
         foreach (var scenario in p.PlaytestScenarios)
         {

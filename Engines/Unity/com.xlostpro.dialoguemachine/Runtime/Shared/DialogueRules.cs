@@ -98,11 +98,30 @@ namespace DialogueMachine.Runtime
 
         public static string[] SplitPages(string text) => text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
+        private static readonly Regex PageHeaderPattern = new Regex(@"^\s*@([^:\[\]\r\n]+?)(?:\s*\[([^\[\]\r\n]+)\])?\s*:\s*(.*)$", RegexOptions.Singleline);
+
+        public static void ParsePageHeader(string rawPage, string defaultSpeaker, string defaultPortrait, out string speaker, out string portrait, out string text)
+        {
+            speaker = string.IsNullOrEmpty(defaultSpeaker) ? "Character" : defaultSpeaker;
+            portrait = defaultPortrait ?? "";
+            text = rawPage ?? "";
+            if (string.IsNullOrEmpty(rawPage)) return;
+            var m = PageHeaderPattern.Match(rawPage);
+            if (!m.Success) return;
+            var parsedSpeaker = m.Groups[1].Value.Trim();
+            if (string.IsNullOrEmpty(parsedSpeaker)) return;
+            speaker = parsedSpeaker;
+            if (m.Groups[2].Success) portrait = m.Groups[2].Value.Trim();
+            text = m.Groups[3].Value;
+        }
+
         // A random line is picked once per scene visit, so refreshing text never advances the stream.
-        public static string[] BuildPages(string text, bool sayItAll, ref ulong randomState, ref int randomLine)
+        public static string[] BuildPages(string text, bool sayItAll, ref ulong randomState, ref int randomLine, string delivery = null, int visitIndex = 0)
         {
             var pages = SplitPages(text);
             if (pages.Length == 0) return new[] { NoDialogue };
+            if (string.Equals(delivery, "escalate", StringComparison.OrdinalIgnoreCase))
+                return new[] { pages[Math.Clamp(visitIndex, 0, pages.Length - 1)] };
             if (sayItAll) return pages;
             if (randomLine < 0) randomLine = SplitMix64(ref randomState, pages.Length);
             return new[] { pages[Math.Min(randomLine, pages.Length - 1)] };

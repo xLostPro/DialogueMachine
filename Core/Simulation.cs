@@ -25,6 +25,30 @@ public sealed class Simulation
     public StoryEnding? Ending { get; private set; }
     public int PageIndex { get; private set; }
     public string[] Pages { get; private set; } = [];
+    private string[] rawPages = [];
+    private Dictionary<string, int> visits = new(StringComparer.Ordinal);
+    private int currentVisitIndex;
+    public string CurrentSpeaker
+    {
+        get
+        {
+            if (Current is null) return "";
+            if (rawPages.Length == 0) return Current.Speaker;
+            DialogueRules.ParsePageHeader(rawPages[PageIndex], Current.Speaker, Current.Metadata.GetValueOrDefault("portrait", ""), out var sp, out _, out _);
+            return sp;
+        }
+    }
+    public string CurrentPortrait
+    {
+        get
+        {
+            if (Current is null) return "";
+            var defPortrait = Current.Metadata.GetValueOrDefault("portrait", "");
+            if (rawPages.Length == 0) return defPortrait;
+            DialogueRules.ParsePageHeader(rawPages[PageIndex], Current.Speaker, defPortrait, out _, out var pt, out _);
+            return pt;
+        }
+    }
     public List<string> Transcript { get; private set; } = [];
     public int Seed { get; }
     public ulong RandomState => random.State;
@@ -51,7 +75,7 @@ public sealed class Simulation
         Project = ProjectStore.Clone(p); scenes = Project.ListOfCharacterStates.ToDictionary(s => s.State, StringComparer.Ordinal);
         Seed = seed; random = new(DialogueRules.SeedState(seed)); this.start = start ?? p.Entry; record = recordHistory; keepHistory = recordHistory && retainHistory;
         startingVariables = DialogueEngine.DiscoverVariables(p).ToDictionary(k => k, k => k.StartsWith("inv:", StringComparison.Ordinal) ? Math.Max(0, p.InitialVariables.GetValueOrDefault(k)) : p.InitialVariables.GetValueOrDefault(k), StringComparer.Ordinal);
-        startingText = new(p.TextVariables, StringComparer.Ordinal);
+        startingText = VariableStore.DiscoverText(p).ToDictionary(k => k, k => p.TextVariables.GetValueOrDefault(k, ""), StringComparer.Ordinal);
         foreach (var (key, value) in numericOverrides ?? new Dictionary<string, int>())
         {
             if (!startingVariables.ContainsKey(key)) throw new ArgumentException($"Starting numeric variable ‘{key}’ no longer exists. Edit the scenario overrides.");
@@ -69,14 +93,16 @@ public sealed class Simulation
         Project = source.Project; scenes = source.scenes; start = source.start; Seed = source.Seed; record = false;
         startingVariables = source.startingVariables; startingText = source.startingText;
         random = new(source.random.State); Current = source.Current; Ending = source.Ending; PageIndex = source.PageIndex;
-        randomLine = source.randomLine; Pages = source.Pages.ToArray(); Variables = new(source.Variables); TextVariables = new(source.TextVariables);
+        randomLine = source.randomLine; rawPages = source.rawPages.ToArray(); Pages = source.Pages.ToArray();
+        visits = new(source.visits, StringComparer.Ordinal); currentVisitIndex = source.currentVisitIndex;
+        Variables = new(source.Variables); TextVariables = new(source.TextVariables);
     }
     // Analysis shares the isolated read-only story and copies only runtime state; no trace/history tree.
     internal Simulation Fork() => new(this);
     public void Restart()
     {
         Variables = new(startingVariables); TextVariables = new(startingText); random.State = DialogueRules.SeedState(Seed);
-        history.Clear(); Trace.Clear(); ReplaySteps.Clear(); Transcript.Clear(); Events.Clear(); Ending = null; Enter(start);
+        visits.Clear(); currentVisitIndex = 0; history.Clear(); Trace.Clear(); ReplaySteps.Clear(); Transcript.Clear(); Events.Clear(); Ending = null; Enter(start);
     }
     private void Add(string kind, Guid? choiceId = null, string? text = null, int? page = null, string? key = null,
         int? before = null, int? after = null, string? eventType = null, string? eventId = null, string? parameter = null, string? destination = null)
@@ -104,7 +130,7 @@ public sealed class Simulation
         if (Current is not null && previous is not null && previous != Pages[PageIndex])
         {
             Add("PreviewRefresh", text: Pages[PageIndex], page: PageIndex);
-            if (record) { Transcript.Add("— Preview refreshed —"); Transcript.Add(Current.Speaker + ": " + DialogueEngine.PlainText(Pages[PageIndex])); }
+            if (record) { Transcript.Add("— Preview refreshed —"); Transcript.Add(CurrentSpeaker + ": " + DialogueEngine.PlainText(Pages[PageIndex])); }
         }
     }
     public void SetVariable(string key, int value)
@@ -126,7 +152,7 @@ public sealed class Simulation
     }
     public void RerollLine()
     {
-        if (Current is null || Current.SayItAll) return;
+        if (Current is null || Current.SayItAll || Current.Metadata.GetValueOrDefault("delivery") == "escalate") return;
         SaveSnapshot(); Step("Reroll"); randomLine = -1;
         if (record) Transcript.Add("— Random line rerolled —"); RefreshPreview(); Add("Reroll");
     }
@@ -134,23 +160,33 @@ public sealed class Simulation
     {
         if (Current is null) return;
         var text = DialogueEngine.ResolveText(Current.Text, Variables, TextVariables);
-        Pages = DialogueRules.BuildPages(text, Current.SayItAll, ref random.State, ref randomLine);
+        var delivery = Current.Metadata.GetValueOrDefault("delivery");
+        rawPages = DialogueRules.BuildPages(text, Current.SayItAll, ref random.State, ref randomLine, delivery, currentVisitIndex);
+        Pages = new string[rawPages.Length];
+        var defPortrait = Current.Metadata.GetValueOrDefault("portrait", "");
+        for (var i = 0; i < rawPages.Length; i++)
+        {
+            DialogueRules.ParsePageHeader(rawPages[i], Current.Speaker, defPortrait, out _, out _, out var pageText);
+            Pages[i] = pageText;
+        }
         PageIndex = Math.Min(PageIndex, Pages.Length - 1);
     }
     private void Deliver()
     {
         Add("Dialogue", text: Pages[PageIndex], page: PageIndex);
-        if (record) Transcript.Add(Current!.Speaker + ": " + DialogueEngine.PlainText(Pages[PageIndex]));
+        if (record) Transcript.Add(CurrentSpeaker + ": " + DialogueEngine.PlainText(Pages[PageIndex]));
     }
     private void Enter(string? id)
     {
         if (string.IsNullOrWhiteSpace(id) || id == "[EXIT]")
         {
             Ending = new(Current?.State ?? start, Trace.LastOrDefault(t => t.Kind == "Choice" && t.SceneId == Current?.State)?.ChoiceId);
-            Add("Ending", Ending.ChoiceId, destination: "[EXIT]"); Current = null; Pages = []; PageIndex = 0;
+            Add("Ending", Ending.ChoiceId, destination: "[EXIT]"); Current = null; rawPages = []; Pages = []; PageIndex = 0;
             if (record) Transcript.Add("— Conversation ended —"); return;
         }
         Current = scenes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"Scene ‘{id}’ does not exist.");
+        currentVisitIndex = visits.GetValueOrDefault(Current.State);
+        visits[Current.State] = currentVisitIndex + 1;
         PageIndex = 0; randomLine = -1; RebuildText(); Add("SceneVisit"); Deliver();
         if (Current.Type == "Shop")
         {
@@ -187,7 +223,7 @@ public sealed class Simulation
         if (string.IsNullOrWhiteSpace(id) || id == "[EXIT]")
         {
             Ending = new(Current!.State, choice?.InternalId); Add("Ending", choice?.InternalId, destination: "[EXIT]");
-            Current = null; Pages = []; PageIndex = 0; if (record) Transcript.Add("— Conversation ended —");
+            Current = null; rawPages = []; Pages = []; PageIndex = 0; if (record) Transcript.Add("— Conversation ended —");
         }
         else Enter(id);
     }
@@ -200,6 +236,14 @@ public sealed class Simulation
                 Add("Integration", eventType: a.Type, eventId: a.TargetId, parameter: a.Parameter);
                 if (record) Events.Add($"{a.Type}: {a.TargetId}({a.Parameter}) — logged only"); continue;
             }
+            if (a.Type == "SetText")
+            {
+                var beforeText = TextVariables.GetValueOrDefault(a.TargetId, "");
+                var afterText = a.Parameter ?? "";
+                TextVariables[a.TargetId] = afterText;
+                Add("TextChange", key: a.TargetId, text: afterText, parameter: beforeText);
+                continue;
+            }
             var key = DialogueEngine.Key(a.Type, a.TargetId); var before = Variables.GetValueOrDefault(key);
             if (!DialogueRules.IsVariableAction(a.Type)) continue;
             var amount = DialogueRules.ApplyAction(a.Type, before, a.Amount);
@@ -209,16 +253,17 @@ public sealed class Simulation
     private void SaveSnapshot()
     {
         if (!keepHistory) return;
-        history.Push(new(Current?.State, Ending, PageIndex, randomLine, RandomState, Pages.ToArray(), new(Variables), new(TextVariables), Events.Count, Transcript.Count, Trace.Count, ReplaySteps.Count));
+        history.Push(new(Current?.State, Ending, PageIndex, randomLine, RandomState, rawPages.ToArray(), Pages.ToArray(), new(visits, StringComparer.Ordinal), currentVisitIndex, new(Variables), new(TextVariables), Events.Count, Transcript.Count, Trace.Count, ReplaySteps.Count));
     }
     public void Back()
     {
         if (!history.TryPop(out var s)) return;
         Current = s.Id is null ? null : scenes.GetValueOrDefault(s.Id); Ending = s.Ending; PageIndex = s.Page; randomLine = s.RandomLine;
-        random.State = s.RandomState; Pages = s.Pages; Variables = s.Variables; TextVariables = s.TextVariables;
+        random.State = s.RandomState; rawPages = s.RawPages; Pages = s.Pages; visits = s.Visits; currentVisitIndex = s.CurrentVisitIndex;
+        Variables = s.Variables; TextVariables = s.TextVariables;
         Events.RemoveRange(s.Events, Events.Count - s.Events); Transcript.RemoveRange(s.Transcript, Transcript.Count - s.Transcript);
         Trace.RemoveRange(s.Trace, Trace.Count - s.Trace); ReplaySteps.RemoveRange(s.Steps, ReplaySteps.Count - s.Steps);
     }
-    private sealed record Snapshot(string? Id, StoryEnding? Ending, int Page, int RandomLine, ulong RandomState, string[] Pages,
-        Dictionary<string, int> Variables, Dictionary<string, string> TextVariables, int Events, int Transcript, int Trace, int Steps);
+    private sealed record Snapshot(string? Id, StoryEnding? Ending, int Page, int RandomLine, ulong RandomState, string[] RawPages, string[] Pages,
+        Dictionary<string, int> Visits, int CurrentVisitIndex, Dictionary<string, int> Variables, Dictionary<string, string> TextVariables, int Events, int Transcript, int Trace, int Steps);
 }

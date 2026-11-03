@@ -64,9 +64,11 @@ public sealed class PlaytestWindow : Window
         else
         {
             location.Text = current.State + "  ·  Page " + (simulation.PageIndex + 1) + " of " + simulation.Pages.Length;
-            var name = Ui.Text(current.Speaker.ToUpperInvariant(), 12); name.Foreground = Ui.Brush("MintInk"); name.LetterSpacing = 1.5; story.Children.Add(name);
+            var portrait = simulation.CurrentPortrait;
+            var speakerLabel = string.IsNullOrWhiteSpace(portrait) ? simulation.CurrentSpeaker.ToUpperInvariant() : $"{simulation.CurrentSpeaker.ToUpperInvariant()} ({portrait})";
+            var name = Ui.Text(speakerLabel, 12); name.Foreground = Ui.Brush("MintInk"); name.LetterSpacing = 1.5; story.Children.Add(name);
             story.Children.Add(RichDialogue.Create(simulation.Pages[simulation.PageIndex]));
-            if (!current.SayItAll) story.Children.Add(Ui.Button("Reroll line", () => { simulation.RerollLine(); Refresh(); }, "subtle"));
+            if (!current.SayItAll && current.Metadata.GetValueOrDefault("delivery") != "escalate") story.Children.Add(Ui.Button("Reroll line", () => { simulation.RerollLine(); Refresh(); }, "subtle"));
             if (current.Type == "Shop") story.Children.Add(Ui.Card(Ui.Text("Shop preview · " + current.ShopData.ShopId + "\nYour game handles this shop after export.", 13, true)));
             if (simulation.MorePages) { advance = () => { simulation.NextPage(); Refresh(); }; story.Children.Add(Ui.Button("Continue →", advance, "primary")); }
             else

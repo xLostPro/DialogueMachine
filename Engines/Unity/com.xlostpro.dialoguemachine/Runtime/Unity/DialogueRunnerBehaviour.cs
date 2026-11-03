@@ -92,6 +92,7 @@ namespace DialogueMachine.Runtime.Unity
         public IDialogueVariables Variables => runner?.Variables;
         public string CurrentSceneId => runner?.CurrentSceneId;
         public string Speaker => runner?.Speaker;
+        public string Portrait => runner?.Portrait;
         public string Title => runner?.Title;
         public bool IsEnded => runner == null || runner.IsEnded;
         public string CurrentPage => runner?.CurrentPage;
@@ -176,6 +177,13 @@ namespace DialogueMachine.Runtime.Unity
 
         public void Choose(Guid choiceId) => Choose(choiceId.ToString());
 
+        public BarkLine EvaluateBark(string sceneId)
+        {
+            if (runner == null) InitializeRunner();
+            if (story != null && !string.IsNullOrEmpty(story.HandoffJson)) runner.Load(story.HandoffJson);
+            return runner.EvaluateBark(sceneId);
+        }
+
         public void ReplaceStory(Handoff newHandoff)
         {
             if (runner == null) return;
@@ -242,8 +250,9 @@ namespace DialogueMachine.Runtime.Unity
         private void ReportState(string status, string choiceId)
         {
             OnRunnerStateChanged?.Invoke(this, status, choiceId);
-#if DEVELOPMENT_BUILD && !UNITY_EDITOR && !UNITY_WEBGL
-            StandaloneLiveLinkBridge.SendRunnerState(this, status, choiceId);
+#if DEBUG && !UNITY_EDITOR && !UNITY_WEBGL
+            if (Debug.isDebugBuild)
+                StandaloneLiveLinkBridge.SendRunnerState(this, status, choiceId);
 #endif
         }
 
@@ -281,7 +290,7 @@ namespace DialogueMachine.Runtime.Unity
             return result;
         }
 
-#if DEVELOPMENT_BUILD && !UNITY_EDITOR && !UNITY_WEBGL
+#if DEBUG && !UNITY_EDITOR && !UNITY_WEBGL
         private static class StandaloneLiveLinkBridge
         {
             private static System.Net.WebSockets.ClientWebSocket socket;

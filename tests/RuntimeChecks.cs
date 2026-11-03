@@ -140,6 +140,29 @@ internal static class RuntimeChecks
         saved.Start(); saved.RestoreState(endedSave);
         check(saved.IsEnded && saved.CurrentSceneId is null, "an ended conversation restores as ended");
         throws(() => saved.RestoreState("""{"sceneId":"missing"}"""), "restoring into a missing scene is refused");
+
+        // EvaluateBark, SetText, escalate delivery and per-page @Speaker [portrait]: overrides
+        var barkScene = Templates.Scene("bark_bed", "Bed", "Narrator", "Visit one.\n@Hero [hero_groggy]: Visit two as {player_calling}.\nVisit three.", 0, 0);
+        barkScene.SayItAll = false; barkScene.Metadata["delivery"] = "escalate"; barkScene.Metadata["portrait"] = "narrator_smug"; barkScene.Metadata["entry"] = "true";
+        first.Choices[1].AfterChoiceActions.Add(new() { Type = "SetText", TargetId = "player_calling", Parameter = "Plumber" });
+        second.Text = "Multi-page banter.\n@Hero [hero_confused]: Wait, what?\n@Narrator [narrator_panicked]: Nothing!";
+        second.Metadata["portrait"] = "narrator_calm";
+        project.TextVariables["player_calling"] = "Noble Warrior";
+        project.ListOfCharacterStates.Add(barkScene);
+        var barkRunner = new DialogueRunner(); barkRunner.Load(Parse(project)); barkRunner.Start();
+        var b1 = barkRunner.EvaluateBark("bark_bed");
+        check(b1.Text == "Visit one." && b1.Speaker == "Narrator" && b1.Portrait == "narrator_smug" && barkRunner.CurrentSceneId == "first" && !barkRunner.IsEnded, "EvaluateBark resolves line 1 without interrupting active conversation");
+        barkRunner.Continue(); barkRunner.Continue(); barkRunner.Choose(open);
+        check(barkRunner.Variables.GetText("player_calling") == "Plumber", "SetText action updates text variable on transition");
+        var b2 = barkRunner.EvaluateBark("bark_bed");
+        check(b2.Text == "Visit two as Plumber." && b2.Speaker == "Hero" && b2.Portrait == "hero_groggy", "EvaluateBark advances escalation visit count and parses @Speaker [portrait]: override");
+        var b3 = barkRunner.EvaluateBark("bark_bed"); var b4 = barkRunner.EvaluateBark("bark_bed");
+        check(b3.Text == "Visit three." && b4.Text == "Visit three.", "escalate delivery clamps to the final line on subsequent visits");
+        check(barkRunner.CurrentSceneId == "second" && barkRunner.Speaker == "Guide" && barkRunner.Portrait == "narrator_calm" && barkRunner.CurrentPage == "Multi-page banter.", "page 0 uses scene speaker and portrait");
+        barkRunner.Continue();
+        check(barkRunner.Speaker == "Hero" && barkRunner.Portrait == "hero_confused" && barkRunner.CurrentMetadata["portrait"] == "hero_confused" && barkRunner.CurrentPage == "Wait, what?", "page 1 applies @Hero [hero_confused]: override and strips header from CurrentPage");
+        barkRunner.Continue();
+        check(barkRunner.Speaker == "Narrator" && barkRunner.Portrait == "narrator_panicked" && barkRunner.CurrentPage == "Nothing!", "page 2 applies @Narrator [narrator_panicked]: override");
     }
 
     // The version in DialogueMachine.csproj; every engine plugin has to match it.
@@ -159,8 +182,19 @@ internal static class RuntimeChecks
         check(pkg["unity"]?.GetValue<string>() == "2022.3", "Unity package targets Unity 2022.3");
         var expectedVersion = ProjectVersion(check);
         check(pkg["version"]?.GetValue<string>() == expectedVersion, "Unity package version matches DialogueMachine.csproj");
-        var runtimeVersion = System.Text.RegularExpressions.Regex.Match(File.ReadAllText("Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs"), @"PluginVersion = ""([^""]+)""");
+        var runnerBehSource = File.ReadAllText("Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs");
+        var runtimeVersion = System.Text.RegularExpressions.Regex.Match(runnerBehSource, @"PluginVersion = ""([^""]+)""");
         check(runtimeVersion.Success && runtimeVersion.Groups[1].Value == expectedVersion, "Unity runtime PluginVersion matches DialogueMachine.csproj");
+        check(!runnerBehSource.Contains("DEVELOPMENT_BUILD"), "Unity runtime avoids DEVELOPMENT_BUILD define inside asmdef (UAC0009)");
+
+        var pkgDir = Path.GetFullPath("Engines/Unity/com.xlostpro.dialoguemachine");
+        foreach (var entry in Directory.EnumerateFileSystemEntries(pkgDir, "*", SearchOption.AllDirectories))
+        {
+            var rel = Path.GetRelativePath(pkgDir, entry).Replace('\\', '/');
+            if (rel.StartsWith("Samples~", StringComparison.Ordinal) || rel.EndsWith(".meta", StringComparison.Ordinal)) continue;
+            var metaPath = entry + ".meta";
+            check(File.Exists(metaPath) && System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(metaPath), @"\bguid:\s*[0-9a-f]{32}\b"), $"Unity package entry {rel} has a valid .meta file");
+        }
 
         // RichText checks
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity(null) == "", "RichText converts null to empty");

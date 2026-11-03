@@ -1,0 +1,239 @@
+{
+  "name": "set_text_escalate_and_page_speakers",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.story.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022prop\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022First inspection of the bed.\\n@Hero [hero_groggy]: Stop talking about my bed.\\nFinal inspection as {player_calling}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022prop_hub\u0022,\n      \u0022SayItAll\u0022: false,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022prop\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022,\n        \u0022delivery\u0022: \u0022escalate\u0022,\n        \u0022portrait\u0022: \u0022narrator_calm\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022prop_hub\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022You stand beside the bed as {player_calling}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Inspect again\u0022,\n          \u0022NextStateId\u0022: \u0022prop\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000002\u0022,\n          \u0022ButtonText\u0022: \u0022Become Plumber\u0022,\n          \u0022NextStateId\u0022: \u0022prop\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [\n            {\n              \u0022Type\u0022: \u0022SetText\u0022,\n              \u0022TargetId\u0022: \u0022player_calling\u0022,\n              \u0022Amount\u0022: 0,\n              \u0022Parameter\u0022: \u0022Plumber\u0022\n            }\n          ],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022prop_hub\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "431b7387e39b2264bc0c0311f7b44a468f9fe5f6c4ab999400fa5a8f2ad682cd",
+    "StartingScene": "prop",
+    "Seed": 0,
+    "NumericValues": {},
+    "TextValues": {
+      "player_name": "Traveller",
+      "player_calling": "Noble Warrior"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000002"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "prop",
+      "ended": false,
+      "page": "First inspection of the bed.",
+      "plain": "First inspection of the bed.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_calling": "Noble Warrior",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop_hub",
+      "ended": false,
+      "page": "You stand beside the bed as Noble Warrior.",
+      "plain": "You stand beside the bed as Noble Warrior.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Inspect again",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Become Plumber",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "player_calling": "Noble Warrior",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop",
+      "ended": false,
+      "page": "Stop talking about my bed.",
+      "plain": "Stop talking about my bed.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_calling": "Noble Warrior",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop_hub",
+      "ended": false,
+      "page": "You stand beside the bed as Noble Warrior.",
+      "plain": "You stand beside the bed as Noble Warrior.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Inspect again",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Become Plumber",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "player_calling": "Noble Warrior",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop",
+      "ended": false,
+      "page": "Final inspection as Plumber.",
+      "plain": "Final inspection as Plumber.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_calling": "Plumber",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop_hub",
+      "ended": false,
+      "page": "You stand beside the bed as Plumber.",
+      "plain": "You stand beside the bed as Plumber.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Inspect again",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Become Plumber",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "player_calling": "Plumber",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop",
+      "ended": false,
+      "page": "Final inspection as Plumber.",
+      "plain": "Final inspection as Plumber.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_calling": "Plumber",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "prop_hub",
+      "ended": false,
+      "page": "You stand beside the bed as Plumber.",
+      "plain": "You stand beside the bed as Plumber.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Inspect again",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Become Plumber",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "player_calling": "Plumber",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "player_calling": "Plumber",
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

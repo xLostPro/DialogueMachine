@@ -347,10 +347,37 @@ static func split_pages(text: String) -> Array[String]:
 				pos += 1
 	return pages
 
-static func build_pages(text: String, say_it_all: bool, random_state_ref: Array, random_line_ref: Array) -> Array[String]:
+static func parse_page_header(raw_page: String, default_speaker: String, default_portrait: String) -> Array:
+	var sp = "Character" if default_speaker.is_empty() else default_speaker
+	var pt = default_portrait
+	if raw_page.is_empty():
+		return [sp, pt, ""]
+	var trimmed = raw_page.lstrip(" \t")
+	if not trimmed.begins_with("@"):
+		return [sp, pt, raw_page]
+	var colon = trimmed.find(":")
+	if colon == -1:
+		return [sp, pt, raw_page]
+	var prefix = trimmed.substr(1, colon - 1).strip_edges()
+	var open_b = prefix.find("[")
+	var parsed_sp = prefix
+	var parsed_pt = pt
+	if open_b != -1:
+		if not prefix.ends_with("]"):
+			return [sp, pt, raw_page]
+		parsed_sp = prefix.substr(0, open_b).strip_edges()
+		parsed_pt = prefix.substr(open_b + 1, prefix.length() - open_b - 2).strip_edges()
+	if parsed_sp.is_empty() or parsed_sp.find("[") != -1 or parsed_sp.find("]") != -1 or parsed_pt.find("[") != -1 or parsed_pt.find("]") != -1:
+		return [sp, pt, raw_page]
+	var body = trimmed.substr(colon + 1).lstrip(" \t")
+	return [parsed_sp, parsed_pt, body]
+
+static func build_pages(text: String, say_it_all: bool, random_state_ref: Array, random_line_ref: Array, delivery: String = "", visit_index: int = 0) -> Array[String]:
 	var pages = split_pages(text)
 	if pages.is_empty():
 		return [NO_DIALOGUE]
+	if delivery.to_lower() == "escalate":
+		return [pages[clampi(visit_index, 0, pages.size() - 1)]]
 	if say_it_all:
 		return pages
 	if random_line_ref[0] < 0:

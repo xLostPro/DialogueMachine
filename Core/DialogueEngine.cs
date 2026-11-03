@@ -29,12 +29,13 @@ public static class DialogueEngine
         void Error(string id, string msg) => issues.Add(new(id, "Error", msg));
         void Warning(string id, string msg) => issues.Add(new(id, "Warning", msg));
         var variables = DiscoverVariables(p).ToHashSet(StringComparer.Ordinal);
+        var textVariables = VariableStore.DiscoverText(p).ToHashSet(StringComparer.Ordinal);
         void CheckText(string id, string text, string field)
         {
             if (!DialogueText.ValidConditions(text)) Error(id, $"{field}: inline conditional tags are malformed. Use [if aff:trust >= 1]…[else]…[/if], with at most one else per block and up to 64 nested blocks.");
             if (!DialogueText.ValidFormatting(text)) Warning(id, $"{field}: formatting tags are unclosed, mismatched or malformed. Check [b], [i], [u] and [colour=…] tags.");
             foreach (Match m in Regex.Matches(text, @"\{([\w:.\-]+)\}"))
-                if (!p.TextVariables.ContainsKey(m.Groups[1].Value) && !variables.Contains(m.Groups[1].Value)) Warning(id, $"{field}: unknown substitution {{{m.Groups[1].Value}}}. Add it in Variables & characters or correct its ID.");
+                if (!textVariables.Contains(m.Groups[1].Value) && !variables.Contains(m.Groups[1].Value)) Warning(id, $"{field}: unknown substitution {{{m.Groups[1].Value}}}. Add it in Variables & characters or correct its ID.");
         }
         if (p.FormatVersion != DialogueProject.CurrentFormatVersion) Error("", $"Unsupported project format {p.FormatVersion}.");
         var ids = p.ListOfCharacterStates.Select(s => s.State).ToHashSet();
@@ -68,9 +69,10 @@ public static class DialogueEngine
                     if (r.Type is not ("Affinity" or "Inventory") || string.IsNullOrWhiteSpace(r.TargetId) || !Operators.Contains(r.Operator) || !int.TryParse(r.Value, out _)) Error(s.State, "A choice condition needs a valid variable, comparison and integer value.");
             }
             foreach (var a in s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)))
-                if (string.IsNullOrWhiteSpace(a.TargetId) || a.Type is not ("Affinity" or "Inventory" or "Event" or "Script" or "Set" or "Toggle")) Error(s.State, "An action needs a supported type and target ID.");
+                if (string.IsNullOrWhiteSpace(a.TargetId) || a.Type is not ("Affinity" or "Inventory" or "Event" or "Script" or "Set" or "Toggle" or "SetText")) Error(s.State, "An action needs a supported type and target ID.");
         }
         var reachable = new HashSet<string>(); var queue = new Queue<string>(); queue.Enqueue(p.Entry);
+        foreach (var s in p.ListOfCharacterStates.Where(s => s.Metadata.GetValueOrDefault("entry") == "true")) queue.Enqueue(s.State);
         while (queue.TryDequeue(out var id)) if (reachable.Add(id) && edges.TryGetValue(id, out var next)) foreach (var n in next) queue.Enqueue(n);
         foreach (var s in p.ListOfCharacterStates.Where(s => !reachable.Contains(s.State))) Warning(s.State, "This scene is unreachable from the story's start.");
         // Cycles are valid dialogue. Warn only when there is no path to an explicit exit.
@@ -114,6 +116,7 @@ public static class DialogueEngine
     {
         var scenes = p.ListOfCharacterStates.GroupBy(s => s.State).ToDictionary(g => g.Key, g => g.First());
         var layers = new Dictionary<string, int>(); var queue = new Queue<(string Id, int Layer)>(); queue.Enqueue((p.Entry, 0));
+        foreach (var s in p.ListOfCharacterStates.Where(s => s.Metadata.GetValueOrDefault("entry") == "true")) queue.Enqueue((s.State, 0));
         while (queue.TryDequeue(out var pair))
         {
             if (layers.ContainsKey(pair.Id)) continue;

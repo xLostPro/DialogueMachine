@@ -35,5 +35,10 @@ internal static class FlagChecks
 
         VariableStore.Rename(project, "aff:open", "aff:unlocked");
         Check(door.Choices[0].AfterChoiceActions[0].TargetId == "unlocked" && next.DefaultAfterActions[0].TargetId == "unlocked" && door.Choices[0].Requirements[0].TargetId == "unlocked" && door.Text.Contains("aff:unlocked"), "renaming a flag variable updates its Set/Toggle actions, conditions and text");
+
+        door.Metadata["portrait"] = "mara_smile"; next.Metadata["portrait"] = "mara_stern";
+        Check(VariableStore.DiscoverPortraits(project).SequenceEqual(["mara_smile", "mara_stern"]), "portrait discovery lists distinct sorted non-empty portrait IDs");
+        door.DefaultAfterActions.Add(new() { Type = "Set", TargetId = "moral_track", Amount = 2 });
+        Check(!VariableStore.DiscoverFlags(project).Contains("moral_track"), "non-binary Set actions are not misclassified as boolean flags");
     }
 }

@@ -446,13 +446,39 @@ TArray<FString> FDialogueRules::SplitPages(const FString& Text)
     return Pages;
 }
 
-TArray<FString> FDialogueRules::BuildPages(const FString& Text, bool bSayItAll, uint64& InOutRandomState, int32& InOutRandomLine)
+void FDialogueRules::ParsePageHeader(const FString& RawPage, const FString& DefaultSpeaker, const FString& DefaultPortrait, FString& OutSpeaker, FString& OutPortrait, FString& OutText)
+{
+    OutSpeaker = DefaultSpeaker.IsEmpty() ? TEXT("Character") : DefaultSpeaker;
+    OutPortrait = DefaultPortrait;
+    OutText = RawPage;
+    FString Trimmed = RawPage.TrimStart();
+    if (!Trimmed.StartsWith(TEXT("@"))) return;
+    int32 ColonIdx = INDEX_NONE;
+    if (!Trimmed.FindChar(TEXT(':'), ColonIdx) || ColonIdx <= 1) return;
+    FString Prefix = Trimmed.Mid(1, ColonIdx - 1).TrimStartAndEnd();
+    FString ParsedSpeaker = Prefix;
+    FString ParsedPortrait = DefaultPortrait;
+    int32 OpenBracket = INDEX_NONE;
+    if (Prefix.FindChar(TEXT('['), OpenBracket))
+    {
+        if (!Prefix.EndsWith(TEXT("]"))) return;
+        ParsedSpeaker = Prefix.Left(OpenBracket).TrimStartAndEnd();
+        ParsedPortrait = Prefix.Mid(OpenBracket + 1, Prefix.Len() - OpenBracket - 2).TrimStartAndEnd();
+    }
+    if (ParsedSpeaker.IsEmpty() || ParsedSpeaker.Contains(TEXT("[")) || ParsedSpeaker.Contains(TEXT("]")) || ParsedPortrait.Contains(TEXT("[")) || ParsedPortrait.Contains(TEXT("]"))) return;
+    OutSpeaker = ParsedSpeaker;
+    OutPortrait = ParsedPortrait;
+    OutText = Trimmed.Mid(ColonIdx + 1).TrimStart();
+}
+
+TArray<FString> FDialogueRules::BuildPages(const FString& Text, bool bSayItAll, uint64& InOutRandomState, int32& InOutRandomLine, const FString& Delivery, int32 VisitIndex)
 {
     TArray<FString> Pages = SplitPages(Text);
     if (Pages.Num() == 0)
     {
         return { NoDialogue };
     }
+    if (Delivery.Equals(TEXT("escalate"), ESearchCase::IgnoreCase)) return { Pages[FMath::Clamp(VisitIndex, 0, Pages.Num() - 1)] };
     if (bSayItAll)
     {
         return Pages;

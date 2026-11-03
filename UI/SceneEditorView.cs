@@ -68,10 +68,28 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
         input.LostFocus += (_, _) => actions.Commit();
         return input;
     }
+    private AutoCompleteBox PortraitInput(string current, Action<string> apply)
+    {
+        var input = new AutoCompleteBox
+        {
+            Text = current,
+            ItemsSource = VariableStore.DiscoverPortraits(project),
+            MinimumPrefixLength = 0,
+            FilterMode = AutoCompleteFilterMode.Contains,
+            IsTextCompletionEnabled = false,
+            PlaceholderText = "Optional portrait or expression ID",
+            PlaceholderForeground = Ui.Brush("Muted")
+        };
+        var previous = current;
+        input.TextChanged += (_, _) => { var val = input.Text ?? ""; if (val != previous) { previous = val; apply(val); actions.Edited(); } };
+        input.LostFocus += (_, _) => actions.Commit();
+        return input;
+    }
     private void BuildContent(DialogueState s)
     {
         panel.Children.Add(Ui.Field("Scene title", EditText(s.Title, v => s.Metadata["title"] = v)));
         panel.Children.Add(Ui.Field("Speaker", SpeakerInput(s.Speaker, v => s.Metadata["speaker"] = v)));
+        panel.Children.Add(Ui.Field("Expression / portrait", PortraitInput(s.Metadata.GetValueOrDefault("portrait", ""), v => { if (string.IsNullOrEmpty(v)) s.Metadata.Remove("portrait"); else s.Metadata["portrait"] = v; })));
         var narrative = EditText(s.Text, v => s.Text = v, true); narrative.MinHeight = 175;
         AutomationProperties.SetName(narrative, "Dialogue text");
         AutomationProperties.SetHelpText(narrative, "One dialogue page per line. Supports bold, italic, underline, colour and inline conditions.");
@@ -85,7 +103,7 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
                 narrative.Focus(); narrative.SelectionStart = start + before.Length; narrative.SelectionEnd = end + before.Length; actions.Commit();
             }, "subtle"); button.Margin = new Thickness(0,0,4,0); ToolTip.SetTip(button, "Insert " + label + " at the cursor or around selected text"); tools.Children.Add(button);
         }
-        InsertButton("Bold", "[b]", "[/b]"); InsertButton("Italic", "[i]", "[/i]"); InsertButton("Condition", "[if aff:trust >= 1]", "[else]Alternative text[/if]"); InsertButton("{player}", "{player_name}", "");
+        InsertButton("Bold", "[b]", "[/b]"); InsertButton("Italic", "[i]", "[/i]"); InsertButton("Condition", "[if aff:trust >= 1]", "[else]Alternative text[/if]"); InsertButton("{player}", "{player_name}", ""); InsertButton("@Speaker", "@Speaker [portrait]: ", "");
         tools.Children.Add(Ui.AsyncButton("Variable…", async () =>
         {
             var key = await actions.PickVariable(); if (key is null) return;
@@ -93,8 +111,15 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             var text = narrative.Text ?? ""; var inserted = "{" + key + "}";
             narrative.Text = text[..start] + inserted + text[end..]; narrative.Focus(); narrative.CaretIndex = start + inserted.Length; actions.Commit();
         }, "subtle"));
-        panel.Children.Add(Ui.Field("Dialogue", Ui.Stack(tools, narrative, Ui.Text("One page per line. Playtest to preview formatting and conditions.", 11, true))));
-        var delivery = Ui.Select(["All pages, in order", "One random line"], s.SayItAll ? "All pages, in order" : "One random line", v => { s.SayItAll = v == "All pages, in order"; actions.Edited(); });
+        panel.Children.Add(Ui.Field("Dialogue", Ui.Stack(tools, narrative, Ui.Text("One page per line. Prefix a line with @Speaker [portrait]: to change speaker mid-scene.", 11, true))));
+        var currentDelivery = s.Metadata.GetValueOrDefault("delivery") == "escalate" ? "One line per visit (escalate)" : s.SayItAll ? "All pages, in order" : "One random line";
+        var delivery = Ui.Select(["All pages, in order", "One random line", "One line per visit (escalate)"], currentDelivery, v =>
+        {
+            s.SayItAll = v == "All pages, in order";
+            if (v == "One line per visit (escalate)") s.Metadata["delivery"] = "escalate";
+            else s.Metadata.Remove("delivery");
+            actions.Edited();
+        });
         panel.Children.Add(Ui.Field("Delivery", delivery));
         panel.Children.Add(Ui.Field("Continue destination", actions.Destination(s, s.DefaultNextId, v => s.DefaultNextId = v, null)));
         panel.Children.Add(Ui.Text("Choices inherit this destination when their own target is unset.", 11, true));
@@ -205,16 +230,37 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
         foreach (var action in list.ToArray())
         {
             var a = action;
-            var flag = a.Type is "Set" or "Toggle";
-            var type = Ui.Select(["Affinity", "Inventory", "Set flag", "Toggle flag", "Event", "Script"], a.Type switch { "Set" => "Set flag", "Toggle" => "Toggle flag", _ => a.Type }, v => { a.Type = v switch { "Set flag" => "Set", "Toggle flag" => "Toggle", _ => v }; if (a.Type == "Set") a.Amount = a.Amount == 0 ? 0 : 1; actions.Edited(); actions.Commit(); Refresh(); });
-            var group = Ui.Stack(Ui.Field("Action type", type), Ui.Field(a.Type is "Event" or "Script" ? "Event / method ID" : flag ? "Flag ID" : "Variable ID", a.Type is "Event" or "Script" ? EditText(a.TargetId, v => a.TargetId = v) : VariableInput(a.Type, a.TargetId, v => a.TargetId = v, flag)));
+            var isSetValue = a.Type == "Set" && (a.Amount is not (0 or 1) || a.Parameter == "value");
+            var flag = (a.Type == "Set" && !isSetValue) || a.Type == "Toggle";
+            var selectedType = a.Type switch { "Set" when isSetValue => "Set value", "Set" => "Set flag", "Toggle" => "Toggle flag", "SetText" => "Set text", _ => a.Type };
+            var type = Ui.Select(["Affinity", "Inventory", "Set value", "Set flag", "Toggle flag", "Set text", "Event", "Script"], selectedType, v =>
+            {
+                a.Type = v switch { "Set value" or "Set flag" => "Set", "Toggle flag" => "Toggle", "Set text" => "SetText", _ => v };
+                if (v == "Set value") a.Parameter = "value";
+                else if (v == "Set flag") { a.Parameter = null; a.Amount = a.Amount == 0 ? 0 : 1; }
+                else if (a.Type is not ("Event" or "Script" or "SetText")) a.Parameter = null;
+                actions.Edited(); actions.Commit(); Refresh();
+            });
+            Control targetField;
+            if (a.Type is "Event" or "Script") targetField = Ui.Field("Event / method ID", EditText(a.TargetId, v => a.TargetId = v));
+            else if (a.Type == "SetText")
+            {
+                var txtInput = new AutoCompleteBox { Text = a.TargetId, ItemsSource = VariableStore.DiscoverText(project).ToList(), MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = "Choose or type a text variable ID", PlaceholderForeground = Ui.Brush("Muted") };
+                var prev = a.TargetId; txtInput.TextChanged += (_, _) => { var cur = txtInput.Text ?? ""; if (cur != prev) { prev = cur; a.TargetId = cur; actions.Edited(); } };
+                txtInput.LostFocus += (_, _) => actions.Commit();
+                targetField = Ui.Field("Text variable ID", txtInput);
+            }
+            else targetField = Ui.Field(flag ? "Flag ID" : "Variable ID", VariableInput(a.Type, a.TargetId, v => a.TargetId = v, flag));
+            var group = Ui.Stack(Ui.Field("Action type", type), targetField);
             if (a.Type is "Event" or "Script") group.Children.Add(Ui.Field("Parameter", EditText(a.Parameter ?? "", v => a.Parameter = v)));
-            else if (a.Type == "Set") group.Children.Add(Ui.Field("Set flag to", Ui.Select(["On (1)", "Off (0)"], a.Amount == 0 ? "Off (0)" : "On (1)", v => { a.Amount = v == "On (1)" ? 1 : 0; actions.Edited(); })));
+            else if (a.Type == "SetText") group.Children.Add(Ui.Field("Text value", EditText(a.Parameter ?? "", v => a.Parameter = v)));
+            else if (a.Type == "Set" && !isSetValue) group.Children.Add(Ui.Field("Set flag to", Ui.Select(["On (1)", "Off (0)"], a.Amount == 0 ? "Off (0)" : "On (1)", v => { a.Amount = v == "On (1)" ? 1 : 0; actions.Edited(); })));
             else if (a.Type == "Toggle") group.Children.Add(Ui.Text("Flips the flag between off (0) and on (1).", 12, true));
             else
             {
                 var amount = new NumericUpDown { Value = a.Amount, Minimum = int.MinValue, Maximum = int.MaxValue, Increment = 1, FormatString = "0" };
-                amount.ValueChanged += (_, _) => { if (amount.Value is { } value) { a.Amount = (int)value; actions.Edited(); } }; group.Children.Add(Ui.Field("Amount to add (negative to subtract)", amount));
+                amount.ValueChanged += (_, _) => { if (amount.Value is { } value) { a.Amount = (int)value; actions.Edited(); } };
+                group.Children.Add(Ui.Field(isSetValue ? "Value to set" : "Amount to add (negative to subtract)", amount));
             }
             group.Children.Add(Ui.Button("Remove action", () => actions.Mutate(() => list.Remove(a)), "subtle")); target.Children.Add(Ui.Card(group, 10));
         }
@@ -226,6 +272,15 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
         panel.Children.Add(Ui.Text("Scene organisation", 17));
         panel.Children.Add(Ui.Field("Scene ID", Ui.Row(Ui.Text(s.State, 13, true), Ui.AsyncButton("Rename…", actions.Rename, "subtle"))));
         panel.Children.Add(Ui.Button(s.State == project.Entry ? "◆  This is the story start" : "Set as story start", actions.SetStart));
+        var entryToggle = new CheckBox { Content = "Entry point (triggered by game)", IsChecked = s.Metadata.GetValueOrDefault("entry") == "true" };
+        AutomationProperties.SetName(entryToggle, "Entry point (triggered by game)");
+        entryToggle.IsCheckedChanged += (_, _) =>
+        {
+            var next = entryToggle.IsChecked == true;
+            if (next == (s.Metadata.GetValueOrDefault("entry") == "true")) return;
+            actions.Mutate(() => { if (next) s.Metadata["entry"] = "true"; else s.Metadata.Remove("entry"); });
+        };
+        panel.Children.Add(entryToggle);
         panel.Children.Add(Ui.Field("Writer's notes", EditText(s.Metadata.GetValueOrDefault("notes", ""), v => s.Metadata["notes"] = v, true)));
         panel.Children.Add(Ui.Field("Tags (comma separated)", EditText(s.Metadata.GetValueOrDefault("tags", ""), v => s.Metadata["tags"] = v)));
         panel.Children.Add(Ui.Text("Notes and tags are saved in scene metadata. They won't appear in dialogue.", 12, true));
