@@ -20,7 +20,8 @@ public:
     static int32 ApplyAction(const FString& Type, int32 Before, int32 Amount);
     static int32 ClampNumber(const FString& Key, int32 Value);
     static TArray<FString> SplitPages(const FString& Text);
-    static TArray<FString> BuildPages(const FString& Text, bool bSayItAll, uint64& InOutRandomState, int32& InOutRandomLine);
+    static void ParsePageHeader(const FString& RawPage, const FString& DefaultSpeaker, const FString& DefaultPortrait, FString& OutSpeaker, FString& OutPortrait, FString& OutText);
+    static TArray<FString> BuildPages(const FString& Text, bool bSayItAll, uint64& InOutRandomState, int32& InOutRandomLine, const FString& Delivery = TEXT(""), int32 VisitIndex = 0);
     static uint64 SeedState(int32 Seed);
     static int32 SplitMix64(uint64& InOutState, int32 Count);
 };

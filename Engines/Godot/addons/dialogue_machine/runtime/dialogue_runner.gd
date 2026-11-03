@@ -198,7 +198,10 @@ var variables: DialogueVariables = null
 var _handoff: Dictionary = {}
 var _scenes_by_id: Dictionary = {}
 var _scene: Dictionary = {}
+var _raw_pages: Array[String] = []
 var _pages: Array[String] = []
+var _visits: Dictionary = {}
+var _current_visit_index: int = 0
 var _random_state: int = 0
 var _random_line: int = -1
 var _story_sha: String = ""
@@ -340,7 +343,10 @@ func start(scene_id: String = "", seed_override: Variant = null, numeric_overrid
 			return
 
 	_scene = {}
+	_raw_pages = []
 	_pages = []
+	if variables_provider == null:
+		_visits.clear()
 	variables.clear()
 	_add_missing_variables()
 
@@ -539,10 +545,18 @@ func _rebuild_pages() -> void:
 	var raw_text = str(_scene.get("Text", ""))
 	var resolved_text = DialogueRules.resolve_text(raw_text, variables.all_numeric(), variables.all_text())
 	var say_it_all = bool(_scene.get("SayItAll", true))
+	var meta = _scene.get("Metadata", {})
+	var delivery = str(meta.get("delivery", "")) if meta is Dictionary else ""
+	var def_speaker = str(meta.get("speaker", "Character")) if meta is Dictionary else "Character"
+	var def_portrait = str(meta.get("portrait", "")) if meta is Dictionary else ""
 
 	var rstate_ref = [_random_state]
 	var rline_ref = [_random_line]
-	_pages = DialogueRules.build_pages(resolved_text, say_it_all, rstate_ref, rline_ref)
+	_raw_pages = DialogueRules.build_pages(resolved_text, say_it_all, rstate_ref, rline_ref, delivery, _current_visit_index)
+	_pages.clear()
+	for rp in _raw_pages:
+		var parsed = DialogueRules.parse_page_header(rp, def_speaker, def_portrait)
+		_pages.append(str(parsed[2]))
 	_random_state = rstate_ref[0]
 	_random_line = rline_ref[0]
 	page_index = clampi(page_index, 0, maxi(0, _pages.size() - 1))
@@ -588,6 +602,8 @@ func _enter(id: String, status: String, choice_taken: Variant = null) -> void:
 		return
 
 	_scene = _scenes_by_id[id]
+	_current_visit_index = int(_visits.get(id, 0))
+	_visits[id] = _current_visit_index + 1
 	is_ended = false
 	page_index = 0
 	_random_line = -1
@@ -630,6 +646,12 @@ func _apply_actions(actions: Array) -> void:
 				variables.write_number(act_key, after_val)
 				if after_val != before_val:
 					variable_changed.emit(act_key, before_val, after_val)
+			elif type == "SetText":
+				var before_txt = variables.get_text(target_id)
+				var after_txt = "" if parameter == null else str(parameter)
+				variables.write_text(target_id, after_txt)
+				if after_txt != before_txt:
+					variable_changed.emit(target_id, before_txt, after_txt)
 			elif type == "Event" or type == "Script":
 				action_raised.emit(type, target_id, parameter, amount)
 				_send_live_link_event(type, target_id, parameter)

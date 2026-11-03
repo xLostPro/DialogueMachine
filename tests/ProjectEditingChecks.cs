@@ -38,6 +38,8 @@ internal static class ProjectEditingChecks
         Check(DialogueEngine.Validate(duplicate).Any(d => d.Message.Contains("Duplicate")), "duplicate scene IDs diagnosed");
         var unreachable = Templates.Blank(); unreachable.ListOfCharacterStates.Add(Templates.Scene("unused", "Unused", "A", "Hi", 0, 0));
         Check(DialogueEngine.Validate(unreachable).Any(d => d.Message.Contains("unreachable")), "unreachable scenes diagnosed");
+        unreachable.ListOfCharacterStates[1].Metadata["entry"] = "true";
+        Check(!DialogueEngine.Validate(unreachable).Any(d => d.Message.Contains("unreachable")), "secondary entry points marked with Metadata[entry]=true are treated as reachable");
         DialogueEngine.AutoLayout(renamed); Check(renamed.ListOfCharacterStates.Select(s => (s.VisualX,s.VisualY)).Distinct().Count() == 5, "layout assigns distinct positions");
         var tallStory = Templates.Blank(); tallStory.ListOfCharacterStates[0].Choices = [new() { NextStateId = "tall" }, new() { NextStateId = "short" }];
         var tall = Templates.Scene("tall", "Tall", "A", "Hi", 0, 0); tall.Choices = Enumerable.Range(0, 10).Select(_ => new Choice { NextStateId = "[EXIT]" }).ToList();

@@ -140,6 +140,29 @@ internal static class RuntimeChecks
         saved.Start(); saved.RestoreState(endedSave);
         check(saved.IsEnded && saved.CurrentSceneId is null, "an ended conversation restores as ended");
         throws(() => saved.RestoreState("""{"sceneId":"missing"}"""), "restoring into a missing scene is refused");
+
+        // EvaluateBark, SetText, escalate delivery and per-page @Speaker [portrait]: overrides
+        var barkScene = Templates.Scene("bark_bed", "Bed", "Narrator", "Visit one.\n@Hero [hero_groggy]: Visit two as {player_calling}.\nVisit three.", 0, 0);
+        barkScene.SayItAll = false; barkScene.Metadata["delivery"] = "escalate"; barkScene.Metadata["portrait"] = "narrator_smug"; barkScene.Metadata["entry"] = "true";
+        first.Choices[1].AfterChoiceActions.Add(new() { Type = "SetText", TargetId = "player_calling", Parameter = "Plumber" });
+        second.Text = "Multi-page banter.\n@Hero [hero_confused]: Wait, what?\n@Narrator [narrator_panicked]: Nothing!";
+        second.Metadata["portrait"] = "narrator_calm";
+        project.TextVariables["player_calling"] = "Noble Warrior";
+        project.ListOfCharacterStates.Add(barkScene);
+        var barkRunner = new DialogueRunner(); barkRunner.Load(Parse(project)); barkRunner.Start();
+        var b1 = barkRunner.EvaluateBark("bark_bed");
+        check(b1.Text == "Visit one." && b1.Speaker == "Narrator" && b1.Portrait == "narrator_smug" && barkRunner.CurrentSceneId == "first" && !barkRunner.IsEnded, "EvaluateBark resolves line 1 without interrupting active conversation");
+        barkRunner.Continue(); barkRunner.Continue(); barkRunner.Choose(open);
+        check(barkRunner.Variables.GetText("player_calling") == "Plumber", "SetText action updates text variable on transition");
+        var b2 = barkRunner.EvaluateBark("bark_bed");
+        check(b2.Text == "Visit two as Plumber." && b2.Speaker == "Hero" && b2.Portrait == "hero_groggy", "EvaluateBark advances escalation visit count and parses @Speaker [portrait]: override");
+        var b3 = barkRunner.EvaluateBark("bark_bed"); var b4 = barkRunner.EvaluateBark("bark_bed");
+        check(b3.Text == "Visit three." && b4.Text == "Visit three.", "escalate delivery clamps to the final line on subsequent visits");
+        check(barkRunner.CurrentSceneId == "second" && barkRunner.Speaker == "Guide" && barkRunner.Portrait == "narrator_calm" && barkRunner.CurrentPage == "Multi-page banter.", "page 0 uses scene speaker and portrait");
+        barkRunner.Continue();
+        check(barkRunner.Speaker == "Hero" && barkRunner.Portrait == "hero_confused" && barkRunner.CurrentMetadata["portrait"] == "hero_confused" && barkRunner.CurrentPage == "Wait, what?", "page 1 applies @Hero [hero_confused]: override and strips header from CurrentPage");
+        barkRunner.Continue();
+        check(barkRunner.Speaker == "Narrator" && barkRunner.Portrait == "narrator_panicked" && barkRunner.CurrentPage == "Nothing!", "page 2 applies @Narrator [narrator_panicked]: override");
     }
 
     // The version in DialogueMachine.csproj; every engine plugin has to match it.

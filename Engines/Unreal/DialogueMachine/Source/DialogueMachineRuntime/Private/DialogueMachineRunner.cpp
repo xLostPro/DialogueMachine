@@ -35,7 +35,7 @@ bool FDialogueRunner::Start(const FString& SceneId, TOptional<int32> Seed, const
 
     if (bOwnsVariables)
     {
-        Store = MakeShared<FDictionaryVariables>();
+        Store = MakeShared<FDictionaryVariables>(); Visits.Empty();
     }
     AddMissingVariables();
 
@@ -216,7 +216,7 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
 
     if (bOwnsVariables)
     {
-        Store = MakeShared<FDictionaryVariables>();
+        Store = MakeShared<FDictionaryVariables>(); Visits.Empty();
     }
 
     const TSharedPtr<FJsonObject>* NumObj = nullptr;
@@ -384,7 +384,18 @@ void FDialogueRunner::RebuildPages()
 {
     if (!CurrentScene.IsValid()) return;
     FString Resolved = FDialogueRules::ResolveText(CurrentScene->Text, GetNumbers(), GetTexts());
-    Pages = FDialogueRules::BuildPages(Resolved, CurrentScene->bSayItAll, RandomState, RandomLine);
+    const FString* FoundDelivery = CurrentScene->Metadata.Find(TEXT("delivery"));
+    FString Delivery = FoundDelivery ? *FoundDelivery : TEXT("");
+    RawPages = FDialogueRules::BuildPages(Resolved, CurrentScene->bSayItAll, RandomState, RandomLine, Delivery, CurrentVisitIndex);
+    Pages.Empty(RawPages.Num());
+    const FString* FoundPortrait = CurrentScene->Metadata.Find(TEXT("portrait"));
+    FString DefPortrait = FoundPortrait ? *FoundPortrait : TEXT("");
+    for (const FString& Raw : RawPages)
+    {
+        FString Sp, Pt, Body;
+        FDialogueRules::ParsePageHeader(Raw, CurrentScene->GetSpeaker(), DefPortrait, Sp, Pt, Body);
+        Pages.Add(Body);
+    }
     PageIndex = FMath::Min(PageIndex, FMath::Max(0, Pages.Num() - 1));
 }
 
@@ -434,6 +445,9 @@ bool FDialogueRunner::Enter(const FString& Id, FString* OutError)
     }
 
     PageIndex = 0;
+    const int32* FoundVisits = Visits.Find(CurrentScene->State);
+    CurrentVisitIndex = FoundVisits ? *FoundVisits : 0;
+    Visits.Add(CurrentScene->State, CurrentVisitIndex + 1);
     RandomLine = -1;
     RebuildPages();
     Deliver();
@@ -490,6 +504,7 @@ void FDialogueRunner::ApplyActions(const TArray<FDialogueAction>& Actions)
         {
             OnActionRaised.Broadcast(Action.Type, Action.TargetId, Action.Parameter, Action.Amount);
         }
+        else if (Action.Type == TEXT("SetText")) { Store->SetText(Action.TargetId, Action.Parameter); }
         else if (FDialogueRules::IsVariableAction(Action.Type))
         {
             FString Key = FDialogueRules::Key(Action.Type, Action.TargetId);

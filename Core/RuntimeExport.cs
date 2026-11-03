@@ -26,8 +26,10 @@ public static class RuntimeExport
             if (scene.Choices.Any(c => c.InternalId == Guid.Empty) || scene.Choices.Select(c => c.InternalId).Distinct().Count() != scene.Choices.Count)
                 throw new InvalidDataException($"Scene ‘{scene.State}’ has empty or duplicate response identities. Duplicate/recreate the affected response and re-record scenarios before runtime export.");
         var story = ProjectStore.StoryExport(project);
+        var textValues = new Dictionary<string, string>(project.TextVariables, StringComparer.Ordinal);
+        foreach (var k in VariableStore.DiscoverText(project)) textValues.TryAdd(k, "");
         return new(1, Contract, story, Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(story))),
-            project.Entry, seed, numeric, new(project.TextVariables, StringComparer.Ordinal), maxOperations);
+            project.Entry, seed, numeric, textValues, maxOperations);
     }
     public static string Serialize(RuntimeHandoff handoff) => JsonSerializer.Serialize(handoff, ProjectStore.Options);
     public static string Slug(string name)

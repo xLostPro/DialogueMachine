@@ -14,6 +14,16 @@ namespace DialogueMachine.Runtime
         public string DisabledReason;
     }
 
+    public sealed class BarkLine
+    {
+        public string SceneId;
+        public string Speaker;
+        public string Portrait;
+        public string Text;
+        public string PlainText;
+        public IReadOnlyDictionary<string, string> Metadata;
+    }
+
     // Plays a handoff with the semantics of Core/Simulation.cs. Back, trace and scenarios stay desktop-only.
     public sealed class DialogueRunner
     {
@@ -22,9 +32,12 @@ namespace DialogueMachine.Runtime
         private IDialogueVariables store;
         private Handoff handoff;
         private Scene scene;
+        private string[] rawPages = new string[0];
         private string[] pages = new string[0];
         private ulong randomState;
         private int randomLine = -1;
+        private readonly Dictionary<string, int> visits = new Dictionary<string, int>(StringComparer.Ordinal);
+        private int currentVisitIndex;
 
         public event Action<string> LineShown;
         public event Action<IReadOnlyList<Choice>> ChoicesShown;
@@ -45,14 +58,49 @@ namespace DialogueMachine.Runtime
 
         public IDialogueVariables Variables { get; }
         public string CurrentSceneId => scene?.State;
-        public string Speaker => scene?.Speaker;
+        public string Speaker
+        {
+            get
+            {
+                if (scene == null) return null;
+                if (rawPages.Length == 0) return scene.Speaker;
+                DialogueRules.ParsePageHeader(rawPages[PageIndex], scene.Speaker, scene.Metadata.GetValueOrDefault("portrait"), out var sp, out _, out _);
+                return sp;
+            }
+        }
+        public string Portrait
+        {
+            get
+            {
+                if (scene == null) return null;
+                var defPortrait = scene.Metadata.GetValueOrDefault("portrait", "");
+                if (rawPages.Length == 0) return defPortrait;
+                DialogueRules.ParsePageHeader(rawPages[PageIndex], scene.Speaker, defPortrait, out _, out var pt, out _);
+                return pt;
+            }
+        }
         public string Title => scene?.Title;
         public bool IsEnded { get; private set; }
         public string CurrentPage => scene == null ? null : pages[PageIndex];
         public string CurrentPagePlain => scene == null ? null : DialogueRules.PlainText(CurrentPage);
         public int PageIndex { get; private set; }
         public int PageCount => pages.Length;
-        public IReadOnlyDictionary<string, string> CurrentMetadata => scene == null ? NoMetadata : scene.Metadata;
+        public IReadOnlyDictionary<string, string> CurrentMetadata
+        {
+            get
+            {
+                if (scene == null) return NoMetadata;
+                if (rawPages.Length == 0) return scene.Metadata;
+                var defPortrait = scene.Metadata.GetValueOrDefault("portrait", "");
+                DialogueRules.ParsePageHeader(rawPages[PageIndex], scene.Speaker, defPortrait, out var sp, out var pt, out _);
+                if (sp == scene.Speaker && pt == defPortrait) return scene.Metadata;
+                var copy = new Dictionary<string, string>();
+                foreach (var kv in scene.Metadata) copy[kv.Key] = kv.Value;
+                copy["speaker"] = sp;
+                if (!string.IsNullOrEmpty(pt)) copy["portrait"] = pt;
+                return copy;
+            }
+        }
         public bool CanContinue => scene != null && (MorePages || (!Choices.Any(c => c.Enabled) && !string.IsNullOrWhiteSpace(scene.DefaultNextId)));
         private bool MorePages => PageIndex < pages.Length - 1;
 
@@ -84,7 +132,7 @@ namespace DialogueMachine.Runtime
         public void Start(string sceneId = null, int? seed = null, IReadOnlyDictionary<string, int> numeric = null, IReadOnlyDictionary<string, string> text = null)
         {
             if (handoff == null) throw new InvalidOperationException("Load a story before starting it.");
-            if (ownsVariables) store = new DictionaryVariables();
+            if (ownsVariables) { store = new DictionaryVariables(); visits.Clear(); }
             AddMissingVariables();
             // Overrides apply before the first scene resolves, like a scenario's starting values.
             if (numeric != null) foreach (var kv in numeric) store.SetNumber(kv.Key, kv.Key.StartsWith("inv:", StringComparison.Ordinal) ? Math.Max(0, kv.Value) : kv.Value);
@@ -93,6 +141,28 @@ namespace DialogueMachine.Runtime
             scene = null;
             IsEnded = false;
             Enter(sceneId ?? handoff.StartingScene);
+        }
+
+        public BarkLine EvaluateBark(string sceneId)
+        {
+            if (handoff == null) throw new InvalidOperationException("Load a story before evaluating a bark.");
+            var barkScene = handoff.Story.Find(sceneId) ?? throw new InvalidOperationException("Scene '" + sceneId + "' does not exist.");
+            AddMissingVariables();
+            var visitIndex = visits.GetValueOrDefault(barkScene.State);
+            visits[barkScene.State] = visitIndex + 1;
+            var resolved = DialogueRules.ResolveText(barkScene.Text, Numbers(), Texts());
+            var tempLine = -1;
+            var barkRaw = DialogueRules.BuildPages(resolved, barkScene.SayItAll, ref randomState, ref tempLine, barkScene.Metadata.GetValueOrDefault("delivery"), visitIndex)[0];
+            DialogueRules.ParsePageHeader(barkRaw, barkScene.Speaker, barkScene.Metadata.GetValueOrDefault("portrait", ""), out var sp, out var pt, out var body);
+            return new BarkLine
+            {
+                SceneId = barkScene.State,
+                Speaker = sp,
+                Portrait = pt,
+                Text = body,
+                PlainText = DialogueRules.PlainText(body),
+                Metadata = barkScene.Metadata
+            };
         }
 
         public void Continue()
@@ -194,7 +264,15 @@ namespace DialogueMachine.Runtime
         private void RebuildPages()
         {
             var text = DialogueRules.ResolveText(scene.Text, Numbers(), Texts());
-            pages = DialogueRules.BuildPages(text, scene.SayItAll, ref randomState, ref randomLine);
+            var delivery = scene.Metadata.GetValueOrDefault("delivery");
+            rawPages = DialogueRules.BuildPages(text, scene.SayItAll, ref randomState, ref randomLine, delivery, currentVisitIndex);
+            pages = new string[rawPages.Length];
+            var defPortrait = scene.Metadata.GetValueOrDefault("portrait", "");
+            for (var i = 0; i < rawPages.Length; i++)
+            {
+                DialogueRules.ParsePageHeader(rawPages[i], scene.Speaker, defPortrait, out _, out _, out var pageText);
+                pages[i] = pageText;
+            }
             PageIndex = Math.Min(PageIndex, pages.Length - 1);
         }
 
@@ -222,6 +300,8 @@ namespace DialogueMachine.Runtime
                 return;
             }
             scene = handoff.Story.Find(id) ?? throw new InvalidOperationException("Scene '" + id + "' does not exist.");
+            currentVisitIndex = visits.GetValueOrDefault(scene.State);
+            visits[scene.State] = currentVisitIndex + 1;
             PageIndex = 0;
             randomLine = -1;
             RebuildPages();
@@ -232,6 +312,7 @@ namespace DialogueMachine.Runtime
         private void End(string sceneId, string choiceId)
         {
             scene = null;
+            rawPages = new string[0];
             pages = new string[0];
             PageIndex = 0;
             IsEnded = true;
@@ -252,6 +333,13 @@ namespace DialogueMachine.Runtime
             foreach (var action in actions)
             {
                 if (action.Type == "Event" || action.Type == "Script") ActionRaised?.Invoke(action.Type, action.TargetId, action.Parameter, action.Amount);
+                else if (action.Type == "SetText")
+                {
+                    var before = store.GetText(action.TargetId);
+                    var after = action.Parameter ?? "";
+                    store.SetText(action.TargetId, after);
+                    if (after != before) VariableChanged?.Invoke(action.TargetId, before, after);
+                }
                 // Stories from newer versions can carry action types this runtime doesn't know.
                 else if (DialogueRules.IsVariableAction(action.Type))
                 {
