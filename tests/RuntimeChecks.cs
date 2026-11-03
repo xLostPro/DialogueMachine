@@ -159,8 +159,19 @@ internal static class RuntimeChecks
         check(pkg["unity"]?.GetValue<string>() == "2022.3", "Unity package targets Unity 2022.3");
         var expectedVersion = ProjectVersion(check);
         check(pkg["version"]?.GetValue<string>() == expectedVersion, "Unity package version matches DialogueMachine.csproj");
-        var runtimeVersion = System.Text.RegularExpressions.Regex.Match(File.ReadAllText("Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs"), @"PluginVersion = ""([^""]+)""");
+        var runnerBehSource = File.ReadAllText("Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs");
+        var runtimeVersion = System.Text.RegularExpressions.Regex.Match(runnerBehSource, @"PluginVersion = ""([^""]+)""");
         check(runtimeVersion.Success && runtimeVersion.Groups[1].Value == expectedVersion, "Unity runtime PluginVersion matches DialogueMachine.csproj");
+        check(!runnerBehSource.Contains("DEVELOPMENT_BUILD"), "Unity runtime avoids DEVELOPMENT_BUILD define inside asmdef (UAC0009)");
+
+        var pkgDir = Path.GetFullPath("Engines/Unity/com.xlostpro.dialoguemachine");
+        foreach (var entry in Directory.EnumerateFileSystemEntries(pkgDir, "*", SearchOption.AllDirectories))
+        {
+            var rel = Path.GetRelativePath(pkgDir, entry).Replace('\\', '/');
+            if (rel.StartsWith("Samples~", StringComparison.Ordinal) || rel.EndsWith(".meta", StringComparison.Ordinal)) continue;
+            var metaPath = entry + ".meta";
+            check(File.Exists(metaPath) && System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(metaPath), @"\bguid:\s*[0-9a-f]{32}\b"), $"Unity package entry {rel} has a valid .meta file");
+        }
 
         // RichText checks
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity(null) == "", "RichText converts null to empty");

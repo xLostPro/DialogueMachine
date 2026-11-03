@@ -242,8 +242,9 @@ namespace DialogueMachine.Runtime.Unity
         private void ReportState(string status, string choiceId)
         {
             OnRunnerStateChanged?.Invoke(this, status, choiceId);
-#if DEVELOPMENT_BUILD && !UNITY_EDITOR && !UNITY_WEBGL
-            StandaloneLiveLinkBridge.SendRunnerState(this, status, choiceId);
+#if DEBUG && !UNITY_EDITOR && !UNITY_WEBGL
+            if (Debug.isDebugBuild)
+                StandaloneLiveLinkBridge.SendRunnerState(this, status, choiceId);
 #endif
         }
 
@@ -281,7 +282,7 @@ namespace DialogueMachine.Runtime.Unity
             return result;
         }
 
-#if DEVELOPMENT_BUILD && !UNITY_EDITOR && !UNITY_WEBGL
+#if DEBUG && !UNITY_EDITOR && !UNITY_WEBGL
         private static class StandaloneLiveLinkBridge
         {
             private static System.Net.WebSockets.ClientWebSocket socket;

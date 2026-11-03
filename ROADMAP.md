@@ -6,6 +6,10 @@
 
 1. **Shrink the hot spots.** Simplify code when you change it, not as a big rewrite.
    - Scene editor moved to `SceneEditorView`, Find & replace to `SearchView`, Variables to `VariablesView`, export dialogs to `ExportView`, Scenarios to `ScenariosView`. Still in `MainWindow`: Playtest launch. Move each into its own view as it's touched.
+2. **Real-game pass (*Project That's Life*).**
+   - Phase 2: portrait/expression metadata field (`Metadata["portrait"]`), secondary entry points (`Metadata["entry"]`), and arbitrary integer `Set` actions in `SceneEditorView`.
+   - Phase 3: `SetText` action (`Type = "SetText"`) and non-interrupting `EvaluateBark(string sceneId)` runner API.
+   - Phase 4: single-node prop escalation and per-page speaker/portrait overrides.
 
 ## Later, only when a real story needs it
 
@@ -18,6 +22,7 @@ Accounts, cloud sync, collaboration, and auto-update. The game engine JSON expor
 
 ## Done
 
+- **Unity UPM package `.meta` files & Unity 6.6 `UAC0009` fix.** Committed deterministic `.meta` files for `Engines/Unity/com.xlostpro.dialoguemachine` so `file:` UPM links stay read-only on disk and keep stable script GUIDs across projects; replaced deprecated `#if DEVELOPMENT_BUILD` in `DialogueRunnerBehaviour.cs` with `#if DEBUG` + `Debug.isDebugBuild`.
 - **Retired website lossy export & modernized engine contract.** The separate website export and its degradation workarounds (`SplitAny` splitting OR choices and stripping Set/Toggle actions) are removed. The game engine runtime companion is now the sole story export format, modernized to contract `dialogue-machine.story.v1` (with `dialogue-machine.website.v1` retained for backwards compatibility). Legacy website JSON files remain importable.
 - **OR conditions.** A choice has `RequirementMatch` (All by default, Any), switched in the Logic tab as "ALL (AND)" / "ANY (OR)". It is stored only when Any. Story exports preserve `RequirementMatch: Any`. The Unity, Godot and Unreal runners honour it (new `or_conditions` conformance fixture, not yet run in Godot or Unreal).
 - **Flags and Set/Toggle actions.** A flag is an ordinary 0/1 `aff:` variable; `Set` (Amount 0/1) and `Toggle` actions write it, and flag conditions are plain `Affinity ==/!= 0/1` requirements, so the Logic tab shows them as "flag is set / not set". Story exports preserve Set and Toggle actions, and the Unity, Godot and Unreal runners implement them (new `flags_set_toggle` conformance fixture, not yet run in Godot or Unreal).
