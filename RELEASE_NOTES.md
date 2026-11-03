@@ -1,5 +1,31 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## 1.5.0
+
+### Dialogue logic, barks & character features
+
+- **OR conditions**: choices can require `ANY (OR)` condition satisfaction in addition to `ALL (AND)`, with full runtime support across Unity, Godot and Unreal.
+- **Flags and Set/Toggle actions**: first-class boolean flags with Set/Toggle actions and conditions in the Logic tab, evaluated natively across the desktop editor and all engine runners. Arbitrary integer `Set` actions are also supported.
+- **SetText action & EvaluateBark API**: added `SetText` action for string variable updates and `EvaluateBark(sceneId)` API across all three engine runners for non-interrupting ambient dialogue and barks.
+- **Per-page speaker overrides & portraits**: override speakers and expression portraits per page with `@Speaker [portrait]:` syntax. Includes expression/portrait autocomplete and playtest preview.
+- **Single-node prop escalation**: `"One line per visit (escalate)"` delivery sequentially cycles lines across visits and clamps at the final line without needing multi-node chains.
+- **Secondary entry points**: mark scenes as `"Entry point (triggered by game)"` for game-triggered dialogue, integrated into reachability validation and auto-layout.
+- **Character roster & swatches**: manage characters with names and custom hex colors in Variables & characters, offering autocomplete and visual color accents on graph nodes.
+
+### Engine integration & contract modernization
+
+- **Unified story export contract**: modernized the engine companion format to `dialogue-machine.story.v1` (with `dialogue-machine.website.v1` retained for backward compatibility).
+- **Consolidated export workflow**: retired the legacy lossy website export in favor of the full-fidelity game engine runtime companion JSON.
+- **Unity package improvements**: deterministic `.meta` files committed for stable UPM links, and removed `DEVELOPMENT_BUILD` preprocessor usage for Unity 6 compatibility.
+- **Updated engine plugins**: pre-packaged plugins for Unreal (`DialogueMachine-Unreal-1.5.0.zip`) and Godot (`DialogueMachine-Godot-1.5.0.zip`), plus the Unity UPM package pinned to `#v1.5.0`.
+
+### Editor ergonomics & performance
+
+- **Zoomed-out graph readability**: level-of-detail rendering simplifies graph nodes when zoomed out below 55% for smooth overview navigation.
+- **Collapsible choice cards**: scenes with more than 4 choices display collapsed cards with direct `If ›` jumps to choice conditions.
+- **Playtest & writing refinements**: keyboard navigation in playtest (Enter, 1-9, Backspace), auto-focus for newly created choices, stable editor scroll position during edits, and visible choice conditions in Script view.
+- **Modular view architecture**: decomposed monolithic panes into dedicated views (`SceneEditorView`, `ExportView`, `VariablesView`, `SearchView`, `ScenariosView`).
+
 ## 1.4.0
 
 ### Engine integration
