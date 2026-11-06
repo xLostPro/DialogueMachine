@@ -1,5 +1,18 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## 1.5.1
+
+### Project export configuration & JSON Schema
+
+- **Project-owned engine export folder**: The engine export folder is now saved directly in the project file as `EngineExportFolder` (relative to the project), allowing projects to move across machines and directories without breaking export paths. Older projects configured via per-machine preferences are seamlessly migrated upon save, "Save as" rebases the relative path, and missing destination folders are reported explicitly instead of being silently recreated.
+- **Project JSON Schema & `schema` CLI command**: Added `Schemas/dialogue-project.schema.json` generated directly from the core model with property descriptions and validation constraints. A new `schema` command on the CLI (`DialogueMachine.exe schema`) enables external scripts, tools, and agents to author and validate project files.
+
+### Runtime runners & engine integration
+
+- **Persistent escalate visit counts**: Single-node escalate delivery (`"One line per visit (escalate)"`) now tracks visit counts as numeric `visit:<sceneId>` entries in the variable store. Scene reloads, state saves, backtracking, and external variables providers preserve escalation progress without restarting from line 1. Supported across Desktop Simulation and the Unity, Godot, and Unreal runners (`escalate_visits_save_restore` conformance fixture).
+- **Unreal Engine 5.8 build fix**: Added missing `SlateColorBrush.h` include to `DialogueMachineWidget.cpp`, fixing game target compilation failure C3861 when packaging games with Unreal Engine 5.8.
+- **Engine packages**: Pre-packaged plugins for Unreal (`DialogueMachine-Unreal-1.5.1.zip`) and Godot (`DialogueMachine-Godot-1.5.1.zip`), plus the Unity UPM package pinned to `#v1.5.1`.
+
 ## 1.5.0
 
 ### Dialogue logic, barks & character features
