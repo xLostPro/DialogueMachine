@@ -115,12 +115,17 @@ namespace DialogueMachine.Runtime
             text = m.Groups[3].Value;
         }
 
+        public static bool IsEscalate(string delivery) => string.Equals(delivery, "escalate", StringComparison.OrdinalIgnoreCase);
+
+        // Numeric key counting entries into an escalate scene; the next visit shows that line.
+        public static string VisitKey(string sceneId) => "visit:" + sceneId;
+
         // A random line is picked once per scene visit, so refreshing text never advances the stream.
         public static string[] BuildPages(string text, bool sayItAll, ref ulong randomState, ref int randomLine, string delivery = null, int visitIndex = 0)
         {
             var pages = SplitPages(text);
             if (pages.Length == 0) return new[] { NoDialogue };
-            if (string.Equals(delivery, "escalate", StringComparison.OrdinalIgnoreCase))
+            if (IsEscalate(delivery))
                 return new[] { pages[Math.Clamp(visitIndex, 0, pages.Length - 1)] };
             if (sayItAll) return pages;
             if (randomLine < 0) randomLine = SplitMix64(ref randomState, pages.Length);

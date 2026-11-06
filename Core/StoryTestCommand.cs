@@ -265,6 +265,7 @@ public static class ConformanceFixtures
         propHub.Choices[1].AfterChoiceActions = [Raise("SetText", "player_calling", "Plumber")];
         var propProject = Project(prop, propHub); propProject.TextVariables["player_calling"] = "Noble Warrior";
         Case("set_text_escalate_and_page_speakers", propProject, [Begin, Next, Pick(Id(1)), Next, Pick(Id(2)), Next, Pick(Id(1)), Next, Next]);
+        Case("escalate_visits_save_restore", propProject, [Begin, Next, Pick(Id(1)), Save, Next, Pick(Id(1)), Restore, Next, Pick(Id(1)), Next, Pick(Id(1))]);
         return fixtures;
     }
 

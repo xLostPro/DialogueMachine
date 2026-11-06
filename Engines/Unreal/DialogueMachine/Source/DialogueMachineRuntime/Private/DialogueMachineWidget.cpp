@@ -1,5 +1,6 @@
 #include "DialogueMachineWidget.h"
 #include "Blueprint/WidgetTree.h"
+#include "Brushes/SlateColorBrush.h"
 #include "Components/VerticalBoxSlot.h"
 #include "Engine/DataTable.h"
 #include "Styling/CoreStyle.h"

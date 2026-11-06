@@ -38,7 +38,7 @@ Every engine parser must preserve website compatibility and **ignore unknown fie
   - `Choices` (`array`): Response choices.
   - `DefaultNextId` (`string`): Fallback destination scene ID.
   - `DefaultAfterActions` (`array`): Scene exit actions executed when transitioning out.
-  - `Metadata` (`Dictionary<string, string>`): Authoring and game metadata (e.g., portrait, audio, animation tags). The speaker is `Metadata["speaker"]` (default `"Character"`) and the title is `Metadata["title"]` (default: the scene ID).
+  - `Metadata` (`Dictionary<string, string>`): Authoring and game metadata (e.g., portrait, audio, animation tags). The speaker is `Metadata["speaker"]` (default `"Character"`) and the title is `Metadata["title"]` (default: the scene ID). `Metadata["delivery"] = "escalate"` (case-insensitive) selects escalate delivery; see Pages & Lines.
 - **Choices:**
   - `InternalId` (`Guid` / `string`): Stable unique choice identifier.
   - `ButtonText` (`string`): Authored response text (resolves substitutions and conditionals).
@@ -66,6 +66,7 @@ Engine runners must mirror Core semantics without deviation:
 
 ### Variables
 - Numeric keys use the prefix `aff:<id>` for Affinity and `inv:<id>` for Inventory.
+- `visit:<sceneId>` counts entries into an escalate scene (see Pages & Lines). It lives in the variable store like any other numeric key, so saves and game-owned stores keep it, and a game can read or reset it.
 - Initial values are populated from `NumericValues`.
 - Inventory values (`inv:`) are clamped to non-negative integers (`value >= 0`).
 - Arithmetic addition and subtraction saturate at 32-bit signed integer boundaries (`[int.MinValue, int.MaxValue]`).
@@ -98,6 +99,11 @@ Engine runners must mirror Core semantics without deviation:
     With rejection threshold `(0UL - (ulong)count) % (ulong)count` to prevent modulo bias.
 - If `SayItAll` is `true`:
   - Present lines as sequential pages (`PageIndex = 0, 1, ...`).
+- If `Metadata["delivery"]` is `"escalate"` (the editor's "One line per visit (escalate)"; this overrides `SayItAll`):
+  - On entering the scene, read `visit:<sceneId>` (default `0`) as the visit index, then write the index + 1 back.
+  - Show the single line at the visit index, clamped to the last line. The random state is not used.
+  - Restoring a save into the scene uses `visit:<sceneId> - 1` (minimum `0`) as the visit index.
+  - Other scenes don't touch `visit:` keys.
 
 ### Choice State & Visibility
 - `Visibility` numeric ordering: `Hide = 0`, `Disable = 1`, `Always = 2`.

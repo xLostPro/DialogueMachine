@@ -106,7 +106,6 @@ private:
     TSharedPtr<FDialogueScene> CurrentScene;
     TArray<FString> RawPages;
     TArray<FString> Pages;
-    TMap<FString, int32> Visits;
     int32 CurrentVisitIndex = 0;
     int32 PageIndex = 0;
     uint64 RandomState = 0;

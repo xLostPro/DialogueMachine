@@ -36,7 +36,6 @@ namespace DialogueMachine.Runtime
         private string[] pages = new string[0];
         private ulong randomState;
         private int randomLine = -1;
-        private readonly Dictionary<string, int> visits = new Dictionary<string, int>(StringComparer.Ordinal);
         private int currentVisitIndex;
 
         public event Action<string> LineShown;
@@ -132,7 +131,7 @@ namespace DialogueMachine.Runtime
         public void Start(string sceneId = null, int? seed = null, IReadOnlyDictionary<string, int> numeric = null, IReadOnlyDictionary<string, string> text = null)
         {
             if (handoff == null) throw new InvalidOperationException("Load a story before starting it.");
-            if (ownsVariables) { store = new DictionaryVariables(); visits.Clear(); }
+            if (ownsVariables) store = new DictionaryVariables();
             AddMissingVariables();
             // Overrides apply before the first scene resolves, like a scenario's starting values.
             if (numeric != null) foreach (var kv in numeric) store.SetNumber(kv.Key, kv.Key.StartsWith("inv:", StringComparison.Ordinal) ? Math.Max(0, kv.Value) : kv.Value);
@@ -148,8 +147,7 @@ namespace DialogueMachine.Runtime
             if (handoff == null) throw new InvalidOperationException("Load a story before evaluating a bark.");
             var barkScene = handoff.Story.Find(sceneId) ?? throw new InvalidOperationException("Scene '" + sceneId + "' does not exist.");
             AddMissingVariables();
-            var visitIndex = visits.GetValueOrDefault(barkScene.State);
-            visits[barkScene.State] = visitIndex + 1;
+            var visitIndex = CountVisit(barkScene);
             var resolved = DialogueRules.ResolveText(barkScene.Text, Numbers(), Texts());
             var tempLine = -1;
             var barkRaw = DialogueRules.BuildPages(resolved, barkScene.SayItAll, ref randomState, ref tempLine, barkScene.Metadata.GetValueOrDefault("delivery"), visitIndex)[0];
@@ -242,9 +240,20 @@ namespace DialogueMachine.Runtime
             if (saved == null) PageIndex = 0;
             else
             {
+                currentVisitIndex = Math.Max(0, store.GetNumber(DialogueRules.VisitKey(saved.State)) - 1);
                 RebuildPages();
                 Deliver();
             }
+        }
+
+        // Escalate scenes keep their visit count in the store, so saves and game-owned stores keep it.
+        private int CountVisit(Scene s)
+        {
+            if (!DialogueRules.IsEscalate(s.Metadata.GetValueOrDefault("delivery"))) return 0;
+            var key = DialogueRules.VisitKey(s.State);
+            var visit = store.GetNumber(key);
+            store.SetNumber(key, visit + 1);
+            return visit;
         }
 
         private void AddMissingVariables()
@@ -300,8 +309,7 @@ namespace DialogueMachine.Runtime
                 return;
             }
             scene = handoff.Story.Find(id) ?? throw new InvalidOperationException("Scene '" + id + "' does not exist.");
-            currentVisitIndex = visits.GetValueOrDefault(scene.State);
-            visits[scene.State] = currentVisitIndex + 1;
+            currentVisitIndex = CountVisit(scene);
             PageIndex = 0;
             randomLine = -1;
             RebuildPages();

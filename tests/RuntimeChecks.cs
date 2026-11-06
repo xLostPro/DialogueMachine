@@ -158,6 +158,10 @@ internal static class RuntimeChecks
         check(b2.Text == "Visit two as Plumber." && b2.Speaker == "Hero" && b2.Portrait == "hero_groggy", "EvaluateBark advances escalation visit count and parses @Speaker [portrait]: override");
         var b3 = barkRunner.EvaluateBark("bark_bed"); var b4 = barkRunner.EvaluateBark("bark_bed");
         check(b3.Text == "Visit three." && b4.Text == "Visit three.", "escalate delivery clamps to the final line on subsequent visits");
+        var gameStore = new DictionaryVariables();
+        var beforeReload = new DialogueRunner(gameStore); beforeReload.Load(Parse(project)); beforeReload.Start(); beforeReload.EvaluateBark("bark_bed");
+        var afterReload = new DialogueRunner(gameStore); afterReload.Load(Parse(project)); afterReload.Start();
+        check(gameStore.GetNumber("visit:bark_bed") == 1 && afterReload.EvaluateBark("bark_bed").Text == "Visit two as Noble Warrior.", "a game-owned store keeps escalate visit counts when the runner is recreated");
         check(barkRunner.CurrentSceneId == "second" && barkRunner.Speaker == "Guide" && barkRunner.Portrait == "narrator_calm" && barkRunner.CurrentPage == "Multi-page banter.", "page 0 uses scene speaker and portrait");
         barkRunner.Continue();
         check(barkRunner.Speaker == "Hero" && barkRunner.Portrait == "hero_confused" && barkRunner.CurrentMetadata["portrait"] == "hero_confused" && barkRunner.CurrentPage == "Wait, what?", "page 1 applies @Hero [hero_confused]: override and strips header from CurrentPage");
