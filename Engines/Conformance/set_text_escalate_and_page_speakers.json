@@ -56,7 +56,9 @@
       "pageCount": 1,
       "choices": [],
       "canContinue": true,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 1
+      },
       "text": {
         "player_calling": "Noble Warrior",
         "player_name": "Traveller"
@@ -83,7 +85,9 @@
         }
       ],
       "canContinue": false,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 1
+      },
       "text": {
         "player_calling": "Noble Warrior",
         "player_name": "Traveller"
@@ -99,7 +103,9 @@
       "pageCount": 1,
       "choices": [],
       "canContinue": true,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 2
+      },
       "text": {
         "player_calling": "Noble Warrior",
         "player_name": "Traveller"
@@ -126,7 +132,9 @@
         }
       ],
       "canContinue": false,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 2
+      },
       "text": {
         "player_calling": "Noble Warrior",
         "player_name": "Traveller"
@@ -142,7 +150,9 @@
       "pageCount": 1,
       "choices": [],
       "canContinue": true,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 3
+      },
       "text": {
         "player_calling": "Plumber",
         "player_name": "Traveller"
@@ -169,7 +179,9 @@
         }
       ],
       "canContinue": false,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 3
+      },
       "text": {
         "player_calling": "Plumber",
         "player_name": "Traveller"
@@ -185,7 +197,9 @@
       "pageCount": 1,
       "choices": [],
       "canContinue": true,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 4
+      },
       "text": {
         "player_calling": "Plumber",
         "player_name": "Traveller"
@@ -212,7 +226,9 @@
         }
       ],
       "canContinue": false,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 4
+      },
       "text": {
         "player_calling": "Plumber",
         "player_name": "Traveller"
@@ -228,7 +244,9 @@
       "pageCount": 0,
       "choices": [],
       "canContinue": false,
-      "numeric": {},
+      "numeric": {
+        "visit:prop": 4
+      },
       "text": {
         "player_calling": "Plumber",
         "player_name": "Traveller"

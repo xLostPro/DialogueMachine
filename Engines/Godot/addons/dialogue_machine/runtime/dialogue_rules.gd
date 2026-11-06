@@ -372,11 +372,18 @@ static func parse_page_header(raw_page: String, default_speaker: String, default
 	var body = trimmed.substr(colon + 1).lstrip(" \t")
 	return [parsed_sp, parsed_pt, body]
 
+static func is_escalate(delivery: String) -> bool:
+	return delivery.to_lower() == "escalate"
+
+# Numeric key counting entries into an escalate scene; the next visit shows that line.
+static func visit_key(scene_id: String) -> String:
+	return "visit:" + scene_id
+
 static func build_pages(text: String, say_it_all: bool, random_state_ref: Array, random_line_ref: Array, delivery: String = "", visit_index: int = 0) -> Array[String]:
 	var pages = split_pages(text)
 	if pages.is_empty():
 		return [NO_DIALOGUE]
-	if delivery.to_lower() == "escalate":
+	if is_escalate(delivery):
 		return [pages[clampi(visit_index, 0, pages.size() - 1)]]
 	if say_it_all:
 		return pages

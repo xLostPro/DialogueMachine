@@ -200,7 +200,6 @@ var _scenes_by_id: Dictionary = {}
 var _scene: Dictionary = {}
 var _raw_pages: Array[String] = []
 var _pages: Array[String] = []
-var _visits: Dictionary = {}
 var _current_visit_index: int = 0
 var _random_state: int = 0
 var _random_line: int = -1
@@ -345,8 +344,6 @@ func start(scene_id: String = "", seed_override: Variant = null, numeric_overrid
 	_scene = {}
 	_raw_pages = []
 	_pages = []
-	if variables_provider == null:
-		_visits.clear()
 	variables.clear()
 	_add_missing_variables()
 
@@ -528,6 +525,7 @@ func restore_state(json_str: String) -> void:
 		_scene = _scenes_by_id[target_scene]
 		is_ended = false
 		page_index = saved_page
+		_current_visit_index = maxi(0, variables.get_number(DialogueRules.visit_key(target_scene)) - 1)
 		_load_metadata()
 		_rebuild_pages()
 		_deliver()
@@ -602,8 +600,13 @@ func _enter(id: String, status: String, choice_taken: Variant = null) -> void:
 		return
 
 	_scene = _scenes_by_id[id]
-	_current_visit_index = int(_visits.get(id, 0))
-	_visits[id] = _current_visit_index + 1
+	_current_visit_index = 0
+	# Escalate scenes keep their visit count in the store, so saves and game-owned stores keep it.
+	var meta = _scene.get("Metadata", {})
+	if meta is Dictionary and DialogueRules.is_escalate(str(meta.get("delivery", ""))):
+		var visit_key = DialogueRules.visit_key(id)
+		_current_visit_index = variables.get_number(visit_key)
+		variables.write_number(visit_key, _current_visit_index + 1)
 	is_ended = false
 	page_index = 0
 	_random_line = -1

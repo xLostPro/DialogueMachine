@@ -26,7 +26,6 @@ public sealed class Simulation
     public int PageIndex { get; private set; }
     public string[] Pages { get; private set; } = [];
     private string[] rawPages = [];
-    private Dictionary<string, int> visits = new(StringComparer.Ordinal);
     private int currentVisitIndex;
     public string CurrentSpeaker
     {
@@ -94,7 +93,7 @@ public sealed class Simulation
         startingVariables = source.startingVariables; startingText = source.startingText;
         random = new(source.random.State); Current = source.Current; Ending = source.Ending; PageIndex = source.PageIndex;
         randomLine = source.randomLine; rawPages = source.rawPages.ToArray(); Pages = source.Pages.ToArray();
-        visits = new(source.visits, StringComparer.Ordinal); currentVisitIndex = source.currentVisitIndex;
+        currentVisitIndex = source.currentVisitIndex;
         Variables = new(source.Variables); TextVariables = new(source.TextVariables);
     }
     // Analysis shares the isolated read-only story and copies only runtime state; no trace/history tree.
@@ -102,7 +101,7 @@ public sealed class Simulation
     public void Restart()
     {
         Variables = new(startingVariables); TextVariables = new(startingText); random.State = DialogueRules.SeedState(Seed);
-        visits.Clear(); currentVisitIndex = 0; history.Clear(); Trace.Clear(); ReplaySteps.Clear(); Transcript.Clear(); Events.Clear(); Ending = null; Enter(start);
+        currentVisitIndex = 0; history.Clear(); Trace.Clear(); ReplaySteps.Clear(); Transcript.Clear(); Events.Clear(); Ending = null; Enter(start);
     }
     private void Add(string kind, Guid? choiceId = null, string? text = null, int? page = null, string? key = null,
         int? before = null, int? after = null, string? eventType = null, string? eventId = null, string? parameter = null, string? destination = null)
@@ -152,7 +151,7 @@ public sealed class Simulation
     }
     public void RerollLine()
     {
-        if (Current is null || Current.SayItAll || Current.Metadata.GetValueOrDefault("delivery") == "escalate") return;
+        if (Current is null || Current.SayItAll || DialogueRules.IsEscalate(Current.Metadata.GetValueOrDefault("delivery"))) return;
         SaveSnapshot(); Step("Reroll"); randomLine = -1;
         if (record) Transcript.Add("— Random line rerolled —"); RefreshPreview(); Add("Reroll");
     }
@@ -185,8 +184,12 @@ public sealed class Simulation
             if (record) Transcript.Add("— Conversation ended —"); return;
         }
         Current = scenes.GetValueOrDefault(id) ?? throw new InvalidOperationException($"Scene ‘{id}’ does not exist.");
-        currentVisitIndex = visits.GetValueOrDefault(Current.State);
-        visits[Current.State] = currentVisitIndex + 1;
+        currentVisitIndex = 0;
+        if (DialogueRules.IsEscalate(Current.Metadata.GetValueOrDefault("delivery")))
+        {
+            var key = DialogueRules.VisitKey(Current.State);
+            currentVisitIndex = Variables.GetValueOrDefault(key); Variables[key] = currentVisitIndex + 1;
+        }
         PageIndex = 0; randomLine = -1; RebuildText(); Add("SceneVisit"); Deliver();
         if (Current.Type == "Shop")
         {
@@ -253,17 +256,17 @@ public sealed class Simulation
     private void SaveSnapshot()
     {
         if (!keepHistory) return;
-        history.Push(new(Current?.State, Ending, PageIndex, randomLine, RandomState, rawPages.ToArray(), Pages.ToArray(), new(visits, StringComparer.Ordinal), currentVisitIndex, new(Variables), new(TextVariables), Events.Count, Transcript.Count, Trace.Count, ReplaySteps.Count));
+        history.Push(new(Current?.State, Ending, PageIndex, randomLine, RandomState, rawPages.ToArray(), Pages.ToArray(), currentVisitIndex, new(Variables), new(TextVariables), Events.Count, Transcript.Count, Trace.Count, ReplaySteps.Count));
     }
     public void Back()
     {
         if (!history.TryPop(out var s)) return;
         Current = s.Id is null ? null : scenes.GetValueOrDefault(s.Id); Ending = s.Ending; PageIndex = s.Page; randomLine = s.RandomLine;
-        random.State = s.RandomState; rawPages = s.RawPages; Pages = s.Pages; visits = s.Visits; currentVisitIndex = s.CurrentVisitIndex;
+        random.State = s.RandomState; rawPages = s.RawPages; Pages = s.Pages; currentVisitIndex = s.CurrentVisitIndex;
         Variables = s.Variables; TextVariables = s.TextVariables;
         Events.RemoveRange(s.Events, Events.Count - s.Events); Transcript.RemoveRange(s.Transcript, Transcript.Count - s.Transcript);
         Trace.RemoveRange(s.Trace, Trace.Count - s.Trace); ReplaySteps.RemoveRange(s.Steps, ReplaySteps.Count - s.Steps);
     }
     private sealed record Snapshot(string? Id, StoryEnding? Ending, int Page, int RandomLine, ulong RandomState, string[] RawPages, string[] Pages,
-        Dictionary<string, int> Visits, int CurrentVisitIndex, Dictionary<string, int> Variables, Dictionary<string, string> TextVariables, int Events, int Transcript, int Trace, int Steps);
+        int CurrentVisitIndex, Dictionary<string, int> Variables, Dictionary<string, string> TextVariables, int Events, int Transcript, int Trace, int Steps);
 }

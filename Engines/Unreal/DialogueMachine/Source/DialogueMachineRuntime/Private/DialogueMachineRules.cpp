@@ -471,6 +471,16 @@ void FDialogueRules::ParsePageHeader(const FString& RawPage, const FString& Defa
     OutText = Trimmed.Mid(ColonIdx + 1).TrimStart();
 }
 
+bool FDialogueRules::IsEscalate(const FString& Delivery)
+{
+    return Delivery.Equals(TEXT("escalate"), ESearchCase::IgnoreCase);
+}
+
+FString FDialogueRules::VisitKey(const FString& SceneId)
+{
+    return TEXT("visit:") + SceneId;
+}
+
 TArray<FString> FDialogueRules::BuildPages(const FString& Text, bool bSayItAll, uint64& InOutRandomState, int32& InOutRandomLine, const FString& Delivery, int32 VisitIndex)
 {
     TArray<FString> Pages = SplitPages(Text);
@@ -478,7 +488,7 @@ TArray<FString> FDialogueRules::BuildPages(const FString& Text, bool bSayItAll, 
     {
         return { NoDialogue };
     }
-    if (Delivery.Equals(TEXT("escalate"), ESearchCase::IgnoreCase)) return { Pages[FMath::Clamp(VisitIndex, 0, Pages.Num() - 1)] };
+    if (IsEscalate(Delivery)) return { Pages[FMath::Clamp(VisitIndex, 0, Pages.Num() - 1)] };
     if (bSayItAll)
     {
         return Pages;

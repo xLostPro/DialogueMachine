@@ -19,7 +19,7 @@ Pass a project's JSON path as the first argument to open it at launch.
 ## What you can do
 
 - **Welcome:** start a blank story, open desktop or website JSON, reopen one of eight recent projects, or explore the Last Lighthouse example.
-- **Write:** each scene has a title, speaker, dialogue pages (read in order or one picked at random), player responses, notes and tags. A **Script** view shows the whole story as text.
+- **Write:** each scene has a title, speaker, dialogue pages (read in order, one picked at random, or one per visit that escalates and stops on the last line), player responses, notes and tags. A **Script** view shows the whole story as text.
 - **Connect:** drag from a response's dot (or the continue dot) onto a scene, or use **Choose…** to search destinations by title or ID. **Jump →** follows a link. **Arrange** and **Fit story** tidy the graph; the optional minimap (Ctrl/Cmd+Shift+M) helps in large stories.
 - **Organize:** multi-select scenes (Ctrl/Cmd-click, Shift-click, Shift-drag), move them together, copy/paste them with links remapped, save scene and response templates, and put scenes in overlapping **groups/chapters** (Ctrl/Cmd+Shift+G).
 - **Logic:** responses can require affinity/inventory values (failing responses are hidden, disabled or always shown) and can change values or fire Event/Script/Shop hooks. **Variables & characters** manages starting values and text substitutions and renames them everywhere they are used.

@@ -35,7 +35,7 @@ bool FDialogueRunner::Start(const FString& SceneId, TOptional<int32> Seed, const
 
     if (bOwnsVariables)
     {
-        Store = MakeShared<FDictionaryVariables>(); Visits.Empty();
+        Store = MakeShared<FDictionaryVariables>();
     }
     AddMissingVariables();
 
@@ -216,7 +216,7 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
 
     if (bOwnsVariables)
     {
-        Store = MakeShared<FDictionaryVariables>(); Visits.Empty();
+        Store = MakeShared<FDictionaryVariables>();
     }
 
     const TSharedPtr<FJsonObject>* NumObj = nullptr;
@@ -269,6 +269,7 @@ bool FDialogueRunner::RestoreState(const FString& Json, FString& OutError)
     }
     else
     {
+        CurrentVisitIndex = FMath::Max(0, Store->GetNumber(FDialogueRules::VisitKey(SavedScene->State)) - 1);
         RebuildPages();
         Deliver();
     }
@@ -445,9 +446,15 @@ bool FDialogueRunner::Enter(const FString& Id, FString* OutError)
     }
 
     PageIndex = 0;
-    const int32* FoundVisits = Visits.Find(CurrentScene->State);
-    CurrentVisitIndex = FoundVisits ? *FoundVisits : 0;
-    Visits.Add(CurrentScene->State, CurrentVisitIndex + 1);
+    // Escalate scenes keep their visit count in the store, so saves and game-owned stores keep it.
+    CurrentVisitIndex = 0;
+    const FString* EnterDelivery = CurrentScene->Metadata.Find(TEXT("delivery"));
+    if (EnterDelivery && FDialogueRules::IsEscalate(*EnterDelivery))
+    {
+        const FString VisitKey = FDialogueRules::VisitKey(CurrentScene->State);
+        CurrentVisitIndex = Store->GetNumber(VisitKey);
+        Store->SetNumber(VisitKey, CurrentVisitIndex + 1);
+    }
     RandomLine = -1;
     RebuildPages();
     Deliver();
