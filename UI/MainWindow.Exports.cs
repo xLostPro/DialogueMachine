@@ -71,18 +71,30 @@ public sealed partial class MainWindow
             return false;
         }
 
-        var (nextFolder, saved) = await Exports.EngineFolder(this, preferences.Scale, WorkspaceStore.GetEngineExportFolder(preferences, filePath));
+        var (nextFolder, saved) = await Exports.EngineFolder(this, preferences.Scale, WorkspaceStore.ResolveEngineExportFolder(preferences, project, filePath));
         if (!saved) return false;
-        WorkspaceStore.SetEngineExportFolder(preferences, filePath, nextFolder);
+        string? relative = null;
+        if (nextFolder is not null)
+        {
+            try { Directory.CreateDirectory(nextFolder); relative = WorkspaceStore.RelativeEngineExportFolder(filePath, nextFolder); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                await Ui.Ask(this, "Could not use that folder", ex.Message, "Close");
+                return false;
+            }
+        }
+        if (project.EngineExportFolder != relative) Mutate(() => project.EngineExportFolder = relative);
+        // The project file now carries the folder, so this machine's older copy is no longer needed.
+        WorkspaceStore.SetEngineExportFolder(preferences, filePath, null);
         WritePreferences();
         if (nextFolder is not null)
         {
-            Status("Engine export folder set to " + nextFolder);
+            Status("Engine export folder set to " + nextFolder + ". Save to keep it in the project.");
             TryAutoExportEngineRuntime();
         }
         else
         {
-            Status("Engine export folder cleared");
+            Status("Engine export folder cleared. Save to keep the change.");
         }
         return true;
     }
@@ -90,8 +102,13 @@ public sealed partial class MainWindow
     public void TryAutoExportEngineRuntime()
     {
         if (filePath is null) return;
-        var folder = WorkspaceStore.GetEngineExportFolder(preferences, filePath);
+        var folder = WorkspaceStore.ResolveEngineExportFolder(preferences, project, filePath);
         if (string.IsNullOrWhiteSpace(folder)) return;
+        if (!Directory.Exists(folder))
+        {
+            Status("Engine export skipped: folder not found: " + folder + ". Set it in File → Engine export folder…");
+            return;
+        }
 
         var errors = DialogueEngine.Validate(project).Where(d => d.Severity == "Error").ToList();
         if (errors.Count > 0)

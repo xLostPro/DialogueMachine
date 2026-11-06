@@ -1,0 +1,558 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Dialogue Machine project (*.dialogue.json)",
+  "description": "A Dialogue Machine story. Only ListOfCharacterStates is required; omitted fields take their defaults. Unknown fields are kept. Run `DialogueMachine.Cli validate <file>` after writing one.",
+  "type": "object",
+  "properties": {
+    "FormatVersion": {
+      "description": "Project format version. Must be 1.",
+      "type": "integer"
+    },
+    "ProjectName": {
+      "description": "Story name. The runtime export file is named after it.",
+      "type": "string"
+    },
+    "CharacterId": {
+      "type": "string"
+    },
+    "EntryStateId": {
+      "description": "Scene ID the story starts at. Defaults to the first scene.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ListOfCharacterStates": {
+      "description": "The scenes. Each scene is one node in the graph.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "State": {
+            "description": "Unique scene ID, e.g. 'arrival'. '[EXIT]' is reserved for ending the conversation.",
+            "type": "string"
+          },
+          "Type": {
+            "description": "'Dialogue', or 'Shop' to also open ShopData.ShopId in the game.",
+            "type": "string",
+            "enum": [
+              "Dialogue",
+              "Shop"
+            ]
+          },
+          "Text": {
+            "description": "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if], {placeholders}, [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
+            "type": "string"
+          },
+          "DefaultNextId": {
+            "description": "Scene to continue to when the scene has no usable choice. '[EXIT]' ends the conversation. A scene needs choices or this.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "SayItAll": {
+            "description": "true: show every line in order as pages. false: show one random line per visit (or one line per visit with Metadata.delivery = 'escalate').",
+            "type": "boolean"
+          },
+          "ShopData": {
+            "type": "object",
+            "properties": {
+              "ShopId": {
+                "description": "Shop ID passed to the game when Type is 'Shop'.",
+                "type": "string"
+              }
+            }
+          },
+          "Choices": {
+            "description": "Player responses shown after the last page.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "InternalId": {
+                  "description": "Stable unique choice ID (GUID).",
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "ButtonText": {
+                  "description": "Response text. Supports the same conditionals and placeholders as scene text.",
+                  "type": "string"
+                },
+                "NextStateId": {
+                  "description": "Destination scene ID. Empty or null uses the scene's DefaultNextId; '[EXIT]' ends the conversation.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Visibility": {
+                  "description": "What happens when Requirements fail: Hide, Disable (shown greyed out) or Always (shown and usable).",
+                  "enum": [
+                    "Hide",
+                    "Disable",
+                    "Always"
+                  ]
+                },
+                "Requirements": {
+                  "description": "Conditions for this choice, combined by RequirementMatch.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "Type": {
+                        "description": "Affinity checks aff:TargetId; Inventory checks inv:TargetId.",
+                        "type": "string",
+                        "enum": [
+                          "Affinity",
+                          "Inventory"
+                        ]
+                      },
+                      "TargetId": {
+                        "description": "Variable name without the aff:/inv: prefix.",
+                        "type": "string"
+                      },
+                      "Operator": {
+                        "type": "string",
+                        "enum": [
+                          "==",
+                          "!=",
+                          ">",
+                          "<",
+                          ">=",
+                          "<="
+                        ]
+                      },
+                      "Value": {
+                        "description": "Integer to compare against, written as a string.",
+                        "type": "string",
+                        "pattern": "^-?[0-9]+$"
+                      }
+                    }
+                  }
+                },
+                "RequirementMatch": {
+                  "description": "All (default): every requirement must pass. Any: one is enough.",
+                  "enum": [
+                    "All",
+                    "Any"
+                  ]
+                },
+                "AfterChoiceActions": {
+                  "description": "Actions run when the player picks this choice.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "Type": {
+                        "description": "Affinity/Inventory add Amount to aff:/inv: TargetId. Set writes Amount to aff:TargetId; Toggle flips it between 0 and 1. SetText writes Parameter to text variable TargetId. Event/Script are raised to the game with TargetId and Parameter.",
+                        "type": "string",
+                        "enum": [
+                          "Affinity",
+                          "Inventory",
+                          "Set",
+                          "Toggle",
+                          "SetText",
+                          "Event",
+                          "Script"
+                        ]
+                      },
+                      "TargetId": {
+                        "description": "Variable name without the aff:/inv: prefix, or the event/script ID.",
+                        "type": "string"
+                      },
+                      "Amount": {
+                        "description": "Amount to add, or the value for Set.",
+                        "type": "integer"
+                      },
+                      "Parameter": {
+                        "description": "Text value for SetText, or an optional parameter for Event/Script.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  }
+                },
+                "VisualX": {
+                  "type": "number"
+                },
+                "VisualY": {
+                  "type": "number"
+                }
+              }
+            }
+          },
+          "DefaultAfterActions": {
+            "description": "Actions run when the scene continues through DefaultNextId.",
+            "type": "array",
+            "items": {
+              "$ref": "#/properties/ListOfCharacterStates/items/properties/Choices/items/properties/AfterChoiceActions/items"
+            }
+          },
+          "Metadata": {
+            "description": "String keys: speaker (default 'Character'), title, portrait, notes, tags (comma-separated), entry ('true' = also started by the game), ending ('true' = intended ending), delivery ('escalate' = next line on each visit, stops on the last). Other keys pass through to the game.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "VisualX": {
+            "description": "Graph X position in the editor.",
+            "type": "number"
+          },
+          "VisualY": {
+            "description": "Graph Y position in the editor.",
+            "type": "number"
+          }
+        }
+      }
+    },
+    "InitialVariables": {
+      "description": "Starting numeric variables, keyed 'aff:<id>' (affinity) or 'inv:<id>' (inventory, never below 0).",
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "TextVariables": {
+      "description": "Starting text variables, used as {key} placeholders in text.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "SceneTemplates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Scene": {
+            "type": "object",
+            "properties": {
+              "State": {
+                "description": "Unique scene ID, e.g. 'arrival'. '[EXIT]' is reserved for ending the conversation.",
+                "type": "string"
+              },
+              "Type": {
+                "description": "'Dialogue', or 'Shop' to also open ShopData.ShopId in the game.",
+                "type": "string",
+                "enum": [
+                  "Dialogue",
+                  "Shop"
+                ]
+              },
+              "Text": {
+                "description": "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if], {placeholders}, [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
+                "type": "string"
+              },
+              "DefaultNextId": {
+                "description": "Scene to continue to when the scene has no usable choice. '[EXIT]' ends the conversation. A scene needs choices or this.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "SayItAll": {
+                "description": "true: show every line in order as pages. false: show one random line per visit (or one line per visit with Metadata.delivery = 'escalate').",
+                "type": "boolean"
+              },
+              "ShopData": {
+                "$ref": "#/properties/ListOfCharacterStates/items/properties/ShopData"
+              },
+              "Choices": {
+                "description": "Player responses shown after the last page.",
+                "$ref": "#/properties/ListOfCharacterStates/items/properties/Choices"
+              },
+              "DefaultAfterActions": {
+                "description": "Actions run when the scene continues through DefaultNextId.",
+                "$ref": "#/properties/ListOfCharacterStates/items/properties/DefaultAfterActions"
+              },
+              "Metadata": {
+                "description": "String keys: speaker (default 'Character'), title, portrait, notes, tags (comma-separated), entry ('true' = also started by the game), ending ('true' = intended ending), delivery ('escalate' = next line on each visit, stops on the last). Other keys pass through to the game.",
+                "$ref": "#/properties/ListOfCharacterStates/items/properties/Metadata"
+              },
+              "VisualX": {
+                "description": "Graph X position in the editor.",
+                "type": "number"
+              },
+              "VisualY": {
+                "description": "Graph Y position in the editor.",
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ChoiceTemplates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Choice": {
+            "type": "object",
+            "properties": {
+              "InternalId": {
+                "description": "Stable unique choice ID (GUID).",
+                "type": "string",
+                "format": "uuid"
+              },
+              "ButtonText": {
+                "description": "Response text. Supports the same conditionals and placeholders as scene text.",
+                "type": "string"
+              },
+              "NextStateId": {
+                "description": "Destination scene ID. Empty or null uses the scene's DefaultNextId; '[EXIT]' ends the conversation.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "Visibility": {
+                "description": "What happens when Requirements fail: Hide, Disable (shown greyed out) or Always (shown and usable).",
+                "enum": [
+                  "Hide",
+                  "Disable",
+                  "Always"
+                ]
+              },
+              "Requirements": {
+                "description": "Conditions for this choice, combined by RequirementMatch.",
+                "$ref": "#/properties/ListOfCharacterStates/items/properties/Choices/items/properties/Requirements"
+              },
+              "RequirementMatch": {
+                "description": "All (default): every requirement must pass. Any: one is enough.",
+                "enum": [
+                  "All",
+                  "Any"
+                ]
+              },
+              "AfterChoiceActions": {
+                "description": "Actions run when the player picks this choice.",
+                "$ref": "#/properties/ListOfCharacterStates/items/properties/Choices/items/properties/AfterChoiceActions"
+              },
+              "VisualX": {
+                "type": "number"
+              },
+              "VisualY": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "SceneGroups": {
+      "description": "Editor-only groups/chapters of scenes.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Scenes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "StateId": {
+                  "type": "string"
+                },
+                "Occurrence": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Characters": {
+      "description": "Editor-only speaker roster. Scenes still name their speaker in Metadata.speaker.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Color": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "PlaytestScenarios": {
+      "description": "Saved story tests. Easiest to record in the editor.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "StartStateId": {
+            "type": "string"
+          },
+          "Seed": {
+            "type": "integer"
+          },
+          "NumericOverrides": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer"
+            }
+          },
+          "TextOverrides": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "Steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Kind": {
+                  "type": "string"
+                },
+                "SceneId": {
+                  "type": "string"
+                },
+                "ChoiceId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "Fingerprint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Label": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Key": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Number": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "Text": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "Assertions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "Kind": {
+                  "type": "string"
+                },
+                "Key": {
+                  "type": "string"
+                },
+                "Number": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "Text": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "SceneId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ChoiceId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "EventType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Parameter": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "Count": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              }
+            }
+          },
+          "RequireEnding": {
+            "type": "boolean"
+          },
+          "MaxSteps": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "EngineExportFolder": {
+      "description": "Folder that saving auto-exports <project-slug>.runtime.json into, relative to this file with '/' separators.",
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "ListOfCharacterStates"
+  ]
+}

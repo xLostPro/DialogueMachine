@@ -113,6 +113,12 @@ internal static class ExportChecks
         WorkspaceStore.SetEngineExportFolder(prefs, projPath, engFolder);
         WorkspaceStore.Forget(prefs, projPath);
         check(WorkspaceStore.GetEngineExportFolder(prefs, projPath) is null, "forgetting project removes its engine export folder");
+        var folderProject = Templates.Blank();
+        WorkspaceStore.SetEngineExportFolder(prefs, projPath, engFolder);
+        check(WorkspaceStore.ResolveEngineExportFolder(prefs, folderProject, projPath) == Path.GetFullPath(engFolder), "a project without its own export folder falls back to the older machine preference");
+        folderProject.EngineExportFolder = WorkspaceStore.RelativeEngineExportFolder(projPath, Path.Combine(output, "Unity", "Assets"));
+        check(folderProject.EngineExportFolder == "Unity/Assets" && WorkspaceStore.ResolveEngineExportFolder(prefs, folderProject, projPath) == Path.GetFullPath(Path.Combine(output, "Unity", "Assets")), "the project's relative export folder wins and resolves against the project file");
+        check(ProjectStore.Parse(ProjectStore.Serialize(folderProject)).EngineExportFolder == "Unity/Assets" && !ProjectStore.Serialize(Templates.Blank()).Contains("EngineExportFolder"), "the export folder round-trips and is omitted when unset");
 
         // CLI export-runtime
         var cliStory = Templates.Blank();

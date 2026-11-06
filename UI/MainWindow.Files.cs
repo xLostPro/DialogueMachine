@@ -92,6 +92,10 @@ public sealed partial class MainWindow
                 path = await projectFilePicker.SaveAsync(this, safeName + ".dialogue.json"); if (path is null) return false;
             }
             path = Path.GetFullPath(path);
+            // Store the engine export folder relative to where the file is saved: keeps it in place through Save as,
+            // and moves a folder from older machine preferences into the project.
+            if (filePath is not null && WorkspaceStore.ResolveEngineExportFolder(preferences, project, filePath) is { } exportFolder)
+                project.EngineExportFolder = WorkspaceStore.RelativeEngineExportFolder(path, exportFolder);
             // The public Project model remains mutable. Reconcile untracked programmatic
             // edits at the file boundary, including edits while an async picker was open.
             Commit(true, force: true);

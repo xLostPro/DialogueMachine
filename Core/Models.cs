@@ -19,6 +19,8 @@ public sealed class DialogueProject
     public List<SceneGroup> SceneGroups { get; set; } = [];
     public List<Character> Characters { get; set; } = [];
     public List<PlaytestScenario> PlaytestScenarios { get; set; } = [];
+    // Relative to the project file, with forward slashes, so it moves with the project.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] public string? EngineExportFolder { get; set; }
     [JsonExtensionData] public Dictionary<string, JsonElement>? Extra { get; set; }
     [JsonIgnore] public string Entry => EntryStateId ?? ListOfCharacterStates.FirstOrDefault()?.State ?? "";
 }
