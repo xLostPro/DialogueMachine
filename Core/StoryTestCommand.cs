@@ -7,20 +7,26 @@ namespace DialogueMachine.Core;
 
 public static class StoryTestCommand
 {
-    public const string Help = "Dialogue Machine story tests\nvalidate <project.json>\nreplay <project.json> [--all | --scenario <id-or-name>] [--max-steps <1..10000>] [--analyze] [--max-configurations <1..10000>] [--trace <output.json>]\nexport-runtime <project.json> <out.runtime.json> [--seed N] [--max-operations N]\nconformance <outputDir>\nExit: 0 passed, 1 invalid story, 2 input/usage/write error, 3 replay/assertion/dead-end failure, 4 bounded limit, 5 cancelled.\n";
+    public const string Help = "Dialogue Machine story tests\nvalidate <project.json>\nreplay <project.json> [--all | --scenario <id-or-name>] [--max-steps <1..10000>] [--analyze] [--max-configurations <1..10000>] [--trace <output.json>]\nexport-runtime <project.json> <out.runtime.json> [--seed N] [--max-operations N]\nconformance <outputDir>\nschema [out.schema.json]   JSON Schema for project files; prints it when no path is given\nExit: 0 passed, 1 invalid story, 2 input/usage/write error, 3 replay/assertion/dead-end failure, 4 bounded limit, 5 cancelled.\n";
     public static int Run(string[] args, TextWriter output, CancellationToken cancellation = default)
     {
         if (args.Length == 1 && args[0] is "--help" or "-h") { output.Write(Help); return 0; }
         object report; var exit = 2; string? tracePath = null;
         try
         {
+            if (args.Length is 1 or 2 && args[0] == "schema")
+            {
+                if (args.Length == 1) { output.Write(ProjectSchema.Generate()); return 0; }
+                ProjectStore.AtomicWrite(args[1], ProjectSchema.Generate());
+                output.WriteLine(JsonSerializer.Serialize(new { SchemaVersion = 1, Command = "schema", ExitCode = 0, Path = Path.GetFullPath(args[1]) }, ProjectStore.Options)); return 0;
+            }
             if (args.Length == 2 && args[0] == "conformance")
             {
                 var fixtures = ConformanceFixtures.Generate();
                 foreach (var (name, content) in fixtures) ProjectStore.AtomicWrite(Path.Combine(args[1], name + ".json"), content);
                 output.WriteLine(JsonSerializer.Serialize(new { SchemaVersion = 1, Command = "conformance", ExitCode = 0, Fixtures = fixtures.Keys }, ProjectStore.Options)); return 0;
             }
-            if (args.Length < 2 || args[0] is not ("validate" or "replay" or "export-runtime")) throw new ArgumentException("Use validate <project.json>, replay <project.json>, export-runtime <project.json> <out.runtime.json> or conformance <outputDir>. See --help.");
+            if (args.Length < 2 || args[0] is not ("validate" or "replay" or "export-runtime")) throw new ArgumentException("Use validate <project.json>, replay <project.json>, export-runtime <project.json> <out.runtime.json>, conformance <outputDir> or schema [out.schema.json]. See --help.");
             var command = args[0];
             if (command == "export-runtime")
             {

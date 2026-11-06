@@ -51,6 +51,15 @@ public sealed class WorkspaceStore(string directory)
             ? new(PathComparer)
             : new(p.EngineExportFolders.Where(kv => !string.IsNullOrWhiteSpace(kv.Key) && !string.IsNullOrWhiteSpace(kv.Value)), PathComparer);
     }
+    // The project's own folder wins; projects configured before it was stored there fall back to this machine's preference.
+    public static string? ResolveEngineExportFolder(WorkspacePreferences p, DialogueProject project, string projectPath)
+    {
+        if (string.IsNullOrWhiteSpace(project.EngineExportFolder)) return GetEngineExportFolder(p, projectPath);
+        return System.IO.Path.GetFullPath(System.IO.Path.Combine(ProjectDirectory(projectPath), project.EngineExportFolder));
+    }
+    public static string RelativeEngineExportFolder(string projectPath, string folder)
+        => System.IO.Path.GetRelativePath(ProjectDirectory(projectPath), System.IO.Path.GetFullPath(folder)).Replace('\\', '/');
+    private static string ProjectDirectory(string projectPath) => System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(projectPath))!;
     public static string? GetEngineExportFolder(WorkspacePreferences p, string path)
     {
         if (string.IsNullOrWhiteSpace(path)) return null;

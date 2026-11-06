@@ -16,6 +16,11 @@ internal static class RuntimeChecks
         check(files.Keys.Order().SequenceEqual(generated.Keys.Order()), $"{Folder} holds exactly the generated fixtures");
         check(files.Count >= 14, "at least 14 conformance cases are checked in");
         foreach (var (name, json) in files) { Replay(name, json, check); check(true, $"shared runner matches conformance fixture {name}"); }
+        var schemaPath = Path.Combine("Schemas", ProjectSchema.FileName);
+        var schema = ProjectSchema.Generate();
+        check(File.Exists(schemaPath) && File.ReadAllText(schemaPath).Replace("\r\n", "\n") == schema, $"{schemaPath} matches the project model. If stale, run: dotnet run --project CLI/DialogueMachine.Cli.csproj -c Release -- schema {schemaPath}");
+        var schemaRoot = JsonNode.Parse(schema)!;
+        check(schemaRoot["properties"]!["EngineExportFolder"]!["description"] is not null && schemaRoot["properties"]!["ListOfCharacterStates"]!["items"]!["properties"]!["Choices"]!["items"]!["properties"]!["AfterChoiceActions"]!["items"]!["properties"]!["Type"]!["enum"]!.AsArray().Count == 7, "project schema describes fields and lists the allowed action types");
         MiniJsonChecks(check, throws);
         RunnerChecks(check, throws);
         UnityPackageChecks(check, throws);

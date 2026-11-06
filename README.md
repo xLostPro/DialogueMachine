@@ -64,7 +64,20 @@ Dark, Light and High contrast themes and 100/115/130% interface sizes are under 
 - **Save project** stores the full desktop project (layout, groups, templates, scenarios, starting values). **Export website / game JSON** writes the original website schema with numeric visibility values and the start scene first. Website JSON opens directly, and unknown fields are preserved.
 - Saves are atomic. If another program changed the file since you opened it, Save offers **Compare**, **Reload**, **Save a copy** or **Cancel** instead of overwriting.
 - Unsaved work is copied to a recovery file every 10 seconds and offered on the next start.
+- **File → Engine export folder…** is saved in the project, relative to the project file, so it follows the project to other machines and through moves. Saving reports a folder that no longer exists instead of recreating it.
 - Settings, recent files and recovery copies live in `%LOCALAPPDATA%/DialogueMachine` on Windows (the .NET `LocalApplicationData` folder elsewhere). The app makes no network calls.
+
+### Writing projects with scripts or agents
+
+Project files (`*.dialogue.json`) are plain JSON. To generate one outside the editor:
+
+1. Follow [`Schemas/dialogue-project.schema.json`](Schemas/dialogue-project.schema.json). It describes every field, the allowed values and the text markup.
+2. Start from [`Examples/lighthouse.dialogue.json`](Examples/lighthouse.dialogue.json) for a complete small story.
+3. Validate it and fix every error it reports (missing destinations, duplicate IDs, bad conditions). Exit code 0 means the editor and engines will accept it:
+
+```powershell
+dotnet run --project CLI/DialogueMachine.Cli.csproj -c Release -- validate path/to/story.dialogue.json
+```
 
 ## Unity
 
@@ -76,7 +89,7 @@ Dialogue Machine includes an official package for Unity (2022.3 LTS and Unity 6)
   ```
 - **Importing:** Point Dialogue Machine's auto-export folder inside your Unity project's `Assets/` directory. Unity's `ScriptedImporter` automatically creates a `DialogueAsset` for each `*.runtime.json` file on change.
 - **Runner:** Add `DialogueRunnerBehaviour` to a GameObject and assign the `DialogueAsset`. It exposes C# and Unity events (`OnLine`, `OnChoices`, `OnAction`, `OnEnded`) and supports custom `IDialogueVariables` providers.
-- **Presentation:** Add `DefaultDialogueView` to build a clean UI Toolkit conversation panel entirely in code with typewriter effects and keyboard/gamepad focus navigation. Or implement `IDialogueView` for custom UI.
+- **Presentation:** Add `DefaultDialogueView` to build a clean UI Toolkit conversation panel entirely in code with typewriter effects and keyboard/gamepad focus navigation. Or implement `IDialogueView` for custom UI. The view has no input binding of its own: call `runner.Continue()` from your game's interact/submit action.
 - **Events & Hooks:** Attach `DialogueEventRouter` to route dialogue `Event` and `Script` actions to `UnityEvent` listeners, and handle `Shop` scenes with `onShop`.
 - **Live Link:** Open **Window → Dialogue Machine → Live Link**. When the bridge is active in Dialogue Machine, edits push instantly to your asset and live runners, and running gameplay is tracked on the graph in DM's **Follow** pane.
 

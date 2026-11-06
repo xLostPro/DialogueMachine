@@ -98,7 +98,8 @@ internal static class EngineExportChecks
         Press(saveFolderBtn!);
         Pump(configTask);
 
-        Check(WorkspaceStore.GetEngineExportFolder(new WorkspaceStore(settingsRoot).Load(), savedStoryPath) == Path.GetFullPath(targetEngineFolder), "configured engine export folder persists in workspace preferences");
+        Check(runtimeWindow.Project.EngineExportFolder == "EngineAssets" && runtimeWindow.HasUnsavedChanges, "configured engine export folder is stored in the project, relative to the project file");
+        Check(WorkspaceStore.GetEngineExportFolder(new WorkspaceStore(settingsRoot).Load(), savedStoryPath) is null, "configured engine export folder is not kept in machine preferences");
 
         var expectedAutoExport = Path.Combine(targetEngineFolder, RuntimeExport.Slug(runtimeWindow.Project.ProjectName) + ".runtime.json");
         Check(File.Exists(expectedAutoExport), "auto-export wrote file to engine folder on folder config / save");
@@ -120,6 +121,19 @@ internal static class EngineExportChecks
 
         // Restore valid target
         runtimeWindow.Project.ListOfCharacterStates[0].DefaultNextId = null;
+        Pump(runtimeWindow.SaveProjectAsync());
+        Check(ProjectStore.Load(savedStoryPath).EngineExportFolder == "EngineAssets", "saving writes the engine export folder into the project file");
+
+        var movedStoryPath = Path.Combine(workflowRoot, "Stories", "moved-story.dialogue.json");
+        runtimePicker.SavePaths.Enqueue(movedStoryPath);
+        Pump(runtimeWindow.SaveProjectAsync(true));
+        Check(runtimeWindow.Project.EngineExportFolder == "../EngineAssets" && ProjectStore.Load(movedStoryPath).EngineExportFolder == "../EngineAssets", "Save as into another folder keeps the export folder pointing at the same place");
+
+        Directory.Delete(targetEngineFolder, true);
+        runtimeWindow.Project.ListOfCharacterStates[0].Text += " Edited.";
+        Pump(runtimeWindow.SaveProjectAsync());
+        Check(!Directory.Exists(targetEngineFolder) && runtimeWindow.FindControl<TextBlock>("StatusText")!.Text!.Contains("folder not found"), "a missing engine export folder is reported instead of silently recreated");
+        Directory.CreateDirectory(targetEngineFolder);
 
         // Clear folder
         configTask = runtimeWindow.ConfigureEngineExportFolderAsync();
@@ -129,7 +143,17 @@ internal static class EngineExportChecks
         Press(clearBtn!);
         Press(saveFolderBtn!);
         Pump(configTask);
-        Check(WorkspaceStore.GetEngineExportFolder(new WorkspaceStore(settingsRoot).Load(), savedStoryPath) is null, "clearing folder removes entry from preferences");
+        Check(runtimeWindow.Project.EngineExportFolder is null, "clearing the engine export folder removes it from the project");
+
+        // A folder configured by an older version lives only in this machine's preferences; the next save moves it into the project.
+        var legacyRoot = Path.Combine(workflowRoot, "legacy-settings");
+        var legacyStore = new WorkspaceStore(legacyRoot); var legacyPrefs = legacyStore.Load();
+        WorkspaceStore.SetEngineExportFolder(legacyPrefs, movedStoryPath, targetEngineFolder); legacyStore.Save(legacyPrefs);
+        var legacyWindow = new MainWindow(null, true, legacyRoot, new TestFilePicker()); legacyWindow.Show();
+        Pump(legacyWindow.OpenProjectAsync(movedStoryPath));
+        Pump(legacyWindow.SaveProjectAsync());
+        Check(ProjectStore.Load(movedStoryPath).EngineExportFolder == "../EngineAssets", "saving a project configured by an older version moves its export folder into the project");
+        legacyWindow.Close();
 
         runtimeWindow.Close();
     }
