@@ -77,7 +77,16 @@ namespace DialogueMachine.Runtime
                 }, RegexOptions.IgnoreCase);
                 if (!changed) break;
             }
-            return Regex.Replace(text, @"\{([\w:.\-]+)\}", m => textVars.TryGetValue(m.Groups[1].Value, out var value) ? value : vars.TryGetValue(m.Groups[1].Value, out var number) ? number.ToString(CultureInfo.InvariantCulture) : m.Value);
+            return Regex.Replace(text, @"\{([\w:.\-]+)\}", m =>
+            {
+                var key = m.Groups[1].Value;
+                if (textVars.TryGetValue(key, out var value)) return value;
+                if (vars.TryGetValue(key, out var number)) return number.ToString(CultureInfo.InvariantCulture);
+                // {a:key} writes "a" or "an" before the text variable's value.
+                if (key.StartsWith("a:", StringComparison.Ordinal) && textVars.TryGetValue(key.Substring(2), out var noun) && noun.Length > 0)
+                    return ("aeiouAEIOU".IndexOf(noun[0]) >= 0 ? "an " : "a ") + noun;
+                return m.Value;
+            });
         }
 
         public static string PlainText(string text) => Regex.Replace(text, @"\[/?(?:b|i|u|colour(?:=[^\]]*)?)\]", "", RegexOptions.IgnoreCase);

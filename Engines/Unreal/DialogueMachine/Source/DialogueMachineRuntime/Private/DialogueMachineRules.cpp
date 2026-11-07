@@ -345,6 +345,18 @@ FString FDialogueRules::ResolveText(const FString& Text, const TMap<FString, int
                         Pos = CloseBrace + 1;
                         continue;
                     }
+                    else if (Key.StartsWith(TEXT("a:"), ESearchCase::CaseSensitive))
+                    {
+                        // {a:key} writes "a" or "an" before the text variable's value.
+                        const FString* Noun = TextVars.Find(Key.RightChop(2));
+                        if (Noun && !Noun->IsEmpty())
+                        {
+                            const bool bVowel = FString(TEXT("aeiouAEIOU")).Contains(Noun->Left(1), ESearchCase::CaseSensitive);
+                            Substituted += (bVowel ? TEXT("an ") : TEXT("a ")) + *Noun;
+                            Pos = CloseBrace + 1;
+                            continue;
+                        }
+                    }
                 }
             }
         }

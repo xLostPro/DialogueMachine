@@ -81,6 +81,7 @@ Engine runners must mirror Core semantics without deviation:
    - After conditional passes finish, resolve `{key}` placeholders.
    - Look up `key` in text variables (`TextValues`), then numeric variables (`NumericValues` converted to invariant string).
    - If neither exists, leave `{key}` intact.
+   - `{a:key}` (when no variable is literally named `a:key`) writes `a` or `an` plus a space and the text variable `key`: `an` if its value starts with `a e i o u` (any case), else `a`. A missing or empty value leaves the placeholder intact.
 
 ### Pages & Lines
 - Split resolved scene text on `\r` and `\n`, discarding empty lines. A whitespace-only line is kept as a page.

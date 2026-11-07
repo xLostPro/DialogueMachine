@@ -286,6 +286,12 @@ static func resolve_text(text: String, vars: Dictionary, text_vars: Dictionary) 
 						substituted += str(int(vars[sub_key]))
 						pos = close_brace + 1
 						continue
+					elif sub_key.begins_with("a:") and text_vars.has(sub_key.substr(2)) and str(text_vars[sub_key.substr(2)]).length() > 0:
+						# {a:key} writes "a" or "an" before the text variable's value.
+						var noun = str(text_vars[sub_key.substr(2)])
+						substituted += ("an " if "aeiouAEIOU".contains(noun[0]) else "a ") + noun
+						pos = close_brace + 1
+						continue
 
 		substituted += current_text[pos]
 		pos += 1
