@@ -1,0 +1,125 @@
+{
+  "name": "article_helper",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.story.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022article\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022You are {a:calling}. {a:missing} {a:empty}.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Be {a:calling}\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022article\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "3f0c778cc67e1fc5a357944e591f40b392a96adff371b11cf40d8e741be08604",
+    "StartingScene": "article",
+    "Seed": 0,
+    "NumericValues": {},
+    "TextValues": {
+      "player_name": "Traveller",
+      "calling": "Plumber",
+      "empty": ""
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setText",
+      "key": "calling",
+      "value": "accountant"
+    },
+    {
+      "op": "setText",
+      "key": "calling",
+      "value": "Umpire"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000001"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "article",
+      "ended": false,
+      "page": "You are a Plumber. {a:missing} {a:empty}.",
+      "plain": "You are a Plumber. {a:missing} {a:empty}.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Be a Plumber",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "calling": "Plumber",
+        "empty": "",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "article",
+      "ended": false,
+      "page": "You are an accountant. {a:missing} {a:empty}.",
+      "plain": "You are an accountant. {a:missing} {a:empty}.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Be an accountant",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "calling": "accountant",
+        "empty": "",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "article",
+      "ended": false,
+      "page": "You are an Umpire. {a:missing} {a:empty}.",
+      "plain": "You are an Umpire. {a:missing} {a:empty}.",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Be an Umpire",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "calling": "Umpire",
+        "empty": "",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "calling": "Umpire",
+        "empty": "",
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

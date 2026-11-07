@@ -83,7 +83,7 @@ public static class VariableStore
         void Text(string state, string value, string field)
         {
             foreach (Match m in Substitutions.Matches(value))
-                if (m.Groups[1].Value == key && (textVariable || !knownText.Contains(key))) references.Add(new(state, field));
+                if ((m.Groups[1].Value == key || textVariable && m.Groups[1].Value == "a:" + key) && (textVariable || !knownText.Contains(key))) references.Add(new(state, field));
             if (!textVariable)
                 foreach (Match m in Conditions.Matches(value))
                     if (ResolveConditionKey(m.Groups[2].Value, known) == key) references.Add(new(state, field + " condition"));
@@ -154,7 +154,8 @@ public static class VariableStore
         string Rewrite(string value, HashSet<string> scopeKeys)
         {
             var renamedKeys = renamedScopes[scopeKeys];
-            value = Substitutions.Replace(value, m => m.Groups[1].Value == oldKey && (textVariable || !p.TextVariables.ContainsKey(oldKey)) ? "{" + newKey + "}" : m.Value);
+            value = Substitutions.Replace(value, m => m.Groups[1].Value == oldKey && (textVariable || !p.TextVariables.ContainsKey(oldKey)) ? "{" + newKey + "}"
+                : textVariable && m.Groups[1].Value == "a:" + oldKey ? "{a:" + newKey + "}" : m.Value);
             return textVariable ? value : Conditions.Replace(value, m =>
             {
                 var id = m.Groups[2].Value; var binding = ResolveConditionKey(id, scopeKeys);

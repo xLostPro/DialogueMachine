@@ -43,6 +43,11 @@ internal static class VariableChecks
         Check(!variableStory.InitialVariables.ContainsKey("aff:unused") && !variableStory.TextVariables.ContainsKey("npc_name"), "unused numeric and text variables can be deleted");
         var variableRoundtrip = ProjectStore.Parse(ProjectStore.Serialize(variableStory));
         Check(VariableStore.References(variableRoundtrip, "aff:rapport").Count == 6 && !DialogueEngine.Validate(variableRoundtrip).Any(), "renamed references survive desktop round trips and validation");
+        var articleStory = Templates.Blank(); articleStory.TextVariables["calling"] = "accountant"; articleStory.ListOfCharacterStates[0].Text = "You are {a:calling}, {calling}.";
+        Check(VariableStore.References(articleStory, "calling", true).Count == 2 && !DialogueEngine.Validate(articleStory).Any(d => d.Message.Contains("a:calling")), "{a:key} counts as a reference to its text variable and is not an unknown substitution");
+        Throws(() => VariableStore.Delete(articleStory, "calling", true), "a text variable used only through {a:key} cannot be deleted");
+        VariableStore.Rename(articleStory, "calling", "job", true);
+        Check(articleStory.ListOfCharacterStates[0].Text == "You are {a:job}, {job}.", "text rename rewrites {a:key} placeholders");
         var bareStory = Templates.Blank(); bareStory.ListOfCharacterStates[0].Text = "[if courage >= 1]Brave[else]Careful[/if] literal aff:not_a_reference";
         Check(DialogueEngine.DiscoverVariables(bareStory).SequenceEqual(new[] { "aff:courage" }), "discovery includes bare inline conditions and excludes numeric-looking prose");
         VariableStore.Rename(bareStory, "aff:courage", "aff:bravery");
