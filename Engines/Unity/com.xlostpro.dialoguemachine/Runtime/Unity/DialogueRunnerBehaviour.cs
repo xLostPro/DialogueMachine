@@ -22,7 +22,7 @@ namespace DialogueMachine.Runtime.Unity
     public class DialogueRunnerBehaviour : MonoBehaviour
     {
         // A build cannot read package.json; the test harness checks this matches it.
-        public const string PluginVersion = "1.5.1";
+        public const string PluginVersion = "1.6.0";
 
         [Header("Configuration")]
         [SerializeField] private DialogueAsset story;
