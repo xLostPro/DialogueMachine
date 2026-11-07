@@ -1,0 +1,273 @@
+{
+  "name": "text_conditions",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.story.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022text_check\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022[if calling == \\u0022\\u0022]No calling yet.[else]You are {a:calling}[if calling == \\u0022Plumber\\u0022], fixing pipes[/if].[/if] [IF mood != \\u0022grim\\u0022]Smile.[ELSE]Frown.[/IF] [if missing == \\u0022\\u0022]unset[/if]\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000001\u0022,\n          \u0022ButtonText\u0022: \u0022Ask about the calling\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Text\u0022,\n              \u0022TargetId\u0022: \u0022calling\u0022,\n              \u0022Operator\u0022: \u0022!=\u0022,\n              \u0022Value\u0022: \u0022\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000002\u0022,\n          \u0022ButtonText\u0022: \u0022Talk pipes\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 0,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Text\u0022,\n              \u0022TargetId\u0022: \u0022calling\u0022,\n              \u0022Operator\u0022: \u0022==\u0022,\n              \u0022Value\u0022: \u0022Plumber\u0022\n            }\n          ],\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        },\n        {\n          \u0022InternalId\u0022: \u002220000000-0000-0000-0000-000000000003\u0022,\n          \u0022ButtonText\u0022: \u0022Plumber or paid\u0022,\n          \u0022NextStateId\u0022: \u0022[EXIT]\u0022,\n          \u0022Visibility\u0022: 1,\n          \u0022Requirements\u0022: [\n            {\n              \u0022Type\u0022: \u0022Text\u0022,\n              \u0022TargetId\u0022: \u0022calling\u0022,\n              \u0022Operator\u0022: \u0022==\u0022,\n              \u0022Value\u0022: \u0022Plumber\u0022\n            },\n            {\n              \u0022Type\u0022: \u0022Inventory\u0022,\n              \u0022TargetId\u0022: \u0022coin\u0022,\n              \u0022Operator\u0022: \u0022\\u003E=\u0022,\n              \u0022Value\u0022: \u00221\u0022\n            }\n          ],\n          \u0022RequirementMatch\u0022: \u0022Any\u0022,\n          \u0022AfterChoiceActions\u0022: [],\n          \u0022VisualX\u0022: 150,\n          \u0022VisualY\u0022: 150\n        }\n      ],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022text_check\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "75a4cb4776046d7beeca49aa47594fe0b00be8e752595ca5b20d98af343b4506",
+    "StartingScene": "text_check",
+    "Seed": 0,
+    "NumericValues": {
+      "inv:coin": 0
+    },
+    "TextValues": {
+      "player_name": "Traveller",
+      "calling": "",
+      "mood": "calm",
+      "missing": ""
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "setText",
+      "key": "calling",
+      "value": "accountant"
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 1
+    },
+    {
+      "op": "setNumber",
+      "key": "inv:coin",
+      "value": 0
+    },
+    {
+      "op": "setText",
+      "key": "calling",
+      "value": "Plumber"
+    },
+    {
+      "op": "setText",
+      "key": "mood",
+      "value": "grim"
+    },
+    {
+      "op": "choose",
+      "choiceId": "20000000-0000-0000-0000-000000000002"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "text_check",
+      "ended": false,
+      "page": "No calling yet. Smile. unset",
+      "plain": "No calling yet. Smile. unset",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Ask about the calling",
+          "enabled": false
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Plumber or paid",
+          "enabled": false
+        }
+      ],
+      "canContinue": true,
+      "numeric": {
+        "inv:coin": 0
+      },
+      "text": {
+        "calling": "",
+        "missing": "",
+        "mood": "calm",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "text_check",
+      "ended": false,
+      "page": "You are an accountant. Smile. unset",
+      "plain": "You are an accountant. Smile. unset",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Ask about the calling",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Plumber or paid",
+          "enabled": false
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "inv:coin": 0
+      },
+      "text": {
+        "calling": "accountant",
+        "missing": "",
+        "mood": "calm",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "text_check",
+      "ended": false,
+      "page": "You are an accountant. Smile. unset",
+      "plain": "You are an accountant. Smile. unset",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Ask about the calling",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Plumber or paid",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "inv:coin": 1
+      },
+      "text": {
+        "calling": "accountant",
+        "missing": "",
+        "mood": "calm",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "text_check",
+      "ended": false,
+      "page": "You are an accountant. Smile. unset",
+      "plain": "You are an accountant. Smile. unset",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Ask about the calling",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Plumber or paid",
+          "enabled": false
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "inv:coin": 0
+      },
+      "text": {
+        "calling": "accountant",
+        "missing": "",
+        "mood": "calm",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "text_check",
+      "ended": false,
+      "page": "You are a Plumber, fixing pipes. Smile. unset",
+      "plain": "You are a Plumber, fixing pipes. Smile. unset",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Ask about the calling",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Talk pipes",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Plumber or paid",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "inv:coin": 0
+      },
+      "text": {
+        "calling": "Plumber",
+        "missing": "",
+        "mood": "calm",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": "text_check",
+      "ended": false,
+      "page": "You are a Plumber, fixing pipes. Frown. unset",
+      "plain": "You are a Plumber, fixing pipes. Frown. unset",
+      "pageIndex": 0,
+      "pageCount": 1,
+      "choices": [
+        {
+          "id": "20000000-0000-0000-0000-000000000001",
+          "text": "Ask about the calling",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000002",
+          "text": "Talk pipes",
+          "enabled": true
+        },
+        {
+          "id": "20000000-0000-0000-0000-000000000003",
+          "text": "Plumber or paid",
+          "enabled": true
+        }
+      ],
+      "canContinue": false,
+      "numeric": {
+        "inv:coin": 0
+      },
+      "text": {
+        "calling": "Plumber",
+        "missing": "",
+        "mood": "grim",
+        "player_name": "Traveller"
+      },
+      "events": []
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {
+        "inv:coin": 0
+      },
+      "text": {
+        "calling": "Plumber",
+        "missing": "",
+        "mood": "grim",
+        "player_name": "Traveller"
+      },
+      "events": []
+    }
+  ]
+}

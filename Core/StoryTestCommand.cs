@@ -225,6 +225,13 @@ public static class ConformanceFixtures
         var either = Scene("either", "Pick a way in.");
         either.Choices = [Reply(1, "Show coin or key", null, VisibilityMode.Disable, Needs("Inventory", "coin", ">=", 1), Needs("Inventory", "key", ">=", 1)), Reply(2, "Trusted or bold", null, VisibilityMode.Hide, Needs("Affinity", "trust", ">=", 2), Needs("Affinity", "bold", ">=", 2))];
         either.Choices[0].RequirementMatch = either.Choices[1].RequirementMatch = RequirementMatch.Any;
+        Requirement TextIs(string key, string op, string value) => new() { Type = "Text", TargetId = key, Operator = op, Value = value };
+        var textCheck = Scene("text_check", "[if calling == \"\"]No calling yet.[else]You are {a:calling}[if calling == \"Plumber\"], fixing pipes[/if].[/if] [IF mood != \"grim\"]Smile.[ELSE]Frown.[/IF] [if missing == \"\"]unset[/if]");
+        textCheck.Choices = [Reply(1, "Ask about the calling", "[EXIT]", VisibilityMode.Disable, TextIs("calling", "!=", "")), Reply(2, "Talk pipes", "[EXIT]", VisibilityMode.Hide, TextIs("calling", "==", "Plumber")),
+            Reply(3, "Plumber or paid", "[EXIT]", VisibilityMode.Disable, TextIs("calling", "==", "Plumber"), Needs("Inventory", "coin", ">=", 1))];
+        textCheck.Choices[2].RequirementMatch = RequirementMatch.Any;
+        var textProject = Project(textCheck); textProject.TextVariables["calling"] = ""; textProject.TextVariables["mood"] = "calm";
+        Case("text_conditions", textProject, [Begin, SetText("calling", "accountant"), SetNumber("inv:coin", 1), SetNumber("inv:coin", 0), SetText("calling", "Plumber"), SetText("mood", "grim"), Pick(Id(2))]);
         Case("or_conditions", Project(either), [Begin, SetNumber("inv:key", 1), SetNumber("aff:bold", 3), SetNumber("inv:key", 0), SetNumber("aff:bold", 0), SetNumber("aff:trust", 2), Pick(Id(2))]);
         Case("flags_set_toggle", flagProject, [Begin, Pick(Id(1)), Next, Begin, Next, SetNumber("aff:door", 1), Next]);
 
@@ -335,7 +342,7 @@ public static class ConformanceFixtures
         var choices = new JsonArray();
         foreach (var c in s.Current?.Choices ?? [])
         {
-            var met = DialogueEngine.RequirementsMet(c, s.Variables, out _) || c.Visibility == VisibilityMode.Always;
+            var met = DialogueEngine.RequirementsMet(c, s.Variables, s.TextVariables, out _) || c.Visibility == VisibilityMode.Always;
             if (!met && c.Visibility == VisibilityMode.Hide) continue;
             choices.Add(new JsonObject { ["id"] = c.InternalId.ToString(), ["text"] = DialogueEngine.ResolveText(c.ButtonText, s.Variables, s.TextVariables), ["enabled"] = met });
         }

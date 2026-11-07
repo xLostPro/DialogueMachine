@@ -48,7 +48,18 @@ static func parse_int_exact(raw: String) -> Array:
 		return [false, 0]
 	return [true, val]
 
-static func requirement_met(type: String, target_id: String, op: String, value: String, vars: Dictionary) -> Array:
+static func text_matches(actual: String, op: String, target: String) -> bool:
+	return (actual == target) == (op == "==")
+
+static func requirement_met(type: String, target_id: String, op: String, value: String, vars: Dictionary, text_vars: Dictionary = {}) -> Array:
+	if type == "Text":
+		# Text conditions compare exactly; a missing text variable counts as "".
+		if target_id.strip_edges().is_empty() or (op != "==" and op != "!="):
+			return [false, "This condition is incomplete or invalid."]
+		var actual_text: String = str(text_vars.get(target_id, ""))
+		if text_matches(actual_text, op, value):
+			return [true, ""]
+		return [false, "Requires %s %s \"%s\" · current \"%s\"" % [target_id, op, value, actual_text]]
 	var parsed = parse_int_exact(value)
 	if (type != "Affinity" and type != "Inventory") or target_id.strip_edges().is_empty() or not parsed[0]:
 		return [false, "This condition is incomplete or invalid."]
@@ -59,7 +70,7 @@ static func requirement_met(type: String, target_id: String, op: String, value: 
 		return [false, "Requires %s %s %d · current %d" % [req_key, op, target, actual]]
 	return [true, ""]
 
-static func requirements_met(requirements: Array, vars: Dictionary, any: bool = false) -> Array:
+static func requirements_met(requirements: Array, vars: Dictionary, text_vars: Dictionary, any: bool = false) -> Array:
 	var first_reason = null
 	for req in requirements:
 		if req is Dictionary:
@@ -68,7 +79,8 @@ static func requirements_met(requirements: Array, vars: Dictionary, any: bool = 
 				str(req.get("TargetId", "")),
 				str(req.get("Operator", "")),
 				str(req.get("Value", "")),
-				vars
+				vars,
+				text_vars
 			)
 			if res[0] and any:
 				return res
@@ -101,7 +113,7 @@ static func _is_whitespace(c: int) -> bool:
 	return c == 32 or (c >= 9 and c <= 13) or c == 0x85 or c == 0xA0 or c == 0x1680 or (c >= 0x2000 and c <= 0x200A) or c == 0x2028 or c == 0x2029 or c == 0x202F or c == 0x205F or c == 0x3000
 
 static func _try_parse_if_header(text: String, start_pos: int) -> Array:
-	# Returns [bool success, int header_end, String key, String op, int target, bool target_valid]
+	# Returns [bool success, int header_end, String key, String op, int target, bool target_valid, bool is_text, String text_target]
 	var len_text = text.length()
 	if start_pos + 4 > len_text:
 		return [false, -1, "", "", 0, false]
@@ -145,6 +157,19 @@ static func _try_parse_if_header(text: String, start_pos: int) -> Array:
 	while pos < len_text and _is_whitespace(text.unicode_at(pos)):
 		pos += 1
 
+	# A quoted value compares a text variable: == or != only, no quote or bracket inside.
+	if pos < len_text and text[pos] == "\"":
+		if parsed_op != "==" and parsed_op != "!=":
+			return [false, -1, "", "", 0, false]
+		var quote_end = pos + 1
+		while quote_end < len_text and text[quote_end] != "\"":
+			if text[quote_end] == "[" or text[quote_end] == "]":
+				return [false, -1, "", "", 0, false]
+			quote_end += 1
+		if quote_end + 1 >= len_text or text[quote_end + 1] != "]":
+			return [false, -1, "", "", 0, false]
+		return [true, quote_end + 1, parsed_key, parsed_op, 0, true, true, text.substr(pos + 1, quote_end - pos - 1)]
+
 	var num_start = pos
 	if pos < len_text and text[pos] == "-":
 		pos += 1
@@ -166,7 +191,7 @@ static func _try_parse_if_header(text: String, start_pos: int) -> Array:
 	var target_valid = parsed_target[0]
 	var target_val = parsed_target[1]
 
-	return [true, pos, parsed_key, parsed_op, target_val, target_valid]
+	return [true, pos, parsed_key, parsed_op, target_val, target_valid, false, ""]
 
 static func _find_next_if_with_space(text: String, start_pos: int) -> int:
 	var pos = start_pos
@@ -238,15 +263,20 @@ static func resolve_text(text: String, vars: Dictionary, text_vars: Dictionary) 
 					else:
 						true_branch = body
 
-					var val: int = 0
-					if vars.has(req_key):
-						val = int(vars[req_key])
-					elif vars.has("inv:" + req_key):
-						val = int(vars["inv:" + req_key])
-					elif vars.has("aff:" + req_key):
-						val = int(vars["aff:" + req_key])
+					var met = false
+					if header[6]:
+						met = text_matches(str(text_vars.get(req_key, "")), req_op, header[7])
+					else:
+						var val: int = 0
+						if vars.has(req_key):
+							val = int(vars[req_key])
+						elif vars.has("inv:" + req_key):
+							val = int(vars["inv:" + req_key])
+						elif vars.has("aff:" + req_key):
+							val = int(vars["aff:" + req_key])
+						met = target_valid and compare(val, req_op, req_target)
 
-					if target_valid and compare(val, req_op, req_target):
+					if met:
 						new_text += true_branch
 					else:
 						new_text += false_branch

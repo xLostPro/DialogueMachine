@@ -391,7 +391,7 @@ func get_choices() -> Array[Dictionary]:
 		var btn_text = str(c.get("ButtonText", ""))
 		var resolved_btn = DialogueRules.resolve_text(btn_text, numbers, texts)
 		var visibility = int(c.get("Visibility", 0))
-		var req_res = DialogueRules.requirements_met(c.get("Requirements", []), numbers, str(c.get("RequirementMatch", "All")) == "Any")
+		var req_res = DialogueRules.requirements_met(c.get("Requirements", []), numbers, texts, str(c.get("RequirementMatch", "All")) == "Any")
 		var met = req_res[0] or visibility == 2
 		if not met and visibility == 0:
 			continue
@@ -432,7 +432,7 @@ func choose(choice_id: String) -> void:
 		return
 
 	var visibility = int(found_choice.get("Visibility", 0))
-	var req_res = DialogueRules.requirements_met(found_choice.get("Requirements", []), variables.all_numeric(), str(found_choice.get("RequirementMatch", "All")) == "Any")
+	var req_res = DialogueRules.requirements_met(found_choice.get("Requirements", []), variables.all_numeric(), variables.all_text(), str(found_choice.get("RequirementMatch", "All")) == "Any")
 	if visibility != 2 and not req_res[0]:
 		push_error("DialogueRunner.choose: cannot pick disabled choice: %s (%s)" % [choice_id, req_res[1]])
 		return

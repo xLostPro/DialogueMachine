@@ -18,6 +18,7 @@ Accounts, cloud sync, collaboration, and auto-update. The game engine JSON expor
 
 ## Done
 
+- **Text-variable conditions.** `[if calling == "Plumber"]` / `[if calling != ""]` inline, and a `Text` choice requirement (`==`/`!=`, missing counts as `""`) in the Logic tab, Core, Unity, Godot and Unreal (`text_conditions` conformance fixture). Renaming a text variable rewrites both.
 - **`{a:key}` article placeholder.** `{a:calling}` writes "a" or "an" before a text variable's value (vowel start → "an"), in Core/Unity, Godot and Unreal (`article_helper` conformance fixture, not yet run in Godot or Unreal).
 - **Project-owned engine export folder & project JSON Schema.** The engine export folder is stored in the project (`EngineExportFolder`, relative to the project file) instead of per-machine preferences; a folder set by an older version moves into the project on the next save. Save as rebases it, and a missing folder is reported instead of silently recreated. `Schemas/dialogue-project.schema.json` (generated from the model, `schema` CLI command) lets scripts and agents write projects, checked with `validate`.
 - **Escalate visit counts persist.** Escalate scenes count visits in the variable store as `visit:<sceneId>`, so saves, Back and game-owned stores keep them across runner restarts. Restoring into an escalate scene shows the saved line. Escalate delivery and `visit:` keys are documented in `Engines/CONTRACT.md` (`escalate_visits_save_restore` conformance fixture).

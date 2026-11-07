@@ -136,7 +136,12 @@ internal static class EditorPerformanceRegressions
         }
         Press("LogicTab"); PickerStep(C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => AutomationProperties.GetName(c) == "Scene type"), "Shop", "scene type picker");
         list.SelectedItems!.Clear(); list.SelectedItem = list.Items.Cast<NavigationScene>().Single(s => s.Index == 953); Dispatcher.UIThread.RunJobs();
-        PickerStep(C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => c.Items.Count == 2 && c.Items.Contains("Affinity")), "Inventory", "condition type picker");
+        ComboBox ConditionType() => C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => c.Items.Contains("Affinity") && c.Items.Contains("Text"));
+        PickerStep(ConditionType(), "Inventory", "condition type picker");
+        PickerStep(ConditionType(), "Text", "text condition type picker");
+        ConditionType().SelectedItem = "Text"; Dispatcher.UIThread.RunJobs();
+        check(C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Any(c => c.Items.Count == 2 && c.Items.Contains("!=")) && C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<TextBlock>().Any(t => t.Text?.StartsWith("Compare with (text") == true), "a text condition offers only == and != and asks for text");
+        Press("UndoButton");
         C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<Button>().First(b => Equals(b.Content, "＋ Add action")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent)); Dispatcher.UIThread.RunJobs();
         PickerStep(C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => AutomationProperties.GetName(c) == "Action type"), "Inventory", "action type picker");
         C<StackPanel>("EditorPanel").GetVisualDescendants().OfType<ComboBox>().Single(c => AutomationProperties.GetName(c) == "Action type").SelectedItem = "Set flag"; Dispatcher.UIThread.RunJobs();

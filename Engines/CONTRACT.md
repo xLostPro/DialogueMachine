@@ -48,10 +48,10 @@ Every engine parser must preserve website compatibility and **ignore unknown fie
   - `RequirementMatch` (`string`, optional): `"Any"` makes one passing requirement enough; anything else (or absent) means all must pass. An `"Any"` choice with no requirements is available. Engine handoffs keep it; the website file never carries it (Core splits such a choice into one choice per requirement).
   - `AfterChoiceActions` (`array`): Actions executed immediately upon selecting this choice.
 - **Requirements:**
-  - `Type` (`string`): `"Affinity"` or `"Inventory"`.
-  - `TargetId` (`string`): Variable name (without `aff:` / `inv:` prefix).
-  - `Operator` (`string`): `"=="`, `"!="`, `"<"`, `"<="`, `">"`, `">="`.
-  - `Value` (`string`): Integer threshold, written as a string. A requirement with any other type, an empty target or a non-integer value is unmet.
+  - `Type` (`string`): `"Affinity"`, `"Inventory"` or `"Text"`.
+  - `TargetId` (`string`): Variable name (without `aff:` / `inv:` prefix), or the text variable key for `Text`.
+  - `Operator` (`string`): `"=="`, `"!="`, `"<"`, `"<="`, `">"`, `">="`. `Text` allows only `"=="` and `"!="`.
+  - `Value` (`string`): Integer threshold, written as a string. For `Text`, the exact string to compare with (ordinal, case-sensitive); a missing text variable counts as `""`, so `!= ""` means "has been set". A requirement with any other type, an empty target, a non-integer numeric value or a `Text` ordering operator is unmet.
 - **Actions:**
   - `Type` (`string`): `"Affinity"`, `"Inventory"`, `"Set"`, `"Toggle"`, `"Event"`, or `"Script"`. Runners ignore any other type, because newer exports may add them. Core's validation rejects them, so they only reach a runner from a newer exporter.
   - `TargetId` (`string`): Target variable name, event name, or script function identifier.
@@ -76,6 +76,7 @@ Engine runners must mirror Core semantics without deviation:
    - Resolve `[if key op N]...[else]...[/if]` **innermost-first** (blocks containing no nested `[if` or `[/if]`), case-insensitively, for up to 64 passes.
    - Operators: `==`, `!=`, `<`, `<=`, `>`, `>=`.
    - Variable lookup in conditionals: a bare key `x` first looks up `x`, then `inv:x`, then `aff:x`, defaulting to `0` if not found.
+   - A quoted value, `[if key == "text"]` or `[if key != "text"]`, compares the text variable `key` exactly instead (missing counts as `""`). Only `==` and `!=` are allowed, and the quoted text cannot contain `"`, `[` or `]`; anything else is not a conditional header.
    - If condition is met, take the text before `[else]`; otherwise take the text after `[else]` (or empty string if no `[else]`).
 2. **Substitutions:**
    - After conditional passes finish, resolve `{key}` placeholders.

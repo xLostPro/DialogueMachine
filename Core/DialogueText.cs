@@ -5,7 +5,7 @@ namespace DialogueMachine.Core;
 internal static class DialogueText
 {
     private static readonly Regex ConditionalTags = new(@"\[(?:/?if\b|else\b)[^\[\]]*(?:\]|(?=\[)|$)", RegexOptions.IgnoreCase);
-    private static readonly Regex ConditionHeader = new(@"^\[if\s+([\w:.\-]+)\s*(==|!=|>=|<=|>|<)\s*(-?\d+)\]$", RegexOptions.IgnoreCase);
+    private static readonly Regex ConditionHeader = new(@"^\[if\s+([\w:.\-]+)\s*(?:(==|!=|>=|<=|>|<)\s*(-?\d+)|(?:==|!=)\s*""[^""\[\]]*"")\]$", RegexOptions.IgnoreCase);
 
     // Check every branch without evaluating it against today's starting variables.
     public static List<Diagnostic> Validate(string text, string stateId, string fieldLabel)
@@ -26,7 +26,7 @@ internal static class DialogueText
             var header = ConditionHeader.Match(token.Value);
             if (header.Success)
             {
-                if (blocks.Count >= 64 || !int.TryParse(header.Groups[3].Value, out _)) return false;
+                if (blocks.Count >= 64 || header.Groups[3].Success && !int.TryParse(header.Groups[3].Value, out _)) return false;
                 blocks.Push(false);
             }
             else if (token.Value.Equals("[else]", StringComparison.OrdinalIgnoreCase))

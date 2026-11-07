@@ -45,7 +45,9 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
     private AutoCompleteBox VariableInput(string type, string id, Action<string> apply, bool flags = false)
     {
         var prefix = type == "Inventory" ? "inv:" : "aff:";
-        var input = new AutoCompleteBox { Text = id, ItemsSource = flags ? VariableStore.DiscoverFlags(project) : DialogueEngine.DiscoverVariables(project).Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).Select(k => k[4..]).ToList(), MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = flags ? "Choose or type a flag ID" : "Choose or type a variable ID", PlaceholderForeground = Ui.Brush("Muted") };
+        var items = flags ? VariableStore.DiscoverFlags(project) : type is "Text" or "SetText" ? VariableStore.DiscoverText(project).ToList() : DialogueEngine.DiscoverVariables(project).Where(k => k.StartsWith(prefix, StringComparison.Ordinal)).Select(k => k[4..]).ToList();
+        var placeholder = flags ? "Choose or type a flag ID" : type is "Text" or "SetText" ? "Choose or type a text variable ID" : "Choose or type a variable ID";
+        var input = new AutoCompleteBox { Text = id, ItemsSource = items, MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = placeholder, PlaceholderForeground = Ui.Brush("Muted") };
         var previous = id;
         input.TextChanged += (_, _) => { var current = input.Text ?? ""; if (current != previous) { previous = current; apply(current); actions.Edited(); } };
         input.LostFocus += (_, _) => actions.Commit(); return input;
@@ -206,10 +208,17 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
                     card.Children.Add(Ui.Card(Ui.Stack(Ui.Field("Flag", VariableInput("Affinity", r.TargetId, v => r.TargetId = v, true)), Ui.Field("Flag state", state), Ui.Button("Remove condition", () => actions.Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
                     continue;
                 }
-                var type = Ui.Select(["Affinity", "Inventory"], r.Type, v => { r.Type = v; actions.Edited(); actions.Commit(); Refresh(); });
-                var op = Ui.Select(["==", "!=", ">", "<", ">=", "<="], r.Operator, v => { r.Operator = v; actions.Edited(); });
+                var isText = r.Type == "Text";
+                var type = Ui.Select(["Affinity", "Inventory", "Text"], r.Type, v =>
+                {
+                    // Text conditions only compare == / != against a string; numbers need an integer.
+                    if (v == "Text") { if (r.Operator is not ("==" or "!=")) r.Operator = "=="; }
+                    else if (!int.TryParse(r.Value, out _)) r.Value = "0";
+                    r.Type = v; actions.Edited(); actions.Commit(); Refresh();
+                });
+                var op = Ui.Select(isText ? new[] { "==", "!=" } : ["==", "!=", ">", "<", ">=", "<="], r.Operator, v => { r.Operator = v; actions.Edited(); });
                 var row = new Grid { ColumnDefinitions = new ColumnDefinitions("*,8,80") }; row.Children.Add(type); Grid.SetColumn(op, 2); row.Children.Add(op);
-                card.Children.Add(Ui.Card(Ui.Stack(row, Ui.Field("Variable ID", VariableInput(r.Type, r.TargetId, v => r.TargetId = v)), Ui.Field("Compare with (integer)", EditText(r.Value, v => r.Value = v)), Ui.Button("Remove condition", () => actions.Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
+                card.Children.Add(Ui.Card(Ui.Stack(row, Ui.Field(isText ? "Text variable ID" : "Variable ID", VariableInput(r.Type, r.TargetId, v => r.TargetId = v)), Ui.Field(isText ? "Compare with (text, empty = not set)" : "Compare with (integer)", EditText(r.Value, v => r.Value = v)), Ui.Button("Remove condition", () => actions.Mutate(() => choice.Requirements.Remove(r)), "subtle")), 10));
             }
             card.Children.Add(Ui.Row(Ui.Button("＋ Add condition", () => actions.Mutate(() => choice.Requirements.Add(new Requirement { TargetId = "trust" })), "subtle"),
                 Ui.Button("＋ Add flag condition", () => actions.Mutate(() => choice.Requirements.Add(new Requirement { TargetId = flagIds.FirstOrDefault() ?? "flag", Operator = "==", Value = "1" })), "subtle")));
@@ -243,13 +252,7 @@ internal sealed class SceneEditorView(StackPanel panel, ScrollViewer scroll, Sce
             });
             Control targetField;
             if (a.Type is "Event" or "Script") targetField = Ui.Field("Event / method ID", EditText(a.TargetId, v => a.TargetId = v));
-            else if (a.Type == "SetText")
-            {
-                var txtInput = new AutoCompleteBox { Text = a.TargetId, ItemsSource = VariableStore.DiscoverText(project).ToList(), MinimumPrefixLength = 0, FilterMode = AutoCompleteFilterMode.Contains, IsTextCompletionEnabled = false, PlaceholderText = "Choose or type a text variable ID", PlaceholderForeground = Ui.Brush("Muted") };
-                var prev = a.TargetId; txtInput.TextChanged += (_, _) => { var cur = txtInput.Text ?? ""; if (cur != prev) { prev = cur; a.TargetId = cur; actions.Edited(); } };
-                txtInput.LostFocus += (_, _) => actions.Commit();
-                targetField = Ui.Field("Text variable ID", txtInput);
-            }
+            else if (a.Type == "SetText") targetField = Ui.Field("Text variable ID", VariableInput(a.Type, a.TargetId, v => a.TargetId = v));
             else targetField = Ui.Field(flag ? "Flag ID" : "Variable ID", VariableInput(a.Type, a.TargetId, v => a.TargetId = v, flag));
             var group = Ui.Stack(Ui.Field("Action type", type), targetField);
             if (a.Type is "Event" or "Script") group.Children.Add(Ui.Field("Parameter", EditText(a.Parameter ?? "", v => a.Parameter = v)));

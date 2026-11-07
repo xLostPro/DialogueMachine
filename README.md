@@ -37,9 +37,10 @@ Every edit can be undone (Ctrl/Cmd+Z / Shift+Z), and bulk operations undo as one
 [b]Bold[/b] [i]Italic[/i] [u]Underline[/u] [colour=#79DFC8]Coloured[/colour]
 Welcome, {player_name}. You have {inv:coin} coins.
 [if aff:trust >= 1]A friend.[else]A stranger.[/if]
+[if calling != ""]You are {a:calling}.[else]Choose a calling.[/if]
 ```
 
-Conditions can nest and use negative numbers. Use `aff:` for affinity and `inv:` for inventory; unprefixed names check inventory first, then affinity, like the website.
+Conditions can nest and use negative numbers. Use `aff:` for affinity and `inv:` for inventory; unprefixed names check inventory first, then affinity, like the website. A quoted value tests a text variable with `==` or `!=` (unset counts as `""`); choice conditions have a matching **Text** type in the Logic tab. `{a:key}` writes "a" or "an" before a text variable's value.
 
 ### Keyboard
 

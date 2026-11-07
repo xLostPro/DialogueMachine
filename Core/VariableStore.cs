@@ -8,7 +8,8 @@ public sealed record VariableReference(string StateId, string Field, bool IsTemp
 public static class VariableStore
 {
     private static readonly Regex Substitutions = new(@"\{([\w:.\-]+)\}");
-    private static readonly Regex Conditions = new(@"(\[if\s+)([\w:.\-]+)(?=\s*(?:==|!=|>=|<=|>|<))", RegexOptions.IgnoreCase);
+    private static readonly Regex Conditions = new(@"(\[if\s+)([\w:.\-]+)(?=\s*(?:==|!=|>=|<=|>|<)\s*-?\d)", RegexOptions.IgnoreCase);
+    private static readonly Regex TextConditions = new(@"(\[if\s+)([\w:.\-]+)(?=\s*(?:==|!=)\s*"")", RegexOptions.IgnoreCase);
     public static bool ValidNumericId(string id) => Regex.IsMatch(id, @"\A(aff|inv):[\w.\-]+\z");
     public static bool ValidTextId(string id) => Regex.IsMatch(id, @"\A[\w.\-]+\z");
     private static IEnumerable<DialogueAction> Actions(DialogueState s) => s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions));
@@ -65,13 +66,19 @@ public static class VariableStore
     public static bool IsFlagCondition(Requirement r, IReadOnlyCollection<string> flags)
         => r.Type == "Affinity" && r.Operator is "==" or "!=" && r.Value is "0" or "1" && flags.Contains(r.TargetId);
 
-    /// <summary>Every text variable key declared in TextVariables or written by a SetText action.</summary>
+    /// <summary>Every text variable key declared in TextVariables, written by a SetText action or tested by a text condition.</summary>
     public static IEnumerable<string> DiscoverText(DialogueProject p)
     {
         var keys = new HashSet<string>(p.TextVariables.Keys, StringComparer.Ordinal);
         foreach (var s in p.ListOfCharacterStates)
+        {
             foreach (var a in Actions(s))
                 if (a.Type == "SetText" && !string.IsNullOrWhiteSpace(a.TargetId)) keys.Add(a.TargetId);
+            foreach (var r in s.Choices.SelectMany(c => c.Requirements))
+                if (r.Type == "Text" && !string.IsNullOrWhiteSpace(r.TargetId)) keys.Add(r.TargetId);
+            foreach (var text in s.Choices.Select(c => c.ButtonText).Prepend(s.Text))
+                foreach (Match m in TextConditions.Matches(text)) keys.Add(m.Groups[2].Value);
+        }
         return keys.Order(StringComparer.Ordinal);
     }
 
@@ -84,6 +91,9 @@ public static class VariableStore
         {
             foreach (Match m in Substitutions.Matches(value))
                 if ((m.Groups[1].Value == key || textVariable && m.Groups[1].Value == "a:" + key) && (textVariable || !knownText.Contains(key))) references.Add(new(state, field));
+            if (textVariable)
+                foreach (Match m in TextConditions.Matches(value))
+                    if (m.Groups[2].Value == key) references.Add(new(state, field + " condition"));
             if (!textVariable)
                 foreach (Match m in Conditions.Matches(value))
                     if (ResolveConditionKey(m.Groups[2].Value, known) == key) references.Add(new(state, field + " condition"));
@@ -106,6 +116,8 @@ public static class VariableStore
                 var c = s.Choices[i]; Text(s.State, c.ButtonText, $"Choice {i + 1} response");
                 if (textVariable)
                 {
+                    foreach (var r in c.Requirements)
+                        if (r.Type == "Text" && r.TargetId == key) references.Add(new(s.State, $"Choice {i + 1} condition"));
                     foreach (var a in c.AfterChoiceActions)
                         if (a.Type == "SetText" && a.TargetId == key) references.Add(new(s.State, $"Choice {i + 1} action"));
                     continue;
@@ -156,7 +168,7 @@ public static class VariableStore
             var renamedKeys = renamedScopes[scopeKeys];
             value = Substitutions.Replace(value, m => m.Groups[1].Value == oldKey && (textVariable || !p.TextVariables.ContainsKey(oldKey)) ? "{" + newKey + "}"
                 : textVariable && m.Groups[1].Value == "a:" + oldKey ? "{a:" + newKey + "}" : m.Value);
-            return textVariable ? value : Conditions.Replace(value, m =>
+            return textVariable ? TextConditions.Replace(value, m => m.Groups[2].Value == oldKey ? m.Groups[1].Value + newKey : m.Value) : Conditions.Replace(value, m =>
             {
                 var id = m.Groups[2].Value; var binding = ResolveConditionKey(id, scopeKeys);
                 if (binding == oldKey) return m.Groups[1].Value + newKey;
@@ -169,7 +181,12 @@ public static class VariableStore
         {
             s.Text = Rewrite(s.Text, scopeKeys);
             foreach (var c in s.Choices) c.ButtonText = Rewrite(c.ButtonText, scopeKeys);
-            if (textVariable) { foreach (var a in Actions(s)) if (a.Type == "SetText" && a.TargetId == oldKey) a.TargetId = newKey; continue; }
+            if (textVariable)
+            {
+                foreach (var a in Actions(s)) if (a.Type == "SetText" && a.TargetId == oldKey) a.TargetId = newKey;
+                foreach (var r in s.Choices.SelectMany(c => c.Requirements)) if (r.Type == "Text" && r.TargetId == oldKey) r.TargetId = newKey;
+                continue;
+            }
             var target = newKey[4..];
             foreach (var a in Actions(s))
                 if (DialogueRules.IsVariableAction(a.Type) && DialogueEngine.Key(a.Type, a.TargetId) == oldKey) a.TargetId = target;

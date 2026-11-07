@@ -41,7 +41,7 @@
             ]
           },
           "Text": {
-            "description": "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if], {placeholders}, [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
+            "description": "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if] and text checks [if calling == \"Plumber\"] or [if calling != \"\"], {placeholders} and {a:key} (a/an + text variable), [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
             "type": "string"
           },
           "DefaultNextId": {
@@ -101,15 +101,16 @@
                     "type": "object",
                     "properties": {
                       "Type": {
-                        "description": "Affinity checks aff:TargetId; Inventory checks inv:TargetId.",
+                        "description": "Affinity checks aff:TargetId; Inventory checks inv:TargetId; Text compares text variable TargetId with == or != (missing counts as empty).",
                         "type": "string",
                         "enum": [
                           "Affinity",
-                          "Inventory"
+                          "Inventory",
+                          "Text"
                         ]
                       },
                       "TargetId": {
-                        "description": "Variable name without the aff:/inv: prefix.",
+                        "description": "Variable name without the aff:/inv: prefix, or the text variable ID for Text.",
                         "type": "string"
                       },
                       "Operator": {
@@ -124,9 +125,8 @@
                         ]
                       },
                       "Value": {
-                        "description": "Integer to compare against, written as a string.",
-                        "type": "string",
-                        "pattern": "^-?[0-9]+$"
+                        "description": "Integer to compare against, written as a string. For Text, the exact text to compare with (empty = not set).",
+                        "type": "string"
                       }
                     }
                   }
@@ -247,7 +247,7 @@
                 ]
               },
               "Text": {
-                "description": "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if], {placeholders}, [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
+                "description": "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if] and text checks [if calling == \"Plumber\"] or [if calling != \"\"], {placeholders} and {a:key} (a/an + text variable), [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
                 "type": "string"
               },
               "DefaultNextId": {

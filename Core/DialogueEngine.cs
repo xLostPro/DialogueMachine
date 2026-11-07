@@ -8,13 +8,13 @@ public static class DialogueEngine
     private static readonly string[] Operators = ["==", "!=", ">", "<", ">=", "<="];
     public static bool Compare(int actual, string op, int target) => DialogueRules.Compare(actual, op, target);
     public static string Key(string type, string id) => DialogueRules.Key(type, id);
-    public static bool RequirementsMet(Choice c, IReadOnlyDictionary<string, int> vars, out string reason)
+    public static bool RequirementsMet(Choice c, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars, out string reason)
     {
         var any = c.RequirementMatch == RequirementMatch.Any && c.Requirements.Count > 0;
         string? first = null;
         foreach (var r in c.Requirements)
         {
-            if (DialogueRules.RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out var why)) { if (any) { reason = ""; return true; } }
+            if (DialogueRules.RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, textVars, out var why)) { if (any) { reason = ""; return true; } }
             else if (!any) { reason = why; return false; }
             else first ??= why;
         }
@@ -66,7 +66,9 @@ public static class DialogueEngine
                 Check(string.IsNullOrWhiteSpace(c.NextStateId) ? s.DefaultNextId : c.NextStateId, $"Choice ‘{PlainText(c.ButtonText)}’");
                 if (string.IsNullOrWhiteSpace(c.ButtonText)) Warning(s.State, "A player choice has no label.");
                 foreach (var r in c.Requirements)
-                    if (r.Type is not ("Affinity" or "Inventory") || string.IsNullOrWhiteSpace(r.TargetId) || !Operators.Contains(r.Operator) || !int.TryParse(r.Value, out _)) Error(s.State, "A choice condition needs a valid variable, comparison and integer value.");
+                    if (r.Type == "Text" ? string.IsNullOrWhiteSpace(r.TargetId) || r.Operator is not ("==" or "!=")
+                        : r.Type is not ("Affinity" or "Inventory") || string.IsNullOrWhiteSpace(r.TargetId) || !Operators.Contains(r.Operator) || !int.TryParse(r.Value, out _))
+                        Error(s.State, "A choice condition needs a valid variable, comparison and value. Number conditions need an integer; text conditions use == or !=.");
             }
             foreach (var a in s.DefaultAfterActions.Concat(s.Choices.SelectMany(c => c.AfterChoiceActions)))
                 if (string.IsNullOrWhiteSpace(a.TargetId) || a.Type is not ("Affinity" or "Inventory" or "Event" or "Script" or "Set" or "Toggle" or "SetText")) Error(s.State, "An action needs a supported type and target ID.");

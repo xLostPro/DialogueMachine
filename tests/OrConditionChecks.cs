@@ -17,12 +17,12 @@ internal static class OrConditionChecks
         var project = new DialogueProject { ListOfCharacterStates = [scene], EntryStateId = "gate" };
 
         var none = new Dictionary<string, int>(); var key = new Dictionary<string, int> { ["inv:key"] = 1 }; var trust = new Dictionary<string, int> { ["aff:trust"] = 2 };
-        Check(!DialogueEngine.RequirementsMet(choice, none, out var reason) && reason.StartsWith("Requires inv:key"), "ANY fails when no requirement passes and reports the first reason");
-        Check(DialogueEngine.RequirementsMet(choice, key, out _) && DialogueEngine.RequirementsMet(choice, trust, out _), "ANY passes when either requirement passes");
+        Check(!DialogueEngine.RequirementsMet(choice, none, new Dictionary<string, string>(), out var reason) && reason.StartsWith("Requires inv:key"), "ANY fails when no requirement passes and reports the first reason");
+        Check(DialogueEngine.RequirementsMet(choice, key, new Dictionary<string, string>(), out _) && DialogueEngine.RequirementsMet(choice, trust, new Dictionary<string, string>(), out _), "ANY passes when either requirement passes");
         choice.RequirementMatch = RequirementMatch.All;
-        Check(!DialogueEngine.RequirementsMet(choice, key, out _) && DialogueEngine.RequirementsMet(choice, new Dictionary<string, int> { ["inv:key"] = 1, ["aff:trust"] = 2 }, out _), "ALL still needs every requirement");
+        Check(!DialogueEngine.RequirementsMet(choice, key, new Dictionary<string, string>(), out _) && DialogueEngine.RequirementsMet(choice, new Dictionary<string, int> { ["inv:key"] = 1, ["aff:trust"] = 2 }, new Dictionary<string, string>(), out _), "ALL still needs every requirement");
         choice.RequirementMatch = RequirementMatch.Any; choice.Requirements.Clear();
-        Check(DialogueEngine.RequirementsMet(choice, none, out _), "ANY with no requirements is available");
+        Check(DialogueEngine.RequirementsMet(choice, none, new Dictionary<string, string>(), out _), "ANY with no requirements is available");
         choice.Requirements = [new() { Type = "Inventory", TargetId = "key", Operator = ">=", Value = "1" }, new() { TargetId = "trust", Operator = ">=", Value = "2" }];
         choice.Requirements[1].Extra = new() { ["FutureRequirement"] = JsonSerializer.SerializeToElement(7) };
 

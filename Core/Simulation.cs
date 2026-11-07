@@ -62,7 +62,7 @@ public sealed class Simulation
     private readonly Stack<Snapshot> history = new();
     public bool CanBack => history.Count > 0;
     public bool MorePages => PageIndex < Pages.Length - 1;
-    public IReadOnlyList<Choice> AvailableChoices => Current?.Choices.Where(c => c.Visibility == VisibilityMode.Always || DialogueEngine.RequirementsMet(c, Variables, out _)).ToList() ?? [];
+    public IReadOnlyList<Choice> AvailableChoices => Current?.Choices.Where(c => c.Visibility == VisibilityMode.Always || DialogueEngine.RequirementsMet(c, Variables, TextVariables, out _)).ToList() ?? [];
     // The player shows continue only without usable responses (or while delivering pages).
     public bool CanContinue => Current is not null && (MorePages || AvailableChoices.Count == 0 && !string.IsNullOrWhiteSpace(Current.DefaultNextId));
 
@@ -206,7 +206,7 @@ public sealed class Simulation
     {
         if (Current is null || !Current.Choices.Contains(choice)) throw new InvalidOperationException("Select a choice from the current scene.");
         if (MorePages) throw new InvalidOperationException("Finish the dialogue pages before choosing.");
-        if (choice.Visibility != VisibilityMode.Always && !DialogueEngine.RequirementsMet(choice, Variables, out var reason)) throw new InvalidOperationException(reason);
+        if (choice.Visibility != VisibilityMode.Always && !DialogueEngine.RequirementsMet(choice, Variables, TextVariables, out var reason)) throw new InvalidOperationException(reason);
         Move(string.IsNullOrWhiteSpace(choice.NextStateId) ? Current.DefaultNextId : choice.NextStateId, choice);
     }
     public void Continue() { if (MorePages) NextPage(); else if (Current is not null) Move(Current.DefaultNextId, null); }

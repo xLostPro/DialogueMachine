@@ -109,7 +109,7 @@ bool FDialogueRunner::Choose(const FString& ChoiceId, FString* OutError)
     }
 
     FString Reason;
-    if (FoundChoice->Visibility != FDialogueChoice::Always && !FDialogueRules::RequirementsMet(*FoundChoice, GetNumbers(), Reason))
+    if (FoundChoice->Visibility != FDialogueChoice::Always && !FDialogueRules::RequirementsMet(*FoundChoice, GetNumbers(), GetTexts(), Reason))
     {
         if (OutError) *OutError = Reason;
         return false;
@@ -306,7 +306,7 @@ TArray<FDialogueRuntimeChoice> FDialogueRunner::GetChoices() const
     for (const FDialogueChoice& Choice : CurrentScene->Choices)
     {
         FString Reason;
-        bool bMet = FDialogueRules::RequirementsMet(Choice, Numbers, Reason) || Choice.Visibility == FDialogueChoice::Always;
+        bool bMet = FDialogueRules::RequirementsMet(Choice, Numbers, Texts, Reason) || Choice.Visibility == FDialogueChoice::Always;
         if (!bMet && Choice.Visibility == FDialogueChoice::Hide)
         {
             continue;

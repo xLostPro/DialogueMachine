@@ -41,11 +41,11 @@ internal static class PlaytestChecks
         textStory.ListOfCharacterStates[0].Text = "[b][i]Hello[/i][/b] [colour=#79DFC8]world[/colour] {inv:coin}";
         Check(!DialogueEngine.Validate(textStory).Any(), "valid formatting and discovered numeric substitutions have no warnings");
         var locked = new Choice { Requirements = [new() { TargetId = "trust", Value = "2" }] };
-        Check(!DialogueEngine.RequirementsMet(locked, vars, out _), "locked choices fail their numeric conditions");
+        Check(!DialogueEngine.RequirementsMet(locked, vars, new Dictionary<string, string>(), out _), "locked choices fail their numeric conditions");
         locked.Requirements[0].Value = "invalid";
-        Check(!DialogueEngine.RequirementsMet(locked, vars, out _), "invalid thresholds fail closed");
+        Check(!DialogueEngine.RequirementsMet(locked, vars, new Dictionary<string, string>(), out _), "invalid thresholds fail closed");
         locked.Requirements[0].Value = "0"; locked.Requirements[0].TargetId = "";
-        Check(!DialogueEngine.RequirementsMet(locked, vars, out _), "blank variable IDs fail closed");
+        Check(!DialogueEngine.RequirementsMet(locked, vars, new Dictionary<string, string>(), out _), "blank variable IDs fail closed");
 
         var sim = new Simulation(p); sim.NextPage(); sim.Choose(sim.Current!.Choices[1]);
         Check(sim.Current!.State == "gift" && sim.Variables["inv:coin"] == 0 && sim.Variables["aff:trust"] == 1, "choice changes inventory and affinity exactly once");
