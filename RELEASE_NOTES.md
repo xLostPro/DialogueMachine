@@ -1,5 +1,17 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## 1.6.0
+
+### Text conditions & placeholders
+
+- **Text-variable conditions**: inline text can test a text variable with a quoted value, `[if calling == "Plumber"]…[else]…[/if]` or `[if calling != ""]`, and choices have a matching **Text** condition type in the Logic tab (`==` / `!=`; an unset variable counts as empty). Validation, variable discovery, references and rename cover both forms. Supported in Desktop Simulation and the Unity, Godot and Unreal runners (`text_conditions` conformance fixture). Older plugin versions treat a Text condition as unmet.
+- **`{a:key}` article placeholder**: writes "a" or "an" before a text variable's value ("an accountant", "a Plumber"), across the editor and all three runners (`article_helper` conformance fixture). Renaming the variable rewrites it.
+
+### Unity
+
+- **Shared, saveable variables**: a **Share Variables** toggle on `DialogueRunnerBehaviour` uses one `SharedVariables` store for every runner, kept across scene loads and reset when play mode starts. `DictionaryVariables.ToJson()` / `LoadJson()` write and read the same variable shape as `SaveState` for game save files.
+- **Engine packages**: Pre-packaged plugins for Unreal (`DialogueMachine-Unreal-1.6.0.zip`) and Godot (`DialogueMachine-Godot-1.6.0.zip`), plus the Unity UPM package pinned to `#v1.6.0`.
+
 ## 1.5.1
 
 ### Project export configuration & JSON Schema
