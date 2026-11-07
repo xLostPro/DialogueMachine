@@ -158,18 +158,19 @@ FDialogueRequirement FDialogueStory::ReadRequirement(const TSharedPtr<FJsonObjec
         Req.Operator = TEXT(">=");
     }
 
-    double NumVal = 0.0;
-    if (Source->TryGetNumberField(TEXT("Value"), NumVal))
+    // Like Unity: a number becomes its text, a string is kept as-is (even ""), a missing Value is "0".
+    const TSharedPtr<FJsonValue> ValueField = Source->TryGetField(TEXT("Value"));
+    if (!ValueField.IsValid())
     {
-        Req.Value = FString::FromInt((int32)NumVal);
+        Req.Value = TEXT("0");
+    }
+    else if (ValueField->Type == EJson::Number)
+    {
+        Req.Value = FString::FromInt((int32)ValueField->AsNumber());
     }
     else
     {
-        Source->TryGetStringField(TEXT("Value"), Req.Value);
-        if (Req.Value.IsEmpty())
-        {
-            Req.Value = TEXT("0");
-        }
+        ValueField->TryGetString(Req.Value);
     }
 
     return Req;
