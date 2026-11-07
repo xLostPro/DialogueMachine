@@ -48,6 +48,20 @@ internal static class VariableChecks
         Throws(() => VariableStore.Delete(articleStory, "calling", true), "a text variable used only through {a:key} cannot be deleted");
         VariableStore.Rename(articleStory, "calling", "job", true);
         Check(articleStory.ListOfCharacterStates[0].Text == "You are {a:job}, {job}.", "text rename rewrites {a:key} placeholders");
+        var textCondStory = Templates.Blank(); var textCondScene = textCondStory.ListOfCharacterStates[0];
+        textCondScene.Text = "[if calling == \"Plumber\"]Pipes[else]Other[/if] [if calling != \"\"]set[/if] [if trust >= 1]x[/if]";
+        textCondScene.Choices = [new() { ButtonText = "Go", NextStateId = "[EXIT]", Requirements = [new() { Type = "Text", TargetId = "calling", Operator = "!=", Value = "" }] }];
+        Check(VariableStore.DiscoverText(textCondStory).Contains("calling") && !DialogueEngine.DiscoverVariables(textCondStory).Any(k => k.EndsWith(":calling")), "text conditions discover a text variable, never a numeric one");
+        Check(!DialogueEngine.Validate(textCondStory).Any(d => d.Severity == "Error"), "quoted [if] checks and Text requirements validate");
+        Check(VariableStore.References(textCondStory, "calling", true).Count == 3, "text condition references include inline checks and choice conditions");
+        VariableStore.Rename(textCondStory, "calling", "job", true);
+        Check(textCondScene.Text.StartsWith("[if job == \"Plumber\"]") && textCondScene.Text.Contains("[if job != \"\"]") && textCondScene.Choices[0].Requirements[0].TargetId == "job", "text rename rewrites inline checks and Text requirements");
+        textCondScene.Choices[0].Requirements[0].Operator = ">=";
+        Check(DialogueEngine.Validate(textCondStory).Any(d => d.Severity == "Error" && d.Message.Contains("text conditions use == or !=")), "Text requirements reject ordering comparisons");
+        bool Malformed(string text) { var story = Templates.Blank(); story.ListOfCharacterStates[0].Text = text; return DialogueEngine.Validate(story).Any(d => d.Message.Contains("inline conditional tags are malformed")); }
+        Check(Malformed("[if job >= \"a\"]x[/if]") && Malformed("[if job == \"a]b\"]x[/if]") && !Malformed("[if job == \"a b\"]x[/if]"), "quoted [if] values allow only == / != and no brackets");
+        var textSim = new Simulation(textCondStory);
+        Check(textSim.Pages[0].StartsWith("Other"), "a text variable no one has set compares as empty in playtest");
         var bareStory = Templates.Blank(); bareStory.ListOfCharacterStates[0].Text = "[if courage >= 1]Brave[else]Careful[/if] literal aff:not_a_reference";
         Check(DialogueEngine.DiscoverVariables(bareStory).SequenceEqual(new[] { "aff:courage" }), "discovery includes bare inline conditions and excludes numeric-looking prose");
         VariableStore.Rename(bareStory, "aff:courage", "aff:bravery");

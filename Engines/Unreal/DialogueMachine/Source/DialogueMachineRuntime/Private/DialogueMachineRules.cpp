@@ -42,8 +42,33 @@ static bool ParseIntExact(const FString& Raw, int32& OutValue)
     return true;
 }
 
-bool FDialogueRules::RequirementMet(const FString& Type, const FString& TargetId, const FString& Op, const FString& Value, const TMap<FString, int32>& Vars, FString& OutReason)
+bool FDialogueRules::TextMatches(const FString& Actual, const FString& Op, const FString& Target)
 {
+    // Ordinal, case-sensitive like the C# string ==.
+    return Actual.Equals(Target, ESearchCase::CaseSensitive) == (Op == TEXT("=="));
+}
+
+bool FDialogueRules::RequirementMet(const FString& Type, const FString& TargetId, const FString& Op, const FString& Value, const TMap<FString, int32>& Vars, const TMap<FString, FString>& TextVars, FString& OutReason)
+{
+    if (Type == TEXT("Text"))
+    {
+        // Text conditions compare exactly; a missing text variable counts as "".
+        if (TargetId.TrimStartAndEnd().IsEmpty() || (Op != TEXT("==") && Op != TEXT("!=")))
+        {
+            OutReason = TEXT("This condition is incomplete or invalid.");
+            return false;
+        }
+        const FString* FoundText = TextVars.Find(TargetId);
+        const FString ActualText = FoundText ? *FoundText : FString();
+        if (TextMatches(ActualText, Op, Value))
+        {
+            OutReason = TEXT("");
+            return true;
+        }
+        OutReason = FString::Printf(TEXT("Requires %s %s \"%s\" · current \"%s\""), *TargetId, *Op, *Value, *ActualText);
+        return false;
+    }
+
     int32 Target = 0;
     if ((Type != TEXT("Affinity") && Type != TEXT("Inventory")) || TargetId.TrimStartAndEnd().IsEmpty() || !ParseIntExact(Value, Target))
     {
@@ -64,7 +89,7 @@ bool FDialogueRules::RequirementMet(const FString& Type, const FString& TargetId
     return true;
 }
 
-bool FDialogueRules::RequirementsMet(const FDialogueChoice& Choice, const TMap<FString, int32>& Vars, FString& OutReason)
+bool FDialogueRules::RequirementsMet(const FDialogueChoice& Choice, const TMap<FString, int32>& Vars, const TMap<FString, FString>& TextVars, FString& OutReason)
 {
     const bool bAny = Choice.bAnyRequirement && Choice.Requirements.Num() > 0;
     FString FirstReason;
@@ -72,7 +97,7 @@ bool FDialogueRules::RequirementsMet(const FDialogueChoice& Choice, const TMap<F
     for (const FDialogueRequirement& Req : Choice.Requirements)
     {
         FString Why;
-        if (RequirementMet(Req.Type, Req.TargetId, Req.Operator, Req.Value, Vars, Why))
+        if (RequirementMet(Req.Type, Req.TargetId, Req.Operator, Req.Value, Vars, TextVars, Why))
         {
             if (bAny)
             {
@@ -100,8 +125,9 @@ static bool IsKeyChar(TCHAR C)
     return FChar::IsAlnum(C) || C == TEXT('_') || C == TEXT(':') || C == TEXT('.') || C == TEXT('-');
 }
 
-static bool TryParseIfHeader(const FString& Text, int32 Start, int32& OutHeaderEnd, FString& OutKey, FString& OutOp, int32& OutTarget, bool& bOutTargetValid)
+static bool TryParseIfHeader(const FString& Text, int32 Start, int32& OutHeaderEnd, FString& OutKey, FString& OutOp, int32& OutTarget, bool& bOutTargetValid, bool& bOutIsText, FString& OutTextTarget)
 {
+    bOutIsText = false;
     int32 Len = Text.Len();
     if (Start + 4 > Len) return false;
     if (Text[Start] != TEXT('[')) return false;
@@ -142,6 +168,24 @@ static bool TryParseIfHeader(const FString& Text, int32 Start, int32& OutHeaderE
     if (OutOp.IsEmpty()) return false;
 
     while (Pos < Len && FChar::IsWhitespace(Text[Pos])) ++Pos;
+
+    // A quoted value compares a text variable: == or != only, no quote or bracket inside.
+    if (Pos < Len && Text[Pos] == TEXT('"'))
+    {
+        if (OutOp != TEXT("==") && OutOp != TEXT("!=")) return false;
+        int32 QuoteEnd = Pos + 1;
+        while (QuoteEnd < Len && Text[QuoteEnd] != TEXT('"'))
+        {
+            if (Text[QuoteEnd] == TEXT('[') || Text[QuoteEnd] == TEXT(']')) return false;
+            ++QuoteEnd;
+        }
+        if (QuoteEnd + 1 >= Len || Text[QuoteEnd + 1] != TEXT(']')) return false;
+        OutTextTarget = Text.Mid(Pos + 1, QuoteEnd - Pos - 1);
+        bOutIsText = true;
+        bOutTargetValid = true;
+        OutHeaderEnd = QuoteEnd + 1;
+        return true;
+    }
 
     // The C# pattern is (-?\d+)\] : an optional minus, digits, and the bracket right after them.
     int32 NumStart = Pos;
@@ -240,8 +284,10 @@ FString FDialogueRules::ResolveText(const FString& Text, const TMap<FString, int
             FString Op;
             int32 Target = 0;
             bool bTargetValid = false;
+            bool bIsText = false;
+            FString TextTarget;
 
-            if (TryParseIfHeader(CurrentText, IfStart, HeaderEnd, Key, Op, Target, bTargetValid))
+            if (TryParseIfHeader(CurrentText, IfStart, HeaderEnd, Key, Op, Target, bTargetValid, bIsText, TextTarget))
             {
                 int32 ClosePos = FindNextCloseIf(CurrentText, HeaderEnd + 1);
                 int32 NextIf = FindNextIfWithSpace(CurrentText, HeaderEnd + 1);
@@ -269,21 +315,31 @@ FString FDialogueRules::ResolveText(const FString& Text, const TMap<FString, int
                         TrueBranch = Body;
                     }
 
-                    int32 Value = 0;
-                    if (const int32* Found = Vars.Find(Key))
+                    bool bMet = false;
+                    if (bIsText)
                     {
-                        Value = *Found;
+                        const FString* FoundText = TextVars.Find(Key);
+                        bMet = TextMatches(FoundText ? *FoundText : FString(), Op, TextTarget);
                     }
-                    else if (const int32* FoundInv = Vars.Find(TEXT("inv:") + Key))
+                    else
                     {
-                        Value = *FoundInv;
-                    }
-                    else if (const int32* FoundAff = Vars.Find(TEXT("aff:") + Key))
-                    {
-                        Value = *FoundAff;
+                        int32 Value = 0;
+                        if (const int32* Found = Vars.Find(Key))
+                        {
+                            Value = *Found;
+                        }
+                        else if (const int32* FoundInv = Vars.Find(TEXT("inv:") + Key))
+                        {
+                            Value = *FoundInv;
+                        }
+                        else if (const int32* FoundAff = Vars.Find(TEXT("aff:") + Key))
+                        {
+                            Value = *FoundAff;
+                        }
+                        bMet = bTargetValid && Compare(Value, Op, Target);
                     }
 
-                    if (bTargetValid && Compare(Value, Op, Target))
+                    if (bMet)
                     {
                         NewText += TrueBranch;
                     }

@@ -30,6 +30,14 @@ namespace DialogueMachine.Runtime.Unity
         [SerializeField] private string startScene = "";
         [SerializeField] private int seed = 0;
         [SerializeField] private MonoBehaviour variablesProvider;
+        [Tooltip("Without a Variables Provider, keep variables in SharedVariables: one store for every runner, kept across scene loads. Save it with SharedVariables.ToJson().")]
+        [SerializeField] private bool shareVariables;
+
+        // One store for every runner with Share Variables on. It lives until the game quits; play mode starts it empty.
+        public static DictionaryVariables SharedVariables { get; private set; } = new DictionaryVariables();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetSharedVariables() => SharedVariables = new DictionaryVariables();
 
         [Header("Events")]
         [SerializeField] private DialogueLineUnityEvent onLine = new DialogueLineUnityEvent();
@@ -89,6 +97,12 @@ namespace DialogueMachine.Runtime.Unity
         public DialogueActionUnityEvent OnAction => onAction;
 
         // Delegated properties from DialogueRunner
+        public bool ShareVariables
+        {
+            get => shareVariables;
+            set => shareVariables = value;
+        }
+
         public IDialogueVariables Variables => runner?.Variables;
         public string CurrentSceneId => runner?.CurrentSceneId;
         public string Speaker => runner?.Speaker;
@@ -122,6 +136,10 @@ namespace DialogueMachine.Runtime.Unity
             if (variablesProvider is IDialogueVariables customVars)
             {
                 vars = customVars;
+            }
+            else if (shareVariables)
+            {
+                vars = SharedVariables;
             }
 
             runner = new DialogueRunner(vars);

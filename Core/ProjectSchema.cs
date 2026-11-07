@@ -25,7 +25,7 @@ public static class ProjectSchema
         ["DialogueProject.EngineExportFolder"] = "Folder that saving auto-exports <project-slug>.runtime.json into, relative to this file with '/' separators.",
         ["DialogueState.State"] = "Unique scene ID, e.g. 'arrival'. '[EXIT]' is reserved for ending the conversation.",
         ["DialogueState.Type"] = "'Dialogue', or 'Shop' to also open ShopData.ShopId in the game.",
-        ["DialogueState.Text"] = "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if], {placeholders}, [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
+        ["DialogueState.Text"] = "One page or line per text line. Supports [if aff:x >= 1]...[else]...[/if] and text checks [if calling == \"Plumber\"] or [if calling != \"\"], {placeholders} and {a:key} (a/an + text variable), [b] [i] [u] [colour=#hex] tags, and '@Speaker [portrait]: text' per-line speaker overrides.",
         ["DialogueState.DefaultNextId"] = "Scene to continue to when the scene has no usable choice. '[EXIT]' ends the conversation. A scene needs choices or this.",
         ["DialogueState.SayItAll"] = "true: show every line in order as pages. false: show one random line per visit (or one line per visit with Metadata.delivery = 'escalate').",
         ["DialogueState.Choices"] = "Player responses shown after the last page.",
@@ -45,16 +45,16 @@ public static class ProjectSchema
         ["DialogueAction.TargetId"] = "Variable name without the aff:/inv: prefix, or the event/script ID.",
         ["DialogueAction.Amount"] = "Amount to add, or the value for Set.",
         ["DialogueAction.Parameter"] = "Text value for SetText, or an optional parameter for Event/Script.",
-        ["Requirement.Type"] = "Affinity checks aff:TargetId; Inventory checks inv:TargetId.",
-        ["Requirement.TargetId"] = "Variable name without the aff:/inv: prefix.",
-        ["Requirement.Value"] = "Integer to compare against, written as a string.",
+        ["Requirement.Type"] = "Affinity checks aff:TargetId; Inventory checks inv:TargetId; Text compares text variable TargetId with == or != (missing counts as empty).",
+        ["Requirement.TargetId"] = "Variable name without the aff:/inv: prefix, or the text variable ID for Text.",
+        ["Requirement.Value"] = "Integer to compare against, written as a string. For Text, the exact text to compare with (empty = not set).",
     };
 
     private static readonly Dictionary<string, string[]> Allowed = new(StringComparer.Ordinal)
     {
         ["DialogueState.Type"] = ["Dialogue", "Shop"],
         ["DialogueAction.Type"] = ["Affinity", "Inventory", "Set", "Toggle", "SetText", "Event", "Script"],
-        ["Requirement.Type"] = ["Affinity", "Inventory"],
+        ["Requirement.Type"] = ["Affinity", "Inventory", "Text"],
         ["Requirement.Operator"] = ["==", "!=", ">", "<", ">=", "<="],
     };
 
@@ -70,7 +70,6 @@ public static class ProjectSchema
                 var key = property.DeclaringType.Name + "." + property.Name;
                 if (Descriptions.TryGetValue(key, out var description)) obj.Insert(0, "description", description);
                 if (Allowed.TryGetValue(key, out var values)) obj["enum"] = new JsonArray(values.Select(v => (JsonNode)v).ToArray());
-                if (key == "Requirement.Value") obj["pattern"] = "^-?[0-9]+$";
                 return obj;
             }
         }).AsObject();

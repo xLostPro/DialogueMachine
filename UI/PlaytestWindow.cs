@@ -76,7 +76,7 @@ public sealed class PlaytestWindow : Window
                 var available = 0;
                 foreach (var choice in current.Choices)
                 {
-                    var met = DialogueEngine.RequirementsMet(choice, simulation.Variables, out var reason) || choice.Visibility == VisibilityMode.Always;
+                    var met = DialogueEngine.RequirementsMet(choice, simulation.Variables, simulation.TextVariables, out var reason) || choice.Visibility == VisibilityMode.Always;
                     if (!met && choice.Visibility == VisibilityMode.Hide) continue;
                     if (met) available++;
                     var c = choice;

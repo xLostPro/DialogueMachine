@@ -37,9 +37,10 @@ Every edit can be undone (Ctrl/Cmd+Z / Shift+Z), and bulk operations undo as one
 [b]Bold[/b] [i]Italic[/i] [u]Underline[/u] [colour=#79DFC8]Coloured[/colour]
 Welcome, {player_name}. You have {inv:coin} coins.
 [if aff:trust >= 1]A friend.[else]A stranger.[/if]
+[if calling != ""]You are {a:calling}.[else]Choose a calling.[/if]
 ```
 
-Conditions can nest and use negative numbers. Use `aff:` for affinity and `inv:` for inventory; unprefixed names check inventory first, then affinity, like the website.
+Conditions can nest and use negative numbers. Use `aff:` for affinity and `inv:` for inventory; unprefixed names check inventory first, then affinity, like the website. A quoted value tests a text variable with `==` or `!=` (unset counts as `""`); choice conditions have a matching **Text** type in the Logic tab. `{a:key}` writes "a" or "an" before a text variable's value.
 
 ### Keyboard
 
@@ -88,7 +89,7 @@ Dialogue Machine includes an official package for Unity (2022.3 LTS and Unity 6)
   https://github.com/xLostPro/DialogueMachine.git?path=/Engines/Unity/com.xlostpro.dialoguemachine#v1.5.1
   ```
 - **Importing:** Point Dialogue Machine's auto-export folder inside your Unity project's `Assets/` directory. Unity's `ScriptedImporter` automatically creates a `DialogueAsset` for each `*.runtime.json` file on change.
-- **Runner:** Add `DialogueRunnerBehaviour` to a GameObject and assign the `DialogueAsset`. It exposes C# and Unity events (`OnLine`, `OnChoices`, `OnAction`, `OnEnded`) and supports custom `IDialogueVariables` providers.
+- **Runner:** Add `DialogueRunnerBehaviour` to a GameObject and assign the `DialogueAsset`. It exposes C# and Unity events (`OnLine`, `OnChoices`, `OnAction`, `OnEnded`) and supports custom `IDialogueVariables` providers. Without a provider each runner keeps its own variables and resets them on start; tick **Share Variables** to use `DialogueRunnerBehaviour.SharedVariables` instead, one store for every runner that survives scene loads. Save and load it (or any `DictionaryVariables`) with `ToJson()` / `LoadJson(json)` in your save file.
 - **Presentation:** Add `DefaultDialogueView` to build a clean UI Toolkit conversation panel entirely in code with typewriter effects and keyboard/gamepad focus navigation. Or implement `IDialogueView` for custom UI. The view has no input binding of its own: call `runner.Continue()` from your game's interact/submit action.
 - **Events & Hooks:** Attach `DialogueEventRouter` to route dialogue `Event` and `Script` actions to `UnityEvent` listeners, and handle `Shop` scenes with `onShop`.
 - **Live Link:** Open **Window → Dialogue Machine → Live Link**. When the bridge is active in Dialogue Machine, edits push instantly to your asset and live runners, and running gameplay is tracked on the graph in DM's **Follow** pane.

@@ -192,7 +192,7 @@ public static class ScenarioAnalysis
                 if (choices.Count == 0)
                 {
                     if (state.CanContinue) { if (transitions++ >= transitionLimit) { truncated = true; break; } state.Continue(); Enqueue(state); }
-                    else deadEnds.Add(new(state.Current.State, new Dictionary<string, int>(state.Variables), state.Current.Choices.Select(c => { DialogueEngine.RequirementsMet(c, state.Variables, out var reason); return reason; }).ToArray()));
+                    else deadEnds.Add(new(state.Current.State, new Dictionary<string, int>(state.Variables), state.Current.Choices.Select(c => { DialogueEngine.RequirementsMet(c, state.Variables, state.TextVariables, out var reason); return reason; }).ToArray()));
                 }
                 else foreach (var choice in choices)
                 {

@@ -28,8 +28,26 @@ namespace DialogueMachine.Runtime
 
         public static string Key(string type, string id) => (type == "Inventory" ? "inv:" : "aff:") + id;
 
-        public static bool RequirementMet(string type, string targetId, string op, string value, IReadOnlyDictionary<string, int> vars, out string reason)
+        public static bool RequirementMet(string type, string targetId, string op, string value, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars, out string reason)
         {
+            if (type == "Text")
+            {
+                // Text conditions compare exactly; a missing text variable counts as "".
+                if (string.IsNullOrWhiteSpace(targetId) || (op != "==" && op != "!="))
+                {
+                    reason = "This condition is incomplete or invalid.";
+                    return false;
+                }
+                var actualText = textVars.GetValueOrDefault(targetId) ?? "";
+                var targetText = value ?? "";
+                if (TextMatches(actualText, op, targetText))
+                {
+                    reason = "";
+                    return true;
+                }
+                reason = $"Requires {targetId} {op} \"{targetText}\" · current \"{actualText}\"";
+                return false;
+            }
             if ((type != "Affinity" && type != "Inventory") || string.IsNullOrWhiteSpace(targetId) || !int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var target))
             {
                 reason = "This condition is incomplete or invalid.";
@@ -46,13 +64,15 @@ namespace DialogueMachine.Runtime
             return true;
         }
 
-        public static bool RequirementsMet(StoryChoice choice, IReadOnlyDictionary<string, int> vars, out string reason)
+        public static bool TextMatches(string actual, string op, string target) => (actual == target) == (op == "==");
+
+        public static bool RequirementsMet(StoryChoice choice, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars, out string reason)
         {
             var any = choice.AnyRequirement && choice.Requirements.Count > 0;
             string first = null;
             foreach (var r in choice.Requirements)
             {
-                if (RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, out var why)) { if (any) { reason = ""; return true; } }
+                if (RequirementMet(r.Type, r.TargetId, r.Operator, r.Value, vars, textVars, out var why)) { if (any) { reason = ""; return true; } }
                 else if (!any) { reason = why; return false; }
                 else if (first == null) first = why;
             }
@@ -63,7 +83,8 @@ namespace DialogueMachine.Runtime
         public static string ResolveText(string text, IReadOnlyDictionary<string, int> vars, IReadOnlyDictionary<string, string> textVars)
         {
             // Match the innermost block first, allowing nested conditions and signed thresholds.
-            var pattern = @"\[if\s+([\w:.\-]+)\s*(==|!=|>=|<=|>|<)\s*(-?\d+)\]((?:(?!\[if\s|\[/if\])[\s\S])*)\[/if\]";
+            // A quoted value ([if calling == "Plumber"]) compares a text variable; only == and != apply.
+            var pattern = @"\[if\s+([\w:.\-]+)\s*(?:(==|!=|>=|<=|>|<)\s*(-?\d+)|(==|!=)\s*""([^""\[\]]*)"")\]((?:(?!\[if\s|\[/if\])[\s\S])*)\[/if\]";
             for (var pass = 0; pass < 64; pass++)
             {
                 var changed = false;
@@ -71,9 +92,15 @@ namespace DialogueMachine.Runtime
                 {
                     changed = true;
                     var key = m.Groups[1].Value;
-                    var value = vars.GetValueOrDefault(key, vars.GetValueOrDefault("inv:" + key, vars.GetValueOrDefault("aff:" + key)));
-                    var parts = Regex.Split(m.Groups[4].Value, @"\[else\]", RegexOptions.IgnoreCase);
-                    return int.TryParse(m.Groups[3].Value, out var target) && Compare(value, m.Groups[2].Value, target) ? parts[0] : parts.ElementAtOrDefault(1) ?? "";
+                    var parts = Regex.Split(m.Groups[6].Value, @"\[else\]", RegexOptions.IgnoreCase);
+                    bool met;
+                    if (m.Groups[4].Success) met = TextMatches(textVars.GetValueOrDefault(key) ?? "", m.Groups[4].Value, m.Groups[5].Value);
+                    else
+                    {
+                        var value = vars.GetValueOrDefault(key, vars.GetValueOrDefault("inv:" + key, vars.GetValueOrDefault("aff:" + key)));
+                        met = int.TryParse(m.Groups[3].Value, out var target) && Compare(value, m.Groups[2].Value, target);
+                    }
+                    return met ? parts[0] : parts.ElementAtOrDefault(1) ?? "";
                 }, RegexOptions.IgnoreCase);
                 if (!changed) break;
             }

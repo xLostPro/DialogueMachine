@@ -113,7 +113,7 @@ namespace DialogueMachine.Runtime
                 var texts = Texts();
                 foreach (var choice in scene.Choices)
                 {
-                    var met = DialogueRules.RequirementsMet(choice, numbers, out var reason) || choice.Visibility == StoryChoice.Always;
+                    var met = DialogueRules.RequirementsMet(choice, numbers, texts, out var reason) || choice.Visibility == StoryChoice.Always;
                     if (!met && choice.Visibility == StoryChoice.Hide) continue;
                     result.Add(new Choice { Id = choice.InternalId, Text = DialogueRules.ResolveText(choice.ButtonText, numbers, texts), Enabled = met, DisabledReason = met ? null : reason });
                 }
@@ -180,7 +180,7 @@ namespace DialogueMachine.Runtime
             var choice = scene?.Choices.FirstOrDefault(c => string.Equals(c.InternalId, choiceId, StringComparison.OrdinalIgnoreCase));
             if (choice == null) throw new InvalidOperationException("Select a choice from the current scene.");
             if (MorePages) throw new InvalidOperationException("Finish the dialogue pages before choosing.");
-            if (choice.Visibility != StoryChoice.Always && !DialogueRules.RequirementsMet(choice, Numbers(), out var reason)) throw new InvalidOperationException(reason);
+            if (choice.Visibility != StoryChoice.Always && !DialogueRules.RequirementsMet(choice, Numbers(), Texts(), out var reason)) throw new InvalidOperationException(reason);
             Move(string.IsNullOrWhiteSpace(choice.NextStateId) ? scene.DefaultNextId : choice.NextStateId, choice);
         }
 
