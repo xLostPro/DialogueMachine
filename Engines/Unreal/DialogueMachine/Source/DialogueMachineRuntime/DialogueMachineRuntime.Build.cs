@@ -17,7 +17,9 @@ public class DialogueMachineRuntime : ModuleRules
                 "UMG",
                 "Slate",
                 "SlateCore",
-                "WebSockets"
+                "WebSockets",
+                "InputCore",
+                "EnhancedInput"
             }
         );
 
