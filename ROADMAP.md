@@ -11,6 +11,8 @@
 
 - Mac/Linux releases: the builds exist but need a native smoke test first.
 - Localization or voice references, once the website/game side is defined.
+- Portraits in the default dialogue views: Unity exposes `Portrait`, but the Godot and Unreal runners don't yet, and the views need a portrait-key → image mapping. A custom layout already has room for one.
+- Unity `UIDocument` → Panel Renderer for `DefaultDialogueView`, once the oldest supported Unity (2022.3) has it.
 
 ## Out of scope
 
@@ -18,6 +20,7 @@ Accounts, cloud sync, collaboration, and auto-update. The game engine JSON expor
 
 ## Done
 
+- **Default dialogue views take game input and restyle without code.** Unity `DefaultDialogueView`, Godot `DialogueView` and Unreal `UDialogueMachineWidget` share `Submit` / `MoveSelection` / `SelectChoice` / `SkipTypewriter`, a highlight they track themselves (skips disabled choices, wraps), and a guard so the press that shows a line doesn't skip it. Each can read input itself (Unity Input System actions, Godot `ui_*` actions, Unreal Enhanced Input or focus), types with rich text kept, and restyles natively (Unity USS `dm-*` classes + UXML layout, Godot Theme type variations + `layout_scene`, Unreal Style properties + `BindWidgetOptional` Widget Blueprint layout). Tests: Unity PlayMode, Godot `run_view_tests.gd` (CI), Unreal `DialogueMachine.Widget`.
 - **Unity shared & saveable variables.** `DialogueRunnerBehaviour` has a **Share Variables** toggle that uses one `SharedVariables` store across runners and scene loads (reset when play mode starts), and `DictionaryVariables.ToJson()` / `LoadJson()` write and read the `SaveState` variable shape for game save files.
 - **Text-variable conditions.** `[if calling == "Plumber"]` / `[if calling != ""]` inline, and a `Text` choice requirement (`==`/`!=`, missing counts as `""`) in the Logic tab, Core, Unity, Godot and Unreal (`text_conditions` conformance fixture). Renaming a text variable rewrites both.
 - **`{a:key}` article placeholder.** `{a:calling}` writes "a" or "an" before a text variable's value (vowel start → "an"), in Core/Unity, Godot and Unreal (`article_helper` conformance fixture, not yet run in Godot or Unreal).
