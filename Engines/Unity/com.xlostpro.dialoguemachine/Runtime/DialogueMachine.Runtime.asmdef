@@ -2,7 +2,8 @@
     "name": "DialogueMachine.Runtime",
     "rootNamespace": "DialogueMachine.Runtime",
     "references": [
-        "UnityEngine.UIElementsModule"
+        "UnityEngine.UIElementsModule",
+        "Unity.InputSystem"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -11,6 +12,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.1.0",
+            "define": "DM_INPUT_SYSTEM"
+        }
+    ],
     "noEngineReferences": false
 }

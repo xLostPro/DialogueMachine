@@ -216,6 +216,11 @@ internal static class RuntimeChecks
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity("[color]stay[/color]") == "[color]stay[/color]", "RichText leaves [color] unchanged");
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity("x < 5 and y > 3") == "x <\u200B 5 and y > 3", "RichText escapes raw < without altering >");
         check(DialogueMachine.Runtime.Unity.RichText.ToUnity("<b>already html</b>") == "<\u200Bb>already html<\u200B/b>", "RichText escapes existing html tags so only bracket markup becomes tags");
+        var typed = DialogueMachine.Runtime.Unity.RichText.ToUnity("Hi [b]bold[/b] [colour=red]x < y[/colour]");
+        check(DialogueMachine.Runtime.Unity.RichText.VisibleLength(typed) == 13, "RichText.VisibleLength skips tags and escape marks");
+        check(DialogueMachine.Runtime.Unity.RichText.Reveal(typed, 5) == "Hi <b>bo", "RichText.Reveal keeps the tags before the shown characters");
+        check(DialogueMachine.Runtime.Unity.RichText.Reveal(typed, 11) == "Hi <b>bold</b> <color=red>x <\u200B", "RichText.Reveal treats an escaped < as one character");
+        check(DialogueMachine.Runtime.Unity.RichText.Reveal(typed, 99) == typed, "RichText.Reveal of everything is the whole text");
     }
 
     private static void UnrealPluginChecks(Action<bool, string> check, Action<Action, string> throws)

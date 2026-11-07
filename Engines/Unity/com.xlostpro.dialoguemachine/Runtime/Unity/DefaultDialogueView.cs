@@ -1,8 +1,9 @@
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
+#if DM_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace DialogueMachine.Runtime.Unity
 {
@@ -13,25 +14,63 @@ namespace DialogueMachine.Runtime.Unity
         void Hide();
     }
 
+    /// <summary>
+    /// Ready-made UI Toolkit dialogue box. Drive it from game input with <see cref="Submit"/>,
+    /// <see cref="MoveSelection"/> and <see cref="SelectChoice"/>, or assign Input System actions.
+    /// Restyle it with a Style Sheet (the dm-* classes) or replace the layout with UXML whose
+    /// elements are named dialogue, speaker, text, choices and continue.
+    /// </summary>
     [AddComponentMenu("Dialogue Machine/Default Dialogue View")]
     public class DefaultDialogueView : MonoBehaviour, IDialogueView
     {
         [SerializeField] private DialogueRunnerBehaviour runner;
+
+        [Header("Typewriter")]
         [SerializeField] private bool enableTypewriter = true;
-        [SerializeField] private float typewriterSpeed = 40f; // characters per second
+        [Tooltip("Characters per second.")]
+        [SerializeField] private float typewriterSpeed = 40f;
+        [Tooltip("Show a Typewriter on/off toggle in the box.")]
+        [SerializeField] private bool showTypewriterToggle;
+
+        [Header("Look")]
+        [Tooltip("Applied after the built-in style. Override the dm-* classes: dm-box, dm-speaker, dm-text, dm-choice, dm-choice--selected, dm-choice--disabled, dm-continue.")]
+        [SerializeField] private StyleSheet styleSheet;
+        [Tooltip("Replaces the built-in layout. Name its elements dialogue, speaker, text, choices and continue; any of them can be left out.")]
+        [SerializeField] private VisualTreeAsset layout;
+        [SerializeField] private string continueLabel = "Continue ▶";
+        [SerializeField] private string skipLabel = "Skip ▶";
+
+#if DM_INPUT_SYSTEM
+        [Header("Input (optional)")]
+        [Tooltip("Finishes the typing, then continues or picks the highlighted choice.")]
+        [SerializeField] private InputActionReference submitAction;
+        [Tooltip("A Vector2 action; up and down move the choice highlight.")]
+        [SerializeField] private InputActionReference navigateAction;
+        [Tooltip("Seconds between moves while Navigate is held.")]
+        [SerializeField] private float repeatSeconds = 0.18f;
+        private float nextMove;
+#endif
+
+        public const string DialogueName = "dialogue", SpeakerName = "speaker", TextName = "text",
+            ChoicesName = "choices", ContinueName = "continue", TypewriterToggleName = "typewriter-toggle";
+        public const string ChoiceClass = "dm-choice", SelectedClass = "dm-choice--selected", DisabledClass = "dm-choice--disabled";
 
         private UIDocument uiDocument;
-        private VisualElement rootContainer;
-        private VisualElement dialogBox;
-        private Label speakerLabel;
-        private Label textLabel;
-        private Button continueButton;
+        private VisualElement dialogue;
+        private TextElement speakerLabel;
+        private TextElement textLabel;
         private VisualElement choicesContainer;
+        private Button continueButton;
         private Toggle typewriterToggle;
+        private readonly List<Button> choiceButtons = new List<Button>();
 
-        private Coroutine typewriterRoutine;
-        private string targetFullText = "";
-        private bool isTyping = false;
+        private string fullText = "";
+        private int fullLength;
+        private float revealed;
+        private int shown;
+        private int selectedIndex = -1;
+        private int lineFrame = -1;
+        private int actionFrame = -1;
 
         public DialogueRunnerBehaviour Runner
         {
@@ -45,9 +84,40 @@ namespace DialogueMachine.Runtime.Unity
             set
             {
                 enableTypewriter = value;
-                if (typewriterToggle != null) typewriterToggle.value = value;
+                if (typewriterToggle != null) typewriterToggle.SetValueWithoutNotify(value);
             }
         }
+
+        public float TypewriterSpeed
+        {
+            get => typewriterSpeed;
+            set => typewriterSpeed = value;
+        }
+
+        /// <summary>Your style sheet, applied after the built-in one. Setting it rebuilds the box.</summary>
+        public StyleSheet StyleSheet
+        {
+            get => styleSheet;
+            set { styleSheet = value; Rebuild(); }
+        }
+
+        /// <summary>Your UXML layout in place of the built-in one. Setting it rebuilds the box.</summary>
+        public VisualTreeAsset Layout
+        {
+            get => layout;
+            set { layout = value; Rebuild(); }
+        }
+
+        public bool IsOpen { get; private set; }
+        public bool IsTyping { get; private set; }
+
+        /// <summary>True once the line has finished typing and the runner offers choices.</summary>
+        public bool IsShowingChoices => IsOpen && !IsTyping && runner != null && runner.Choices.Count > 0 && runner.PageIndex == runner.PageCount - 1;
+
+        /// <summary>The highlighted choice, or -1 when no choice is shown or enabled.</summary>
+        public int SelectedIndex => IsShowingChoices ? selectedIndex : -1;
+
+        private IReadOnlyList<Choice> Choices => runner != null ? runner.Choices : System.Array.Empty<Choice>();
 
         private void Awake()
         {
@@ -61,9 +131,13 @@ namespace DialogueMachine.Runtime.Unity
             if (runner != null)
             {
                 runner.LineShown += HandleLineShown;
-                runner.ChoicesShown += HandleChoicesShown;
+                runner.ChoicesShown += ShowChoices;
                 runner.Ended += HandleEnded;
             }
+#if DM_INPUT_SYSTEM
+            if (submitAction != null) submitAction.action.Enable();
+            if (navigateAction != null) navigateAction.action.Enable();
+#endif
         }
 
         private void OnDisable()
@@ -71,7 +145,7 @@ namespace DialogueMachine.Runtime.Unity
             if (runner != null)
             {
                 runner.LineShown -= HandleLineShown;
-                runner.ChoicesShown -= HandleChoicesShown;
+                runner.ChoicesShown -= ShowChoices;
                 runner.Ended -= HandleEnded;
             }
         }
@@ -79,15 +153,12 @@ namespace DialogueMachine.Runtime.Unity
         private void EnsureUIDocument()
         {
             uiDocument = GetComponent<UIDocument>();
-            if (uiDocument == null)
-            {
-                uiDocument = gameObject.AddComponent<UIDocument>();
-            }
+            if (uiDocument == null) uiDocument = gameObject.AddComponent<UIDocument>();
 
             if (uiDocument.panelSettings == null)
             {
                 // A PanelSettings without a theme renders nothing, so give it an empty one;
-                // every element in this view is styled inline.
+                // the view's own style sheet styles every element.
                 var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
                 panelSettings.themeStyleSheet = ScriptableObject.CreateInstance<ThemeStyleSheet>();
                 uiDocument.panelSettings = panelSettings;
@@ -98,326 +169,304 @@ namespace DialogueMachine.Runtime.Unity
         {
             var root = uiDocument.rootVisualElement;
             root.Clear();
-            // The default theme normally sizes the document root; without it the root collapses to zero height.
-            root.style.flexGrow = 1;
-            root.style.height = new Length(100, LengthUnit.Percent);
+            root.styleSheets.Clear();
+            root.AddToClassList("dm-document");
+            var defaultStyle = Resources.Load<StyleSheet>("DialogueMachine/DefaultDialogueView");
+            if (defaultStyle != null) root.styleSheets.Add(defaultStyle);
+            if (styleSheet != null) root.styleSheets.Add(styleSheet);
 
-            // Screen container
-            rootContainer = new VisualElement();
-            rootContainer.style.position = Position.Absolute;
-            rootContainer.style.left = 0;
-            rootContainer.style.right = 0;
-            rootContainer.style.top = 0;
-            rootContainer.style.bottom = 0;
-            rootContainer.style.justifyContent = Justify.FlexEnd;
-            rootContainer.style.alignItems = Align.Center;
-            rootContainer.style.paddingBottom = 28;
-            rootContainer.style.display = DisplayStyle.None;
+            if (layout != null) layout.CloneTree(root);
+            else BuildDefaultLayout(root);
 
-            // Dialogue Box
-            dialogBox = new VisualElement();
-            dialogBox.style.width = new Length(80, LengthUnit.Percent);
-            dialogBox.style.maxWidth = 860;
-            dialogBox.style.minHeight = 160;
-            dialogBox.style.backgroundColor = new StyleColor(new Color(0.12f, 0.14f, 0.18f, 0.94f));
-            dialogBox.style.borderTopLeftRadius = 10;
-            dialogBox.style.borderTopRightRadius = 10;
-            dialogBox.style.borderBottomLeftRadius = 10;
-            dialogBox.style.borderBottomRightRadius = 10;
-            dialogBox.style.borderLeftWidth = 1.5f;
-            dialogBox.style.borderRightWidth = 1.5f;
-            dialogBox.style.borderTopWidth = 1.5f;
-            dialogBox.style.borderBottomWidth = 1.5f;
-            dialogBox.style.borderLeftColor = new StyleColor(new Color(0.28f, 0.32f, 0.40f, 0.8f));
-            dialogBox.style.borderRightColor = new StyleColor(new Color(0.28f, 0.32f, 0.40f, 0.8f));
-            dialogBox.style.borderTopColor = new StyleColor(new Color(0.28f, 0.32f, 0.40f, 0.8f));
-            dialogBox.style.borderBottomColor = new StyleColor(new Color(0.28f, 0.32f, 0.40f, 0.8f));
-            dialogBox.style.paddingLeft = 24;
-            dialogBox.style.paddingRight = 24;
-            dialogBox.style.paddingTop = 18;
-            dialogBox.style.paddingBottom = 18;
+            dialogue = root.Q(DialogueName) ?? root;
+            speakerLabel = root.Q<TextElement>(SpeakerName);
+            textLabel = root.Q<TextElement>(TextName);
+            choicesContainer = root.Q(ChoicesName);
+            continueButton = root.Q<Button>(ContinueName);
+            typewriterToggle = root.Q<Toggle>(TypewriterToggleName);
 
-            // Header bar (Speaker + Typewriter toggle)
-            var headerBar = new VisualElement();
-            headerBar.style.flexDirection = FlexDirection.Row;
-            headerBar.style.justifyContent = Justify.SpaceBetween;
-            headerBar.style.alignItems = Align.Center;
-            headerBar.style.marginBottom = 10;
-
-            speakerLabel = new Label("Speaker");
-            speakerLabel.style.fontSize = 18;
-            speakerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
-            speakerLabel.style.color = new StyleColor(new Color(0.47f, 0.87f, 0.78f)); // #79DFC8
-
-            typewriterToggle = new Toggle("Typewriter");
-            typewriterToggle.value = enableTypewriter;
-            typewriterToggle.style.fontSize = 12;
-            typewriterToggle.style.color = new StyleColor(new Color(0.7f, 0.75f, 0.82f));
-            typewriterToggle.RegisterValueChangedCallback(evt => enableTypewriter = evt.newValue);
-
-            headerBar.Add(speakerLabel);
-            headerBar.Add(typewriterToggle);
-            dialogBox.Add(headerBar);
-
-            // Dialogue Text
-            textLabel = new Label("");
-            textLabel.enableRichText = true;
-            textLabel.style.fontSize = 16;
-            textLabel.style.color = new StyleColor(new Color(0.94f, 0.95f, 0.97f));
-            textLabel.style.whiteSpace = WhiteSpace.Normal;
-            textLabel.style.marginBottom = 16;
-            textLabel.style.flexGrow = 1;
-            dialogBox.Add(textLabel);
-
-            // Click dialogue box to fast forward typewriter
-            dialogBox.RegisterCallback<ClickEvent>(evt =>
+            if (textLabel != null) textLabel.enableRichText = true;
+            if (continueButton != null) continueButton.clicked += () => Act(ContinueOrSkip);
+            if (typewriterToggle != null)
             {
-                if (isTyping)
-                {
-                    CompleteTypewriterImmediately();
-                    evt.StopPropagation();
-                }
+                typewriterToggle.SetValueWithoutNotify(enableTypewriter);
+                typewriterToggle.RegisterValueChangedCallback(evt => enableTypewriter = evt.newValue);
+            }
+            // Clicking the box finishes the typing.
+            dialogue.RegisterCallback<ClickEvent>(evt =>
+            {
+                if (IsTyping && Act(SkipTypewriter)) evt.StopPropagation();
             });
 
-            // Choices Container
-            choicesContainer = new VisualElement();
-            choicesContainer.style.flexDirection = FlexDirection.Column;
-            choicesContainer.style.marginBottom = 8;
-            dialogBox.Add(choicesContainer);
+            dialogue.style.display = IsOpen ? DisplayStyle.Flex : DisplayStyle.None;
+        }
 
-            // Footer bar (Continue button)
-            var footerBar = new VisualElement();
-            footerBar.style.flexDirection = FlexDirection.Row;
-            footerBar.style.justifyContent = Justify.FlexEnd;
+        private void Rebuild()
+        {
+            if (uiDocument == null) return;
+            BuildUI();
+            if (IsOpen && runner != null) Show(runner.CurrentPage, runner.Speaker);
+        }
 
-            continueButton = new Button(() =>
+        private void BuildDefaultLayout(VisualElement root)
+        {
+            var screen = new VisualElement { name = DialogueName };
+            screen.AddToClassList("dm-root");
+
+            var box = new VisualElement();
+            box.AddToClassList("dm-box");
+
+            var header = new VisualElement();
+            header.AddToClassList("dm-header");
+            var speaker = new Label { name = SpeakerName };
+            speaker.AddToClassList("dm-speaker");
+            header.Add(speaker);
+            if (showTypewriterToggle)
             {
-                if (isTyping)
+                var toggle = new Toggle("Typewriter") { name = TypewriterToggleName };
+                toggle.AddToClassList("dm-typewriter-toggle");
+                header.Add(toggle);
+            }
+            box.Add(header);
+
+            var text = new Label { name = TextName };
+            text.AddToClassList("dm-text");
+            box.Add(text);
+
+            var choices = new VisualElement { name = ChoicesName };
+            choices.AddToClassList("dm-choices");
+            box.Add(choices);
+
+            var footer = new VisualElement();
+            footer.AddToClassList("dm-footer");
+            var cont = new Button { name = ContinueName };
+            cont.AddToClassList("dm-continue");
+            footer.Add(cont);
+            box.Add(footer);
+
+            screen.Add(box);
+            root.Add(screen);
+        }
+
+        private void Update()
+        {
+            if (!IsOpen) return;
+
+            if (IsTyping)
+            {
+                revealed += typewriterSpeed * Time.unscaledDeltaTime;
+                var count = (int)revealed;
+                if (count >= fullLength) FinishTyping();
+                else if (count != shown)
                 {
-                    CompleteTypewriterImmediately();
+                    shown = count;
+                    if (textLabel != null) textLabel.text = RichText.Reveal(fullText, count);
                 }
-                else if (runner != null && runner.CanContinue)
-                {
-                    runner.Continue();
-                }
-            });
-            continueButton.text = "Continue ▶";
-            continueButton.focusable = true;
-            continueButton.style.paddingLeft = 18;
-            continueButton.style.paddingRight = 18;
-            continueButton.style.paddingTop = 8;
-            continueButton.style.paddingBottom = 8;
-            continueButton.style.fontSize = 14;
-            continueButton.style.unityFontStyleAndWeight = FontStyle.Bold;
-            StyleButton(continueButton);
+            }
 
-            footerBar.Add(continueButton);
-            dialogBox.Add(footerBar);
-
-            rootContainer.Add(dialogBox);
-            root.Add(rootContainer);
+#if DM_INPUT_SYSTEM
+            ReadInput();
+#endif
         }
 
-        private static void StyleButton(Button button)
+#if DM_INPUT_SYSTEM
+        private void ReadInput()
         {
-            var border = new StyleColor(new Color(0.28f, 0.32f, 0.40f));
-            button.style.backgroundColor = new StyleColor(new Color(0.2f, 0.24f, 0.31f));
-            button.style.color = new StyleColor(new Color(0.94f, 0.95f, 0.97f));
-            button.style.borderTopColor = border;
-            button.style.borderRightColor = border;
-            button.style.borderBottomColor = border;
-            button.style.borderLeftColor = border;
-            button.style.borderTopWidth = 1;
-            button.style.borderRightWidth = 1;
-            button.style.borderBottomWidth = 1;
-            button.style.borderLeftWidth = 1;
-            button.style.borderTopLeftRadius = 6;
-            button.style.borderTopRightRadius = 6;
-            button.style.borderBottomLeftRadius = 6;
-            button.style.borderBottomRightRadius = 6;
+            if (submitAction != null && submitAction.action.WasPressedThisFrame()) Submit();
+            if (navigateAction == null || !IsShowingChoices) return;
+
+            var y = navigateAction.action.ReadValue<Vector2>().y;
+            if (Mathf.Abs(y) < 0.5f) { nextMove = 0f; return; }
+            if (Time.unscaledTime < nextMove) return;
+            MoveSelection(y > 0 ? -1 : 1);
+            nextMove = Time.unscaledTime + (nextMove == 0f ? repeatSeconds * 2f : repeatSeconds);
+        }
+#endif
+
+        /// <summary>
+        /// The one button a game needs: finishes the typing, then picks the highlighted choice or continues.
+        /// Call it from your confirm/interact input. A press in the frame that showed the line is ignored,
+        /// so the press that started or advanced the dialogue doesn't also skip the new line.
+        /// </summary>
+        public void Submit() => Act(() =>
+        {
+            if (IsTyping) SkipTypewriter();
+            else if (IsShowingChoices) ChooseIndex(selectedIndex);
+            else if (runner != null && runner.CanContinue) runner.Continue();
+        });
+
+        /// <summary>Moves the choice highlight by delta (negative is up), skipping disabled choices and wrapping.</summary>
+        public void MoveSelection(int delta)
+        {
+            if (!IsShowingChoices || delta == 0) return;
+            var step = delta > 0 ? 1 : -1;
+            var n = Choices.Count;
+            for (var i = 0; i < Mathf.Abs(delta); i++)
+            {
+                selectedIndex = FirstEnabled(((selectedIndex + step) % n + n) % n, step);
+            }
+            ApplySelection(true);
         }
 
-        private void HandleLineShown(string line)
+        /// <summary>Picks the choice at index (as shown, from 0) if it is enabled. Use it for number keys.</summary>
+        public void SelectChoice(int index) => Act(() => ChooseIndex(index));
+
+        /// <summary>Shows the whole line at once.</summary>
+        public void SkipTypewriter()
         {
-            Show(runner?.CurrentPage, runner?.Speaker);
+            if (IsTyping) FinishTyping();
         }
 
-        private void HandleChoicesShown(IReadOnlyList<Choice> choices)
+        // One action per frame, and none in the frame a line appeared, so the game's input and
+        // UI Toolkit's own button navigation can't both act on one press.
+        private bool Act(System.Action action)
         {
-            ShowChoices(choices);
+            var frame = Time.frameCount;
+            if (!IsOpen || frame == lineFrame || frame == actionFrame) return false;
+            actionFrame = frame;
+            action();
+            return true;
         }
 
-        private void HandleEnded(string sceneId, string choiceId)
+        private void ContinueOrSkip()
         {
-            Hide();
+            if (IsTyping) SkipTypewriter();
+            else if (runner != null && runner.CanContinue) runner.Continue();
         }
+
+        private void ChooseIndex(int index)
+        {
+            if (!IsShowingChoices || index < 0 || index >= Choices.Count || !Choices[index].Enabled) return;
+            runner.Choose(Choices[index].Id);
+        }
+
+        private void HandleLineShown(string line) => Show(runner?.CurrentPage, runner?.Speaker);
+
+        private void HandleEnded(string sceneId, string choiceId) => Hide();
 
         public void Show(string page, string speaker)
         {
-            if (rootContainer == null) BuildUI();
-            rootContainer.style.display = DisplayStyle.Flex;
+            if (dialogue == null) BuildUI();
+            IsOpen = true;
+            dialogue.style.display = DisplayStyle.Flex;
+            lineFrame = Time.frameCount;
 
-            speakerLabel.text = speaker ?? string.Empty;
-            speakerLabel.style.display = string.IsNullOrEmpty(speaker) ? DisplayStyle.None : DisplayStyle.Flex;
-
-            choicesContainer.Clear();
-            choicesContainer.style.display = DisplayStyle.None;
-
-            targetFullText = RichText.ToUnity(page ?? string.Empty);
-
-            if (typewriterRoutine != null)
+            if (speakerLabel != null)
             {
-                StopCoroutine(typewriterRoutine);
-                typewriterRoutine = null;
+                speakerLabel.text = speaker ?? string.Empty;
+                speakerLabel.style.display = string.IsNullOrEmpty(speaker) ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
-            if (enableTypewriter && gameObject.activeInHierarchy)
-            {
-                typewriterRoutine = StartCoroutine(TypewriterLoop(targetFullText));
-            }
-            else
-            {
-                textLabel.text = targetFullText;
-                isTyping = false;
-                UpdateControlsAfterLine();
-            }
+            fullText = RichText.ToUnity(page ?? string.Empty);
+            fullLength = RichText.VisibleLength(fullText);
+            revealed = 0f;
+            shown = 0;
+            IsTyping = enableTypewriter && typewriterSpeed > 0f && fullLength > 0;
+            if (textLabel != null) textLabel.text = IsTyping ? string.Empty : fullText;
+            RefreshControls();
         }
 
-        private IEnumerator TypewriterLoop(string fullText)
-        {
-            isTyping = true;
-            continueButton.style.display = DisplayStyle.Flex;
-            continueButton.text = "Skip ▶";
-
-            var plainText = DialogueRules.PlainText(fullText);
-            var charDelay = typewriterSpeed > 0 ? 1f / typewriterSpeed : 0.025f;
-            var currentLength = 0;
-
-            while (currentLength < plainText.Length)
-            {
-                currentLength++;
-                textLabel.text = plainText.Substring(0, currentLength);
-                yield return new WaitForSeconds(charDelay);
-            }
-
-            textLabel.text = fullText;
-            isTyping = false;
-            typewriterRoutine = null;
-            UpdateControlsAfterLine();
-        }
-
-        private void CompleteTypewriterImmediately()
-        {
-            if (typewriterRoutine != null)
-            {
-                StopCoroutine(typewriterRoutine);
-                typewriterRoutine = null;
-            }
-            textLabel.text = targetFullText;
-            isTyping = false;
-            UpdateControlsAfterLine();
-        }
-
-        private void UpdateControlsAfterLine()
-        {
-            if (runner == null) return;
-
-            if (runner.Choices != null && runner.Choices.Count > 0 && runner.PageIndex == runner.PageCount - 1)
-            {
-                ShowChoices(runner.Choices);
-            }
-            else
-            {
-                choicesContainer.Clear();
-                choicesContainer.style.display = DisplayStyle.None;
-                continueButton.style.display = runner.CanContinue ? DisplayStyle.Flex : DisplayStyle.None;
-                continueButton.text = "Continue ▶";
-                if (runner.CanContinue) continueButton.Focus();
-            }
-        }
-
-        public void ShowChoices(IReadOnlyList<Choice> choices)
-        {
-            if (rootContainer == null) BuildUI();
-            choicesContainer.Clear();
-
-            if (choices == null || choices.Count == 0)
-            {
-                choicesContainer.style.display = DisplayStyle.None;
-                continueButton.style.display = (runner != null && runner.CanContinue) ? DisplayStyle.Flex : DisplayStyle.None;
-                if (runner != null && runner.CanContinue) continueButton.Focus();
-                return;
-            }
-
-            choicesContainer.style.display = DisplayStyle.Flex;
-            Button firstEnabledButton = null;
-
-            for (var i = 0; i < choices.Count; i++)
-            {
-                var choice = choices[i];
-                var button = new Button();
-                button.text = RichText.ToUnity(choice.Text);
-                button.focusable = choice.Enabled;
-                button.SetEnabled(choice.Enabled);
-                button.style.marginTop = 4;
-                button.style.marginBottom = 4;
-                button.style.paddingTop = 8;
-                button.style.paddingBottom = 8;
-                button.style.paddingLeft = 14;
-                button.style.paddingRight = 14;
-                button.style.fontSize = 15;
-                button.style.unityTextAlign = TextAnchor.MiddleLeft;
-
-                StyleButton(button);
-                if (!choice.Enabled)
-                {
-                    button.style.opacity = 0.5f;
-                    if (!string.IsNullOrEmpty(choice.DisabledReason))
-                    {
-                        button.tooltip = choice.DisabledReason;
-                        button.text += " (" + choice.DisabledReason + ")";
-                    }
-                }
-
-                var choiceId = choice.Id;
-                button.clicked += () =>
-                {
-                    if (runner != null) runner.Choose(choiceId);
-                };
-
-                choicesContainer.Add(button);
-                if (choice.Enabled && firstEnabledButton == null)
-                {
-                    firstEnabledButton = button;
-                }
-            }
-
-            // Continue button is hidden if there are enabled choices, unless runner.CanContinue
-            continueButton.style.display = (runner != null && runner.CanContinue) ? DisplayStyle.Flex : DisplayStyle.None;
-            continueButton.text = "Continue ▶";
-
-            if (firstEnabledButton != null)
-            {
-                firstEnabledButton.Focus();
-            }
-            else if (runner != null && runner.CanContinue)
-            {
-                continueButton.Focus();
-            }
-        }
+        public void ShowChoices(IReadOnlyList<Choice> choices) => RefreshControls();
 
         public void Hide()
         {
-            if (typewriterRoutine != null)
+            IsOpen = false;
+            IsTyping = false;
+            ClearChoices();
+            if (dialogue != null) dialogue.style.display = DisplayStyle.None;
+        }
+
+        private void FinishTyping()
+        {
+            IsTyping = false;
+            if (textLabel != null) textLabel.text = fullText;
+            RefreshControls();
+        }
+
+        private void RefreshControls()
+        {
+            if (!IsOpen) return;
+            ClearChoices();
+
+            if (IsShowingChoices && choicesContainer != null)
             {
-                StopCoroutine(typewriterRoutine);
-                typewriterRoutine = null;
+                choicesContainer.style.display = DisplayStyle.Flex;
+                for (var i = 0; i < Choices.Count; i++)
+                {
+                    choiceButtons.Add(CreateChoiceButton(Choices[i], i));
+                    choicesContainer.Add(choiceButtons[i]);
+                }
+                selectedIndex = FirstEnabled(0, 1);
             }
-            isTyping = false;
-            if (rootContainer != null)
+
+            if (continueButton != null)
             {
-                rootContainer.style.display = DisplayStyle.None;
+                var visible = IsTyping || (runner != null && runner.CanContinue);
+                continueButton.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+                continueButton.text = IsTyping ? skipLabel : continueLabel;
             }
+
+            if (IsShowingChoices) ApplySelection(true);
+            else if (continueButton != null && runner != null && runner.CanContinue && !IsTyping) continueButton.Focus();
+        }
+
+        private Button CreateChoiceButton(Choice choice, int index)
+        {
+            var button = new Button { text = RichText.ToUnity(choice.Text) };
+            button.AddToClassList(ChoiceClass);
+            button.focusable = choice.Enabled;
+            button.SetEnabled(choice.Enabled);
+            if (!choice.Enabled)
+            {
+                button.AddToClassList(DisabledClass);
+                if (!string.IsNullOrEmpty(choice.DisabledReason))
+                {
+                    button.tooltip = choice.DisabledReason;
+                    button.text += " (" + choice.DisabledReason + ")";
+                }
+            }
+
+            button.clicked += () => SelectChoice(index);
+            // Mouse hover and UI Toolkit focus move the same highlight the game's input moves.
+            button.RegisterCallback<PointerEnterEvent>(_ => Highlight(index));
+            button.RegisterCallback<FocusInEvent>(_ => Highlight(index));
+            return button;
+        }
+
+        private void Highlight(int index)
+        {
+            if (index == selectedIndex || !IsShowingChoices || !Choices[index].Enabled) return;
+            selectedIndex = index;
+            ApplySelection(false);
+        }
+
+        private void ApplySelection(bool focus)
+        {
+            for (var i = 0; i < choiceButtons.Count; i++)
+            {
+                choiceButtons[i].EnableInClassList(SelectedClass, i == selectedIndex);
+            }
+            if (focus && selectedIndex >= 0 && selectedIndex < choiceButtons.Count) choiceButtons[selectedIndex].Focus();
+        }
+
+        private void ClearChoices()
+        {
+            choiceButtons.Clear();
+            if (choicesContainer == null) return;
+            choicesContainer.Clear();
+            choicesContainer.style.display = DisplayStyle.None;
+        }
+
+        // The first enabled choice from start, walking in direction step (wraps); -1 if none is enabled.
+        private int FirstEnabled(int start, int step)
+        {
+            var n = Choices.Count;
+            for (var i = 0; i < n; i++)
+            {
+                var k = ((start + i * step) % n + n) % n;
+                if (Choices[k].Enabled) return k;
+            }
+            return -1;
         }
     }
 }

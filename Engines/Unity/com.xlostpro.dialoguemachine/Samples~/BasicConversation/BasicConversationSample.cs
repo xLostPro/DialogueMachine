@@ -1,5 +1,6 @@
 using DialogueMachine.Runtime.Unity;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace DialogueMachine.Samples
 {
@@ -12,6 +13,11 @@ namespace DialogueMachine.Samples
     {
         [Tooltip("Optional DialogueAsset. If left empty, a built-in introductory story is played.")]
         [SerializeField] private DialogueAsset storyAsset;
+
+        [Tooltip("Optional. Try WarmDialogue.uss from this sample to restyle the default view.")]
+        [SerializeField] private StyleSheet styleSheet;
+
+        private DefaultDialogueView view;
 
         private void Start()
         {
@@ -50,12 +56,13 @@ namespace DialogueMachine.Samples
             runner.PlayOnStart = false;
 
             // Ensure DefaultDialogueView exists
-            var view = gameObject.GetComponent<DefaultDialogueView>();
+            view = gameObject.GetComponent<DefaultDialogueView>();
             if (view == null)
             {
                 view = gameObject.AddComponent<DefaultDialogueView>();
             }
             view.Runner = runner;
+            if (styleSheet != null) view.StyleSheet = styleSheet;
 
             // Log events for demonstration
             runner.ActionRaised += (type, targetId, parameter, amount) =>
@@ -69,6 +76,23 @@ namespace DialogueMachine.Samples
 
             // Start dialogue playback
             runner.StartDialogue();
+        }
+
+        // The view takes no input of its own: send it the game's confirm and up/down presses.
+        private void Update()
+        {
+            if (view == null) return;
+#if ENABLE_INPUT_SYSTEM
+            var keyboard = UnityEngine.InputSystem.Keyboard.current;
+            if (keyboard == null) return;
+            if (keyboard.enterKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame) view.Submit();
+            if (keyboard.upArrowKey.wasPressedThisFrame) view.MoveSelection(-1);
+            if (keyboard.downArrowKey.wasPressedThisFrame) view.MoveSelection(1);
+#elif ENABLE_LEGACY_INPUT_MANAGER
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Space)) view.Submit();
+            if (Input.GetKeyDown(KeyCode.UpArrow)) view.MoveSelection(-1);
+            if (Input.GetKeyDown(KeyCode.DownArrow)) view.MoveSelection(1);
+#endif
         }
     }
 }

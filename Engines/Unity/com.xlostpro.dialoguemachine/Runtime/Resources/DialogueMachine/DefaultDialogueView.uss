@@ -1,0 +1,102 @@
+/* Dialogue Machine default view style. Don't edit this file: assign your own Style Sheet on the
+   Default Dialogue View and override these classes there; it is applied after this one. */
+
+.dm-document {
+    flex-grow: 1;
+    height: 100%;
+}
+
+.dm-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    justify-content: flex-end;
+    align-items: center;
+    padding-bottom: 28px;
+}
+
+.dm-box {
+    width: 80%;
+    max-width: 860px;
+    min-height: 160px;
+    background-color: rgba(31, 36, 46, 0.94);
+    border-width: 1.5px;
+    border-color: rgba(71, 82, 102, 0.8);
+    border-radius: 10px;
+    padding: 18px 24px;
+}
+
+.dm-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.dm-speaker {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: rgb(120, 222, 199);
+}
+
+.dm-typewriter-toggle {
+    font-size: 12px;
+    color: rgb(179, 191, 209);
+}
+
+.dm-text {
+    font-size: 16px;
+    color: rgb(240, 242, 247);
+    white-space: normal;
+    margin-bottom: 16px;
+    flex-grow: 1;
+}
+
+.dm-choices {
+    flex-direction: column;
+    margin-bottom: 8px;
+}
+
+.dm-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.dm-choice,
+.dm-continue {
+    background-color: rgb(51, 61, 79);
+    color: rgb(240, 242, 247);
+    border-width: 1px;
+    border-color: rgb(71, 82, 102);
+    border-radius: 6px;
+}
+
+.dm-choice {
+    margin: 4px 0;
+    padding: 8px 14px;
+    font-size: 15px;
+    -unity-text-align: middle-left;
+    white-space: normal;
+}
+
+.dm-choice:hover,
+.dm-continue:hover {
+    background-color: rgb(61, 73, 94);
+}
+
+.dm-choice--selected {
+    border-color: rgb(120, 222, 199);
+    background-color: rgb(61, 73, 94);
+}
+
+.dm-choice--disabled {
+    opacity: 0.5;
+}
+
+.dm-continue {
+    padding: 8px 18px;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
