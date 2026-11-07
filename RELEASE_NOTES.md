@@ -1,5 +1,17 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## Unreleased
+
+### Default dialogue views
+
+The ready-made dialogue boxes in Unity, Godot and Unreal can now be driven by game input and restyled without writing your own.
+
+- **Game input**: `Submit` (finish typing, then continue or pick the highlighted choice), `MoveSelection`, `SelectChoice` and `SkipTypewriter` on all three. The view tracks the highlighted choice itself, skipping disabled choices and wrapping, and ignores a press in the frame that showed a line so the press that starts a conversation doesn't skip it. Mouse and focus navigation still work.
+- **Built-in input, optional**: Unity **Submit Action** / **Navigate Action** when the Input System is installed; Godot reads `ui_accept`, `ui_up`, `ui_down` (configurable); Unreal binds Enhanced Input **Submit Action** / **Navigate Action** or handles Enter, Space, gamepad and arrows when focused.
+- **Typewriter everywhere**: Godot and Unreal gain one, and rich text (bold, colour) now stays formatted while it types in all three.
+- **Restyling**: Unity moves its look into a built-in style sheet with `dm-*` classes; assign your own **Style Sheet** or a UXML **Layout**. Godot controls use Theme type variations (`DialoguePanel`, `DialogueChoiceSelected`, …) and accept a `layout_scene`. Unreal has Style properties (panel brush, fonts, colours, button styles, rich text table) and binds a Widget Blueprint subclass's own widgets by name. The Unity typewriter toggle is now hidden unless **Show Typewriter Toggle** is on, and the Unreal box gains a background panel and hides when the conversation ends.
+- **Unreal**: the plugin now depends on the built-in Enhanced Input plugin.
+
 ## 1.6.0
 
 ### Text conditions & placeholders

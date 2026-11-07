@@ -209,6 +209,13 @@ jobs:
           # A script that fails to compile can still exit 0, so the summary line has to say nothing failed.
           grep -q -- "--- Summary: [0-9]* passed, 0 failed ---" godot-test.log
           ! grep -q "SCRIPT ERROR" godot-test.log
+      - name: Run Godot dialogue view tests
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --path Engines/Godot --script res://addons/dialogue_machine/tests/run_view_tests.gd 2>&1 | tee godot-view.log
+          grep -q -- "--- View tests: 0 failed ---" godot-view.log
+          ! grep -q "SCRIPT ERROR" godot-view.log
 
   release:
     name: Publish GitHub Release

@@ -1,0 +1,36 @@
+/* Example override for the Default Dialogue View: assign it to the view's Style Sheet
+   (or to this sample's Style Sheet slot). Only what you change needs to be here. */
+
+.dm-root {
+    justify-content: flex-start;
+    padding-top: 28px;
+}
+
+.dm-box {
+    background-color: rgba(250, 240, 222, 0.97);
+    border-color: rgb(140, 98, 57);
+    border-width: 3px;
+    border-radius: 2px;
+}
+
+.dm-speaker {
+    color: rgb(140, 62, 32);
+}
+
+.dm-text {
+    color: rgb(51, 38, 28);
+    font-size: 18px;
+}
+
+.dm-choice,
+.dm-continue {
+    background-color: rgb(237, 222, 196);
+    color: rgb(51, 38, 28);
+    border-color: rgb(186, 152, 112);
+}
+
+.dm-choice--selected {
+    background-color: rgb(140, 62, 32);
+    color: rgb(250, 240, 222);
+    border-color: rgb(140, 62, 32);
+}

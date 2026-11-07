@@ -1,0 +1,23 @@
+{
+    "name": "DialogueMachine.Runtime.Tests",
+    "rootNamespace": "DialogueMachine.Runtime.Tests",
+    "references": [
+        "DialogueMachine.Runtime",
+        "UnityEngine.UIElementsModule",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
