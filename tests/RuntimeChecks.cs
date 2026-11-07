@@ -128,6 +128,10 @@ internal static class RuntimeChecks
         var store = new DictionaryVariables(); store.SetNumber("inv:coin", 7);
         var gameOwned = new DialogueRunner(store); gameOwned.Load(Parse(project)); gameOwned.Start();
         check(gameOwned.Variables.GetNumber("inv:coin") == 7 && store.GetText("player_name") == "Traveller", "a game-owned store keeps its values and gains missing ones");
+        store.SetText("calling", "Zoë \"the\" Plumber");
+        var loaded = new DictionaryVariables(); loaded.SetNumber("aff:stale", 1); loaded.LoadJson(store.ToJson());
+        check(loaded.GetNumber("inv:coin") == 7 && loaded.GetText("calling") == "Zoë \"the\" Plumber" && loaded.GetText("player_name") == "Traveller" && !loaded.HasNumber("aff:stale") && loaded.Keys.Count() == store.Keys.Count(), "DictionaryVariables saves to JSON and loading replaces every value");
+        throws(() => loaded.LoadJson("[]"), "loading saved variables rejects a non-object");
 
         var reload = new DialogueRunner(); var warnings = new List<string>(); reload.Warning += warnings.Add;
         reload.Load(Parse(project)); reload.Start(); reload.Continue(); reload.Continue(); reload.Variables.SetNumber("inv:coin", 5);
