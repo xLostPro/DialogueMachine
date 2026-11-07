@@ -35,7 +35,7 @@ public static class DialogueEngine
             if (!DialogueText.ValidConditions(text)) Error(id, $"{field}: inline conditional tags are malformed. Use [if aff:trust >= 1]…[else]…[/if], with at most one else per block and up to 64 nested blocks.");
             if (!DialogueText.ValidFormatting(text)) Warning(id, $"{field}: formatting tags are unclosed, mismatched or malformed. Check [b], [i], [u] and [colour=…] tags.");
             foreach (Match m in Regex.Matches(text, @"\{([\w:.\-]+)\}"))
-                if (!textVariables.Contains(m.Groups[1].Value) && !variables.Contains(m.Groups[1].Value)) Warning(id, $"{field}: unknown substitution {{{m.Groups[1].Value}}}. Add it in Variables & characters or correct its ID.");
+                if (!textVariables.Contains(m.Groups[1].Value) && !variables.Contains(m.Groups[1].Value) && !(m.Groups[1].Value.StartsWith("a:", StringComparison.Ordinal) && textVariables.Contains(m.Groups[1].Value[2..]))) Warning(id, $"{field}: unknown substitution {{{m.Groups[1].Value}}}. Add it in Variables & characters or correct its ID.");
         }
         if (p.FormatVersion != DialogueProject.CurrentFormatVersion) Error("", $"Unsupported project format {p.FormatVersion}.");
         var ids = p.ListOfCharacterStates.Select(s => s.State).ToHashSet();
