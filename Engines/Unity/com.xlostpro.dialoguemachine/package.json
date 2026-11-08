@@ -1,6 +1,6 @@
 {
   "name": "com.xlostpro.dialoguemachine",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "displayName": "Dialogue Machine",
   "description": "Dialogue Machine runtime, importer and live link for Unity.",
   "unity": "6000.5",
