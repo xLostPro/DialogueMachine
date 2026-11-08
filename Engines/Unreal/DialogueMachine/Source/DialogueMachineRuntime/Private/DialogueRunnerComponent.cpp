@@ -250,6 +250,7 @@ bool UDialogueRunnerComponent::RestoreState(const FString& Json)
 
 FString UDialogueRunnerComponent::GetCurrentSceneId() const { return InternalRunner.IsValid() ? InternalRunner->GetCurrentSceneId() : TEXT(""); }
 FString UDialogueRunnerComponent::GetSpeaker() const { return InternalRunner.IsValid() ? InternalRunner->GetSpeaker() : TEXT(""); }
+FString UDialogueRunnerComponent::GetPortrait() const { return InternalRunner.IsValid() ? InternalRunner->GetPortrait() : TEXT(""); }
 FString UDialogueRunnerComponent::GetTitle() const { return InternalRunner.IsValid() ? InternalRunner->GetTitle() : TEXT(""); }
 bool UDialogueRunnerComponent::IsEnded() const { return InternalRunner.IsValid() ? InternalRunner->IsEnded() : true; }
 FString UDialogueRunnerComponent::GetCurrentPage() const { return InternalRunner.IsValid() ? InternalRunner->GetCurrentPage() : TEXT(""); }

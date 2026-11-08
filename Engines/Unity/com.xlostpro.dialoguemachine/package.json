@@ -3,7 +3,7 @@
   "version": "1.6.0",
   "displayName": "Dialogue Machine",
   "description": "Dialogue Machine runtime, importer and live link for Unity.",
-  "unity": "2022.3",
+  "unity": "6000.5",
   "author": {
     "name": "xLostPro",
     "url": "https://github.com/xLostPro/DialogueMachine"

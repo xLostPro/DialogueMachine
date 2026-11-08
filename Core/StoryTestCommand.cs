@@ -161,7 +161,7 @@ public static class ConformanceFixtures
     public static SortedDictionary<string, string> Generate()
     {
         var fixtures = new SortedDictionary<string, string>(StringComparer.Ordinal);
-        void Case(string name, DialogueProject project, Step[] steps, int seed = 0, DialogueProject? futureStory = null) => fixtures[name] = Fixture(name, project, seed, steps, futureStory);
+        void Case(string name, DialogueProject project, Step[] steps, int seed = 0, DialogueProject? futureStory = null, bool presentation = false) => fixtures[name] = Fixture(name, project, seed, steps, futureStory, presentation);
 
         var lighthouse = ProjectStore.Load("Examples/lighthouse.dialogue.json");
         Case("lighthouse", lighthouse, [Begin, Next, Pick(Id(lighthouse, "arrival", 1)), Next, Next, Next, Pick(Id(lighthouse, "keeper", 0)), Next, Next]);
@@ -284,10 +284,16 @@ public static class ConformanceFixtures
         var propProject = Project(prop, propHub); propProject.TextVariables["player_calling"] = "Noble Warrior";
         Case("set_text_escalate_and_page_speakers", propProject, [Begin, Next, Pick(Id(1)), Next, Pick(Id(2)), Next, Pick(Id(1)), Next, Next]);
         Case("escalate_visits_save_restore", propProject, [Begin, Next, Pick(Id(1)), Save, Next, Pick(Id(1)), Restore, Next, Pick(Id(1)), Next, Pick(Id(1))]);
+
+        // Snapshots here also carry the page's speaker and portrait, which `@Speaker [portrait]:` overrides per page.
+        var porch = Scene("porch", "The lamp gutters.\n@Mara [mara_smile]: You made it.\n@Guard: Papers, please.\nThe wind picks up.", "farewell");
+        porch.Metadata["portrait"] = "narrator_calm";
+        var farewell = Scene("farewell", "@Mara [mara_sad]: Goodbye, then.\nSilence.");
+        Case("page_speakers_and_portraits", Project(porch, farewell), [Begin, Next, Next, Next, Next, Next, Next], presentation: true);
         return fixtures;
     }
 
-    private static string Fixture(string name, DialogueProject project, int seed, Step[] steps, DialogueProject? futureStory)
+    private static string Fixture(string name, DialogueProject project, int seed, Step[] steps, DialogueProject? futureStory, bool presentation)
     {
         var handoff = RuntimeExport.Create(project, seed);
         // StoryExport indents with the platform newline; fixtures must be identical on every OS.
@@ -310,7 +316,7 @@ public static class ConformanceFixtures
                     mark = simulation.Trace.Count; break;
                 default: Play(simulation!, step); played.Add(step); break;
             }
-            expected.Add(Snapshot(simulation!, mark));
+            expected.Add(Snapshot(simulation!, mark, presentation));
         }
         return new JsonObject { ["name"] = name, ["handoff"] = node, ["inputs"] = new JsonArray(steps.Select(Input).ToArray<JsonNode?>()), ["expected"] = expected }.ToJsonString(Output) + "\n";
     }
@@ -336,7 +342,7 @@ public static class ConformanceFixtures
         return input;
     }
 
-    private static JsonObject Snapshot(Simulation s, int traceMark)
+    private static JsonObject Snapshot(Simulation s, int traceMark, bool presentation)
     {
         var page = s.Current is null ? null : s.Pages[s.PageIndex];
         var choices = new JsonArray();
@@ -350,10 +356,16 @@ public static class ConformanceFixtures
         var text = new JsonObject(); foreach (var (key, value) in s.TextVariables.OrderBy(v => v.Key, StringComparer.Ordinal)) text[key] = value;
         var events = new JsonArray();
         foreach (var t in s.Trace.Skip(traceMark).Where(t => t.Kind == "Integration")) events.Add(new JsonObject { ["type"] = t.EventType, ["targetId"] = t.EventId, ["parameter"] = t.Parameter });
-        return new JsonObject
+        var snapshot = new JsonObject
         {
             ["sceneId"] = s.Current?.State, ["ended"] = s.Current is null, ["page"] = page, ["plain"] = page is null ? null : DialogueEngine.PlainText(page), ["pageIndex"] = s.PageIndex, ["pageCount"] = s.Pages.Length,
             ["choices"] = choices, ["canContinue"] = s.CanContinue, ["numeric"] = numeric, ["text"] = text, ["events"] = events
         };
+        if (presentation)
+        {
+            snapshot["speaker"] = s.Current is null ? null : s.CurrentSpeaker;
+            snapshot["portrait"] = s.Current is null ? null : s.CurrentPortrait;
+        }
+        return snapshot;
     }
 }

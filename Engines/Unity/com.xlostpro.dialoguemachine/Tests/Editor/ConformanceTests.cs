@@ -180,6 +180,12 @@ namespace DialogueMachine.Editor.Tests
                     Assert.AreEqual(bcc, runner.CanContinue, $"{name} step {i} ({op}) canContinue");
                 }
 
+                // Only some fixtures record the page's speaker and portrait.
+                if (expected.TryGetValue("speaker", out var expSpeaker))
+                    Assert.AreEqual(expSpeaker as string, runner.Speaker, $"{name} step {i} ({op}) speaker");
+                if (expected.TryGetValue("portrait", out var expPortrait))
+                    Assert.AreEqual(expPortrait as string, runner.Portrait, $"{name} step {i} ({op}) portrait");
+
                 // Check numeric variables
                 if (expected.TryGetValue("numeric", out var expNumObj) && expNumObj is Dictionary<string, object> expNums)
                 {

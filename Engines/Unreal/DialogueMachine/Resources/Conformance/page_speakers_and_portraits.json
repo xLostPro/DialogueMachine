@@ -1,0 +1,160 @@
+{
+  "name": "page_speakers_and_portraits",
+  "handoff": {
+    "SchemaVersion": 1,
+    "Contract": "dialogue-machine.story.v1",
+    "StoryJson": "{\n  \u0022ListOfCharacterStates\u0022: [\n    {\n      \u0022State\u0022: \u0022porch\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022The lamp gutters.\\n@Mara [mara_smile]: You made it.\\n@Guard: Papers, please.\\nThe wind picks up.\u0022,\n      \u0022DefaultNextId\u0022: \u0022farewell\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022porch\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022,\n        \u0022portrait\u0022: \u0022narrator_calm\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    },\n    {\n      \u0022State\u0022: \u0022farewell\u0022,\n      \u0022Type\u0022: \u0022Dialogue\u0022,\n      \u0022Text\u0022: \u0022@Mara [mara_sad]: Goodbye, then.\\nSilence.\u0022,\n      \u0022DefaultNextId\u0022: \u0022[EXIT]\u0022,\n      \u0022SayItAll\u0022: true,\n      \u0022ShopData\u0022: {\n        \u0022ShopId\u0022: \u0022\u0022\n      },\n      \u0022Choices\u0022: [],\n      \u0022DefaultAfterActions\u0022: [],\n      \u0022Metadata\u0022: {\n        \u0022title\u0022: \u0022farewell\u0022,\n        \u0022speaker\u0022: \u0022Narrator\u0022\n      },\n      \u0022VisualX\u0022: 0,\n      \u0022VisualY\u0022: 0\n    }\n  ]\n}",
+    "StorySha256": "5c314f3be89a1a16b75f6dbac9eea562ec83b277fb76bb4548a21fec1287e56a",
+    "StartingScene": "porch",
+    "Seed": 0,
+    "NumericValues": {},
+    "TextValues": {
+      "player_name": "Traveller"
+    },
+    "MaxOperations": 1000
+  },
+  "inputs": [
+    {
+      "op": "start"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    },
+    {
+      "op": "continue"
+    }
+  ],
+  "expected": [
+    {
+      "sceneId": "porch",
+      "ended": false,
+      "page": "The lamp gutters.",
+      "plain": "The lamp gutters.",
+      "pageIndex": 0,
+      "pageCount": 4,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": "Narrator",
+      "portrait": "narrator_calm"
+    },
+    {
+      "sceneId": "porch",
+      "ended": false,
+      "page": "You made it.",
+      "plain": "You made it.",
+      "pageIndex": 1,
+      "pageCount": 4,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": "Mara",
+      "portrait": "mara_smile"
+    },
+    {
+      "sceneId": "porch",
+      "ended": false,
+      "page": "Papers, please.",
+      "plain": "Papers, please.",
+      "pageIndex": 2,
+      "pageCount": 4,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": "Guard",
+      "portrait": "narrator_calm"
+    },
+    {
+      "sceneId": "porch",
+      "ended": false,
+      "page": "The wind picks up.",
+      "plain": "The wind picks up.",
+      "pageIndex": 3,
+      "pageCount": 4,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": "Narrator",
+      "portrait": "narrator_calm"
+    },
+    {
+      "sceneId": "farewell",
+      "ended": false,
+      "page": "Goodbye, then.",
+      "plain": "Goodbye, then.",
+      "pageIndex": 0,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": "Mara",
+      "portrait": "mara_sad"
+    },
+    {
+      "sceneId": "farewell",
+      "ended": false,
+      "page": "Silence.",
+      "plain": "Silence.",
+      "pageIndex": 1,
+      "pageCount": 2,
+      "choices": [],
+      "canContinue": true,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": "Narrator",
+      "portrait": ""
+    },
+    {
+      "sceneId": null,
+      "ended": true,
+      "page": null,
+      "plain": null,
+      "pageIndex": 0,
+      "pageCount": 0,
+      "choices": [],
+      "canContinue": false,
+      "numeric": {},
+      "text": {
+        "player_name": "Traveller"
+      },
+      "events": [],
+      "speaker": null,
+      "portrait": null
+    }
+  ]
+}

@@ -85,11 +85,7 @@ namespace DialogueMachine.Editor
             var req = pendingPlayFrom.Value;
             pendingPlayFrom = null;
 
-#if UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
             var runner = UnityEngine.Object.FindAnyObjectByType<DialogueRunnerBehaviour>();
-#else
-            var runner = UnityEngine.Object.FindObjectOfType<DialogueRunnerBehaviour>();
-#endif
             if (runner != null)
             {
                 runner.StartDialogue(req.sceneId, req.seed, req.numeric, req.text);
@@ -131,13 +127,7 @@ namespace DialogueMachine.Editor
 
             if (autoApplyInPlayMode && EditorApplication.isPlaying && handoff != null)
             {
-#if UNITY_6000_4_OR_NEWER
                 var runners = UnityEngine.Object.FindObjectsByType<DialogueRunnerBehaviour>();
-#elif UNITY_2023_1_OR_NEWER || UNITY_6000_0_OR_NEWER
-                var runners = UnityEngine.Object.FindObjectsByType<DialogueRunnerBehaviour>(FindObjectsSortMode.None);
-#else
-                var runners = UnityEngine.Object.FindObjectsOfType<DialogueRunnerBehaviour>();
-#endif
                 foreach (var runner in runners)
                 {
                     if (asset == null || runner.Story == asset)

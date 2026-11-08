@@ -6,6 +6,8 @@
 #include "Components/RichTextBlock.h"
 #include "Components/PanelWidget.h"
 #include "Components/Button.h"
+#include "Components/Image.h"
+#include "Engine/Texture2D.h"
 #include "Styling/SlateTypes.h"
 #include "DialogueRunnerComponent.h"
 #include "DialogueMachineWidget.generated.h"
@@ -46,7 +48,7 @@ private:
 /**
  * Ready-made dialogue box. Drive it from game input with Submit, MoveSelection and SelectChoice,
  * assign Enhanced Input actions, or focus it (Enter / gamepad bottom face button / up / down).
- * Restyle it with the Style properties, or subclass it as a Widget Blueprint with widgets named
+ * Restyle it with the Style properties, or subclass it as a Widget Blueprint with widgets named PortraitImage,
  * SpeakerTextBlock, BodyRichTextBlock, ChoicesVerticalBox and ContinueButton (all optional) to use your own layout.
  */
 UCLASS(BlueprintType, Blueprintable)
@@ -137,6 +139,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue Machine|Input")
     float RepeatSeconds = 0.18f;
 
+    // Portrait
+
+    /**
+     * The image for each portrait key: the line's portrait (the scene's, or a page's `@Speaker [portrait]:`),
+     * or its speaker's name when it has none. A key with no entry hides the image.
+     */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue Machine|Portrait")
+    TMap<FString, TSoftObjectPtr<UTexture2D>> Portraits;
+
     // Style (used by the built-in layout; a Widget Blueprint layout keeps its own look, except the choice buttons)
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue Machine|Style")
@@ -148,6 +159,10 @@ public:
     /** Space around the panel; it sits at the bottom of the screen. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue Machine|Style")
     FMargin ScreenMargin = FMargin(120.f, 0.f, 120.f, 40.f);
+
+    /** Size of the built-in layout's portrait, left of the text. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue Machine|Style")
+    FVector2D PortraitSize = FVector2D(128.f, 128.f);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue Machine|Style")
     FSlateFontInfo SpeakerFont;
@@ -189,6 +204,9 @@ public:
 
 protected:
     UPROPERTY(BlueprintReadOnly, Category = "Dialogue Machine", meta = (BindWidgetOptional))
+    UImage* PortraitImage;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Dialogue Machine", meta = (BindWidgetOptional))
     UTextBlock* SpeakerTextBlock;
 
     UPROPERTY(BlueprintReadOnly, Category = "Dialogue Machine", meta = (BindWidgetOptional))
@@ -225,6 +243,7 @@ protected:
 private:
     void BuildWidgetTree();
     void UpdateTextStyles(const TSet<FString>& ColourRows);
+    void ShowPortrait(const FString& Speaker);
     void RefreshControls();
     void FinishTyping();
     void ApplySelection(bool bFocus);

@@ -381,6 +381,16 @@ TMap<FString, FString> FDialogueRunner::GetTexts() const
     return Result;
 }
 
+void FDialogueRunner::GetPageHeader(FString& OutSpeaker, FString& OutPortrait) const
+{
+    OutSpeaker.Empty();
+    OutPortrait.Empty();
+    if (!CurrentScene.IsValid()) return;
+    const FString* FoundPortrait = CurrentScene->Metadata.Find(TEXT("portrait"));
+    FString Body;
+    FDialogueRules::ParsePageHeader(RawPages.IsValidIndex(PageIndex) ? RawPages[PageIndex] : FString(), CurrentScene->GetSpeaker(), FoundPortrait ? *FoundPortrait : FString(), OutSpeaker, OutPortrait, Body);
+}
+
 void FDialogueRunner::RebuildPages()
 {
     if (!CurrentScene.IsValid()) return;

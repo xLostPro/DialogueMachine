@@ -203,6 +203,17 @@ bool FDialogueMachineConformanceTest::RunTest(const FString& Parameters)
 
             const FString Step = FString::Printf(TEXT("%s[%d]"), *FileName, StepIdx);
 
+            // Only some fixtures record the page's speaker and portrait; null (ended) reads as "".
+            auto CheckOptional = [&](const TCHAR* Field, const FString& Actual)
+            {
+                if (!(*Expected)->HasField(Field)) return;
+                FString ExpectedValue;
+                (*Expected)->TryGetStringField(Field, ExpectedValue);
+                TestEqual(FString::Printf(TEXT("%s %s"), *Step, Field), Actual, ExpectedValue);
+            };
+            CheckOptional(TEXT("speaker"), Runner->GetSpeaker());
+            CheckOptional(TEXT("portrait"), Runner->GetPortrait());
+
             const TSharedPtr<FJsonObject>* ExpectedNumeric = nullptr;
             if ((*Expected)->TryGetObjectField(TEXT("numeric"), ExpectedNumeric) && ExpectedNumeric)
             {

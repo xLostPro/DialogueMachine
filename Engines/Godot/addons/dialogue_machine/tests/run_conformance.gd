@@ -204,7 +204,9 @@ func _take_snapshot(runner, events: Array) -> Dictionary:
 		"canContinue": runner.can_continue,
 		"numeric": numeric_dict,
 		"text": text_dict,
-		"events": events_copy
+		"events": events_copy,
+		"speaker": null if runner.is_ended else runner.speaker,
+		"portrait": null if runner.is_ended else runner.portrait
 	}
 
 func _compare_snapshots(actual: Dictionary, expected: Dictionary) -> String:

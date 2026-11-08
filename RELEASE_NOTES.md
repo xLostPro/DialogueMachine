@@ -2,6 +2,16 @@ Dialogue Machine is an offline desktop workspace for branching dialogue.
 
 ## Unreleased
 
+### Unity 6.5 or later required
+
+- **Unity 2022.3 (and Unity 6.0 to 6.4) is no longer supported.** The Unity package now needs Unity 6.5 (6000.5), the first release with **Panel Renderer**, which Unity 6.6 marks as the replacement for UI Document. Stay on 1.6.0 of the package for older Unity versions.
+- `DefaultDialogueView` now draws through a Panel Renderer instead of a UI Document. It adds one (with a theme-free Panel Settings) when the GameObject has none, and keeps its fields, element names, `dm-*` classes and built-in style sheet. A UI Document on the same GameObject is no longer used.
+
+### Portraits
+
+- **Portraits in the default dialogue views**: map portrait keys to images (Unity **Portraits** with Sprites, Godot `portraits` with `Texture2D`s, Unreal **Portraits** with textures). The key is the line's portrait (the scene's, or a page's `@Speaker [portrait]:`), or the speaker's name when there is none; a key with no image hides it. The built-in layouts show it left of the text, and custom layouts pick it up by name (`portrait` / `dm-portrait`, `%Portrait` / `DialoguePortrait`, `PortraitImage`).
+- **Godot and Unreal runners expose the page's portrait** (`portrait`, `GetPortrait()`), like Unity's `Portrait`. Their `speaker` / `GetSpeaker()` now follow a `@Speaker:` page too, instead of always returning the scene's speaker. The new `page_speakers_and_portraits` conformance fixture checks both in every runner.
+
 ### Default dialogue views
 
 The ready-made dialogue boxes in Unity, Godot and Unreal can now be driven by game input and restyled without writing your own.
