@@ -7,6 +7,14 @@ using UnityEngine.InputSystem;
 
 namespace DialogueMachine.Runtime.Unity
 {
+    /// <summary>A portrait key (a scene's portrait, a page's @Speaker [portrait]: or a speaker name) and its image.</summary>
+    [System.Serializable]
+    public class PortraitEntry
+    {
+        public string Key;
+        public Sprite Sprite;
+    }
+
     public interface IDialogueView
     {
         void Show(string page, string speaker);
@@ -18,7 +26,7 @@ namespace DialogueMachine.Runtime.Unity
     /// Ready-made UI Toolkit dialogue box. Drive it from game input with <see cref="Submit"/>,
     /// <see cref="MoveSelection"/> and <see cref="SelectChoice"/>, or assign Input System actions.
     /// Restyle it with a Style Sheet (the dm-* classes) or replace the layout with UXML whose
-    /// elements are named dialogue, speaker, text, choices and continue.
+    /// elements are named dialogue, portrait, speaker, text, choices and continue.
     /// </summary>
     [AddComponentMenu("Dialogue Machine/Default Dialogue View")]
     public class DefaultDialogueView : MonoBehaviour, IDialogueView
@@ -33,10 +41,12 @@ namespace DialogueMachine.Runtime.Unity
         [SerializeField] private bool showTypewriterToggle;
 
         [Header("Look")]
-        [Tooltip("Applied after the built-in style. Override the dm-* classes: dm-box, dm-speaker, dm-text, dm-choice, dm-choice--selected, dm-choice--disabled, dm-continue.")]
+        [Tooltip("Applied after the built-in style. Override the dm-* classes: dm-box, dm-portrait, dm-speaker, dm-text, dm-choice, dm-choice--selected, dm-choice--disabled, dm-continue.")]
         [SerializeField] private StyleSheet styleSheet;
-        [Tooltip("Replaces the built-in layout. Name its elements dialogue, speaker, text, choices and continue; any of them can be left out.")]
+        [Tooltip("Replaces the built-in layout. Name its elements dialogue, portrait, speaker, text, choices and continue; any of them can be left out.")]
         [SerializeField] private VisualTreeAsset layout;
+        [Tooltip("The image for each portrait key (a scene's portrait or a page's @Speaker [portrait]:). A line without a portrait looks up its speaker's name. A key with no entry hides the image.")]
+        [SerializeField] private List<PortraitEntry> portraits = new List<PortraitEntry>();
         [SerializeField] private string continueLabel = "Continue ▶";
         [SerializeField] private string skipLabel = "Skip ▶";
 
@@ -51,13 +61,14 @@ namespace DialogueMachine.Runtime.Unity
         private float nextMove;
 #endif
 
-        public const string DialogueName = "dialogue", SpeakerName = "speaker", TextName = "text",
+        public const string DialogueName = "dialogue", PortraitName = "portrait", SpeakerName = "speaker", TextName = "text",
             ChoicesName = "choices", ContinueName = "continue", TypewriterToggleName = "typewriter-toggle";
         public const string ChoiceClass = "dm-choice", SelectedClass = "dm-choice--selected", DisabledClass = "dm-choice--disabled";
 
         private PanelRenderer panelRenderer;
         private VisualElement document;
         private VisualElement dialogue;
+        private VisualElement portraitImage;
         private TextElement speakerLabel;
         private TextElement textLabel;
         private VisualElement choicesContainer;
@@ -108,6 +119,9 @@ namespace DialogueMachine.Runtime.Unity
             get => layout;
             set { layout = value; Rebuild(); }
         }
+
+        /// <summary>Portrait key → image. Changes show from the next line.</summary>
+        public List<PortraitEntry> Portraits => portraits;
 
         public bool IsOpen { get; private set; }
         public bool IsTyping { get; private set; }
@@ -196,6 +210,7 @@ namespace DialogueMachine.Runtime.Unity
             else BuildDefaultLayout(root);
 
             dialogue = root.Q(DialogueName) ?? root;
+            portraitImage = root.Q(PortraitName);
             speakerLabel = root.Q<TextElement>(SpeakerName);
             textLabel = root.Q<TextElement>(TextName);
             choicesContainer = root.Q(ChoicesName);
@@ -233,6 +248,13 @@ namespace DialogueMachine.Runtime.Unity
             var box = new VisualElement();
             box.AddToClassList("dm-box");
 
+            var portrait = new VisualElement { name = PortraitName };
+            portrait.AddToClassList("dm-portrait");
+            box.Add(portrait);
+            var content = new VisualElement();
+            content.AddToClassList("dm-content");
+            box.Add(content);
+
             var header = new VisualElement();
             header.AddToClassList("dm-header");
             var speaker = new Label { name = SpeakerName };
@@ -244,22 +266,22 @@ namespace DialogueMachine.Runtime.Unity
                 toggle.AddToClassList("dm-typewriter-toggle");
                 header.Add(toggle);
             }
-            box.Add(header);
+            content.Add(header);
 
             var text = new Label { name = TextName };
             text.AddToClassList("dm-text");
-            box.Add(text);
+            content.Add(text);
 
             var choices = new VisualElement { name = ChoicesName };
             choices.AddToClassList("dm-choices");
-            box.Add(choices);
+            content.Add(choices);
 
             var footer = new VisualElement();
             footer.AddToClassList("dm-footer");
             var cont = new Button { name = ContinueName };
             cont.AddToClassList("dm-continue");
             footer.Add(cont);
-            box.Add(footer);
+            content.Add(footer);
 
             screen.Add(box);
             root.Add(screen);
@@ -373,6 +395,7 @@ namespace DialogueMachine.Runtime.Unity
                 speakerLabel.text = speaker ?? string.Empty;
                 speakerLabel.style.display = string.IsNullOrEmpty(speaker) ? DisplayStyle.None : DisplayStyle.Flex;
             }
+            ShowPortrait(runner != null && !string.IsNullOrEmpty(runner.Portrait) ? runner.Portrait : speaker);
 
             fullText = RichText.ToUnity(page ?? string.Empty);
             fullLength = RichText.VisibleLength(fullText);
@@ -384,6 +407,15 @@ namespace DialogueMachine.Runtime.Unity
         }
 
         public void ShowChoices(IReadOnlyList<Choice> choices) => RefreshControls();
+
+        private void ShowPortrait(string key)
+        {
+            if (portraitImage == null) return;
+            var entry = string.IsNullOrEmpty(key) ? null : portraits.Find(p => p != null && p.Key == key);
+            var sprite = entry?.Sprite;
+            portraitImage.style.backgroundImage = sprite != null ? new StyleBackground(sprite) : StyleKeyword.Null;
+            portraitImage.style.display = sprite != null ? DisplayStyle.Flex : DisplayStyle.None;
+        }
 
         public void Hide()
         {

@@ -3,7 +3,7 @@ class_name DialogueView
 extends Control
 ## Ready-made dialogue box. It reads input actions itself (ui_accept, ui_up and ui_down by default),
 ## or a game drives it with submit(), move_selection() and select_choice(). Restyle it with a Theme
-## (type variations DialoguePanel, DialogueSpeaker, DialogueText, DialogueChoice,
+## (type variations DialoguePanel, DialoguePortrait, DialogueSpeaker, DialogueText, DialogueChoice,
 ## DialogueChoiceSelected and DialogueContinue) or replace the layout with layout_scene.
 
 const DialogueRules = preload("dialogue_rules.gd")
@@ -31,9 +31,12 @@ const DialogueRunner = preload("dialogue_runner.gd")
 @export var down_action: StringName = &"ui_down"
 
 @export_group("Look")
-## Replaces the built-in layout. Give its nodes unique names: %Speaker (Label), %Text (RichTextLabel),
-## %Choices (a Container) and %Continue (Button). Any of them can be left out.
+## Replaces the built-in layout. Give its nodes unique names: %Portrait (TextureRect), %Speaker (Label),
+## %Text (RichTextLabel), %Choices (a Container) and %Continue (Button). Any of them can be left out.
 @export var layout_scene: PackedScene = null
+## Portrait key (String) → Texture2D. The key is the line's portrait (the scene's, or a page's
+## @Speaker [portrait]:), or its speaker's name when it has none. A key with no entry hides the image.
+@export var portraits: Dictionary = {}
 @export var continue_text: String = "Continue"
 @export var skip_text: String = "Skip"
 
@@ -45,6 +48,7 @@ var is_open: bool:
 		return _panel != null and _panel.visible
 
 var _panel: Control = null
+var _portrait_rect: TextureRect = null
 var _speaker_label: Label = null
 var _dialogue_label: RichTextLabel = null
 var _choices_box: Container = null
@@ -128,6 +132,7 @@ func _build_ui_if_needed():
 	if layout_scene:
 		_panel = layout_scene.instantiate()
 		add_child(_panel)
+		_portrait_rect = _panel.get_node_or_null("%Portrait") as TextureRect
 		_speaker_label = _panel.get_node_or_null("%Speaker") as Label
 		_dialogue_label = _panel.get_node_or_null("%Text") as RichTextLabel
 		_choices_box = _panel.get_node_or_null("%Choices") as Container
@@ -160,9 +165,24 @@ func _build_default_layout():
 	margin.add_theme_constant_override("margin_bottom", 12)
 	panel.add_child(margin)
 
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 16)
+	margin.add_child(row)
+
+	_portrait_rect = TextureRect.new()
+	_portrait_rect.name = "Portrait"
+	_portrait_rect.theme_type_variation = &"DialoguePortrait"
+	_portrait_rect.custom_minimum_size = Vector2(128, 128)
+	_portrait_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_portrait_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_portrait_rect.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_portrait_rect.visible = false
+	row.add_child(_portrait_rect)
+
 	var main_vbox = VBoxContainer.new()
 	main_vbox.add_theme_constant_override("separation", 8)
-	margin.add_child(main_vbox)
+	main_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(main_vbox)
 
 	_speaker_label = Label.new()
 	_speaker_label.theme_type_variation = &"DialogueSpeaker"
@@ -316,6 +336,11 @@ func _sync_controls() -> void:
 	if _speaker_label:
 		_speaker_label.text = runner.speaker
 		_speaker_label.visible = not runner.speaker.is_empty()
+	if _portrait_rect:
+		var key = runner.portrait if not runner.portrait.is_empty() else runner.speaker
+		var texture = portraits.get(key) as Texture2D
+		_portrait_rect.texture = texture
+		_portrait_rect.visible = texture != null
 	_clear_choices()
 
 	# Choices are only shown on the last page of a scene, once the line has finished typing.

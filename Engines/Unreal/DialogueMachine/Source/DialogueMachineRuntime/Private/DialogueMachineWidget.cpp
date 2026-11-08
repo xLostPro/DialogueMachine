@@ -156,8 +156,18 @@ void UDialogueMachineWidget::BuildWidgetTree()
     PanelSlot->SetVerticalAlignment(VAlign_Bottom);
     PanelSlot->SetPadding(ScreenMargin);
 
+    UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(), TEXT("PortraitRow"));
+    Panel->SetContent(Row);
+
+    PortraitImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("PortraitImage"));
+    PortraitImage->SetDesiredSizeOverride(PortraitSize);
+    PortraitImage->SetVisibility(ESlateVisibility::Collapsed);
+    UHorizontalBoxSlot* PortraitSlot = Row->AddChildToHorizontalBox(PortraitImage);
+    PortraitSlot->SetVerticalAlignment(VAlign_Top);
+    PortraitSlot->SetPadding(FMargin(0.f, 0.f, 20.f, 0.f));
+
     UVerticalBox* Box = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("ContentBox"));
-    Panel->SetContent(Box);
+    Row->AddChildToHorizontalBox(Box)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
     SpeakerTextBlock = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("SpeakerTextBlock"));
     SpeakerTextBlock->SetFont(SpeakerFont);
@@ -371,6 +381,7 @@ void UDialogueMachineWidget::HandleLine(const FString& Page, const FString& Spea
         SpeakerTextBlock->SetText(FText::FromString(Speaker));
         SpeakerTextBlock->SetVisibility(Speaker.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
     }
+    ShowPortrait(Speaker);
 
     TSet<FString> Colours;
     FullText = ConvertRichText(Page, Colours);
@@ -385,6 +396,16 @@ void UDialogueMachineWidget::HandleLine(const FString& Page, const FString& Spea
         BodyRichTextBlock->SetText(FText::FromString(bTyping ? RevealRichText(FullText, 0, Unused) : FullText));
     }
     RefreshControls();
+}
+
+void UDialogueMachineWidget::ShowPortrait(const FString& Speaker)
+{
+    if (!PortraitImage) return;
+    const FString Portrait = RunnerComponent ? RunnerComponent->GetPortrait() : FString();
+    const TSoftObjectPtr<UTexture2D>* Found = Portraits.Find(Portrait.IsEmpty() ? Speaker : Portrait);
+    UTexture2D* Texture = Found ? Found->LoadSynchronous() : nullptr;
+    if (Texture) PortraitImage->SetBrushFromTexture(Texture);
+    PortraitImage->SetVisibility(Texture ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Collapsed);
 }
 
 void UDialogueMachineWidget::HandleChoices(const TArray<FDialogueComponentChoice>& InChoices)

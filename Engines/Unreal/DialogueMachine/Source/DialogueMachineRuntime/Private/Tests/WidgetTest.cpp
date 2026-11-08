@@ -4,6 +4,8 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Image.h"
 #include "DialogueAsset.h"
 #include "DialogueMachineWidget.h"
 #include "DialogueRunnerComponent.h"
@@ -43,14 +45,14 @@ namespace
     }
 
     // One scene: a line, then a disabled choice and two enabled ones.
-    FString StoryHandoff()
+    FString StoryHandoff(const FString& Text = TEXT("Hello [b]there[/b]"))
     {
         TSharedRef<FJsonObject> Meta = MakeShared<FJsonObject>();
         Meta->SetStringField(TEXT("speaker"), TEXT("Mara"));
         TSharedRef<FJsonObject> Scene = MakeShared<FJsonObject>();
         Scene->SetStringField(TEXT("State"), TEXT("a"));
         Scene->SetStringField(TEXT("Type"), TEXT("Dialogue"));
-        Scene->SetStringField(TEXT("Text"), TEXT("Hello [b]there[/b]"));
+        Scene->SetStringField(TEXT("Text"), Text);
         Scene->SetBoolField(TEXT("SayItAll"), true);
         Scene->SetStringField(TEXT("DefaultNextId"), TEXT("[EXIT]"));
         Scene->SetObjectField(TEXT("Metadata"), Meta);
@@ -119,6 +121,35 @@ bool FDialogueMachineWidgetTest::RunTest(const FString& Parameters)
     Widget->Submit();
     TestEqual(TEXT("Submit picks the highlighted choice"), Chosen, FString(TEXT("leave")));
     TestFalse(TEXT("The box closes when the dialogue ends"), Widget->IsOpen());
+
+    // The portrait follows the page: a scene without one looks up its speaker, `@Guard [guard_stern]:`
+    // switches it, and a key with no image hides it.
+    UDialogueAsset* PortraitAsset = NewObject<UDialogueAsset>();
+    PortraitAsset->SetData(StoryHandoff(TEXT("Hello.\n@Guard [guard_stern]: Halt.\n@Stranger [nobody]: Who goes there?")), TEXT("test"), TEXT("Test"));
+    UDialogueRunnerComponent* PortraitRunner = NewObject<UDialogueRunnerComponent>();
+    PortraitRunner->Story = PortraitAsset;
+    UTexture2D* Mara = UTexture2D::CreateTransient(4, 4);
+    UTexture2D* Guard = UTexture2D::CreateTransient(4, 4);
+    UDialogueMachineWidget* PortraitWidget = NewObject<UDialogueMachineWidget>();
+    PortraitWidget->bTypewriter = false;
+    PortraitWidget->Portraits.Add(TEXT("Mara"), Mara);
+    PortraitWidget->Portraits.Add(TEXT("guard_stern"), Guard);
+    PortraitWidget->Initialize();
+    PortraitWidget->TakeWidget();
+    PortraitWidget->BindToRunner(PortraitRunner);
+    UImage* Portrait = Cast<UImage>(PortraitWidget->WidgetTree->FindWidget(TEXT("PortraitImage")));
+    if (!TestNotNull(TEXT("The built-in layout has a PortraitImage"), Portrait)) return false;
+    auto Shows = [Portrait](UTexture2D* Texture) { return Portrait->GetVisibility() != ESlateVisibility::Collapsed && Portrait->GetBrush().GetResourceObject() == Texture; };
+
+    TestTrue(TEXT("Portrait story starts"), PortraitRunner->StartDialogue());
+    TestTrue(TEXT("A scene without a portrait shows its speaker's image"), Shows(Mara));
+    ++GFrameCounter;
+    PortraitWidget->Submit();
+    TestEqual(TEXT("GetPortrait follows the page"), PortraitRunner->GetPortrait(), FString(TEXT("guard_stern")));
+    TestTrue(TEXT("@Guard [guard_stern]: switches the portrait"), Shows(Guard));
+    ++GFrameCounter;
+    PortraitWidget->Submit();
+    TestTrue(TEXT("An unknown portrait key hides the image"), Portrait->GetVisibility() == ESlateVisibility::Collapsed);
     return true;
 }
 

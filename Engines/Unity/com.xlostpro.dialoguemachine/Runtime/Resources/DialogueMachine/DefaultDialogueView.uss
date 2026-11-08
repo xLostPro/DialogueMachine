@@ -26,6 +26,20 @@
     border-color: rgba(71, 82, 102, 0.8);
     border-radius: 10px;
     padding: 18px 24px;
+    flex-direction: row;
+}
+
+.dm-portrait {
+    width: 128px;
+    height: 128px;
+    flex-shrink: 0;
+    margin-right: 20px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.dm-content {
+    flex-grow: 1;
+    flex-shrink: 1;
 }
 
 .dm-header {

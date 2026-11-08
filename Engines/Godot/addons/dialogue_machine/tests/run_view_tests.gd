@@ -18,9 +18,9 @@ func _choice(id: String, text: String, requirements: Array = []) -> Dictionary:
 	return {"InternalId": id, "ButtonText": text, "NextStateId": "[EXIT]", "Visibility": 1, "Requirements": requirements, "AfterChoiceActions": []}
 
 # One scene: a line, then a disabled choice and two enabled ones.
-func _story() -> Dictionary:
+func _story(text: String = "Hello [b]there[/b]") -> Dictionary:
 	var scene = {
-		"State": "a", "Type": "Dialogue", "Text": "Hello [b]there[/b]", "DefaultNextId": "[EXIT]", "SayItAll": true,
+		"State": "a", "Type": "Dialogue", "Text": text, "DefaultNextId": "[EXIT]", "SayItAll": true,
 		"Metadata": {"speaker": "Mara"},
 		"Choices": [
 			_choice("rich", "Pay", [{"Type": "Inventory", "TargetId": "coin", "Operator": ">=", "Value": "5"}]),
@@ -33,7 +33,7 @@ func _story() -> Dictionary:
 		"Seed": 0, "NumericValues": {}, "TextValues": {}, "StoryJson": JSON.stringify({"ListOfCharacterStates": [scene]})
 	}
 
-func _create(layout: PackedScene = null) -> Array:
+func _create(layout: PackedScene = null, text: String = "Hello [b]there[/b]") -> Array:
 	var runner = RunnerScript.new()
 	runner.live_link = false
 	root.add_child(runner)
@@ -42,7 +42,7 @@ func _create(layout: PackedScene = null) -> Array:
 	view.characters_per_second = 1.0
 	view.layout_scene = layout
 	root.add_child(view)
-	runner.load_story(_story())
+	runner.load_story(_story(text))
 	return [runner, view]
 
 func _press(action: StringName) -> void:
@@ -53,8 +53,8 @@ func _press(action: StringName) -> void:
 
 func _custom_layout() -> PackedScene:
 	var box = VBoxContainer.new()
-	for n in ["Speaker", "Text", "Choices"]:
-		var node: Control = Label.new() if n == "Speaker" else (RichTextLabel.new() if n == "Text" else VBoxContainer.new())
+	for n in ["Portrait", "Speaker", "Text", "Choices"]:
+		var node: Control = TextureRect.new() if n == "Portrait" else Label.new() if n == "Speaker" else RichTextLabel.new() if n == "Text" else VBoxContainer.new()
 		node.name = n
 		box.add_child(node)
 		node.owner = box
@@ -115,6 +115,32 @@ func _run() -> void:
 	var speakers = view.find_children("Speaker", "Label", true, false)
 	_expect(speakers.size() == 1 and speakers[0].text == "Mara", "the custom layout's %Speaker shows the speaker")
 	_expect(view.find_children("*", "Button", true, false).size() == 3, "the custom layout's %Choices gets the choice buttons")
+	var custom_portraits = view.find_children("Portrait", "TextureRect", true, false)
+	_expect(custom_portraits.size() == 1 and not custom_portraits[0].visible, "the custom layout's %Portrait hides without a portrait image")
+	runner.queue_free()
+	view.queue_free()
+
+	# The portrait follows the page: a scene without one looks up its speaker, `@Guard [guard_stern]:`
+	# switches it, and a key with no image hides it.
+	var mara = ImageTexture.create_from_image(Image.create(4, 4, false, Image.FORMAT_RGBA8))
+	var guard = ImageTexture.create_from_image(Image.create(4, 4, false, Image.FORMAT_RGBA8))
+	made = _create(null, "Hello.\n@Guard [guard_stern]: Halt.\n@Stranger [nobody]: Who goes there?")
+	runner = made[0]
+	view = made[1]
+	view.typewriter_enabled = false
+	view.portraits = {"Mara": mara, "guard_stern": guard}
+	runner.start()
+	var portrait: TextureRect = view.find_children("Portrait", "TextureRect", true, false)[0]
+	_expect(portrait.theme_type_variation == &"DialoguePortrait", "the built-in portrait uses the DialoguePortrait variation")
+	_expect(portrait.visible and portrait.texture == mara, "a scene without a portrait shows its speaker's image")
+	await process_frame
+	view.submit()
+	_expect(portrait.visible and portrait.texture == guard, "@Guard [guard_stern]: switches the portrait")
+	await process_frame
+	view.submit()
+	_expect(not portrait.visible, "an unknown portrait key hides the image")
+	runner.queue_free()
+	view.queue_free()
 
 	for f in _failures:
 		printerr("FAIL: view -> ", f)

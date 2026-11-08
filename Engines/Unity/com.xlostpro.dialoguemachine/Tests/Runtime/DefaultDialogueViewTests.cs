@@ -4,6 +4,7 @@ using DialogueMachine.Runtime.Unity;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.UIElements;
 
 namespace DialogueMachine.Runtime.Tests
 {
@@ -21,11 +22,11 @@ namespace DialogueMachine.Runtime.Tests
         };
 
         // One scene: a line, then a disabled choice and two enabled ones.
-        private (DialogueRunnerBehaviour, DefaultDialogueView) Create()
+        private (DialogueRunnerBehaviour, DefaultDialogueView) Create(string text = "Hello [b]there[/b]")
         {
             var scene = new Dictionary<string, object>
             {
-                ["State"] = "a", ["Type"] = "Dialogue", ["Text"] = "Hello [b]there[/b]", ["SayItAll"] = true, ["DefaultNextId"] = "[EXIT]",
+                ["State"] = "a", ["Type"] = "Dialogue", ["Text"] = text, ["SayItAll"] = true, ["DefaultNextId"] = "[EXIT]",
                 ["Metadata"] = new Dictionary<string, object> { ["speaker"] = "Mara" },
                 ["Choices"] = new object[]
                 {
@@ -103,6 +104,36 @@ namespace DialogueMachine.Runtime.Tests
             yield return null;
             view.SelectChoice(1);
             Assert.IsTrue(runner.IsEnded);
+        }
+
+        [UnityTest]
+        public IEnumerator PortraitFollowsThePage()
+        {
+            var (runner, view) = Create("Hello.\n@Guard [guard_stern]: Halt.\n@Stranger [nobody]: Who goes there?");
+            Sprite Make() => Sprite.Create(Texture2D.whiteTexture, new Rect(0, 0, 4, 4), Vector2.zero);
+            var mara = Make();
+            var guard = Make();
+            view.Portraits.Add(new PortraitEntry { Key = "Mara", Sprite = mara });
+            view.Portraits.Add(new PortraitEntry { Key = "guard_stern", Sprite = guard });
+            view.EnableTypewriter = false;
+            VisualElement root = null;
+            host.GetComponent<PanelRenderer>().RegisterUIReloadCallback((PanelRenderer _, VisualElement r, int __) => root = r);
+            runner.StartDialogue();
+            yield return null;
+
+            var portrait = root.Q(DefaultDialogueView.PortraitName);
+            Assert.IsNotNull(portrait, "the built-in layout has a portrait");
+            Assert.IsTrue(portrait.ClassListContains("dm-portrait"));
+            Assert.AreEqual(DisplayStyle.Flex, portrait.style.display.value, "a scene without a portrait looks up its speaker");
+            Assert.AreEqual(mara, portrait.style.backgroundImage.value.sprite);
+
+            view.Submit();
+            Assert.AreEqual(DisplayStyle.Flex, portrait.style.display.value);
+            Assert.AreEqual(guard, portrait.style.backgroundImage.value.sprite, "@Guard [guard_stern]: changes the portrait");
+
+            yield return null;
+            view.Submit();
+            Assert.AreEqual(DisplayStyle.None, portrait.style.display.value, "an unknown portrait key hides the image");
         }
     }
 }
