@@ -54,7 +54,7 @@ internal static class LiveLinkChecks
         }
         public void Send(string type, JsonNode? payload = null) => SendRaw(new JsonObject { ["protocol"] = 1, ["type"] = type, ["payload"] = payload ?? new JsonObject() }.ToJsonString());
         public void SendRaw(string text) { var send = Task.Run(() => socket.SendAsync(Encoding.UTF8.GetBytes(text), WebSocketMessageType.Text, true, CancellationToken.None)); Until(() => send.IsCompleted, "a scripted message is sent"); }
-        public void Hello(string token, int protocol = 1, string pluginVersion = AppVersion) => Send("hello", new JsonObject { ["token"] = token, ["engine"] = "unity", ["engineVersion"] = "2022.3", ["pluginVersion"] = pluginVersion, ["protocol"] = protocol, ["schemaVersion"] = 1 });
+        public void Hello(string token, int protocol = 1, string pluginVersion = AppVersion) => Send("hello", new JsonObject { ["token"] = token, ["engine"] = "unity", ["engineVersion"] = "6000.5", ["pluginVersion"] = pluginVersion, ["protocol"] = protocol, ["schemaVersion"] = 1 });
         public JsonNode Expect(string type)
         {
             JsonNode? found = null;

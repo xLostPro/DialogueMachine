@@ -55,7 +55,8 @@ namespace DialogueMachine.Runtime.Unity
             ChoicesName = "choices", ContinueName = "continue", TypewriterToggleName = "typewriter-toggle";
         public const string ChoiceClass = "dm-choice", SelectedClass = "dm-choice--selected", DisabledClass = "dm-choice--disabled";
 
-        private UIDocument uiDocument;
+        private PanelRenderer panelRenderer;
+        private VisualElement document;
         private VisualElement dialogue;
         private TextElement speakerLabel;
         private TextElement textLabel;
@@ -122,8 +123,23 @@ namespace DialogueMachine.Runtime.Unity
         private void Awake()
         {
             if (runner == null) runner = GetComponent<DialogueRunnerBehaviour>();
-            EnsureUIDocument();
+            EnsurePanelRenderer();
             BuildUI();
+            // The panel hands over its root later in the frame (and again if it reloads), so the
+            // box is built into its own element now and attached whenever the root arrives.
+            panelRenderer.RegisterUIReloadCallback(AttachToPanel);
+        }
+
+        private void OnDestroy()
+        {
+            if (panelRenderer != null) panelRenderer.UnregisterUIReloadCallback(AttachToPanel);
+        }
+
+        private void AttachToPanel(PanelRenderer _, VisualElement root, int version)
+        {
+            // A Panel Renderer's root is only as tall as its content; fill the screen so the box can sit at the bottom.
+            root.style.flexGrow = 1;
+            root.Add(document);
         }
 
         private void OnEnable()
@@ -150,24 +166,25 @@ namespace DialogueMachine.Runtime.Unity
             }
         }
 
-        private void EnsureUIDocument()
+        private void EnsurePanelRenderer()
         {
-            uiDocument = GetComponent<UIDocument>();
-            if (uiDocument == null) uiDocument = gameObject.AddComponent<UIDocument>();
+            panelRenderer = GetComponent<PanelRenderer>();
+            if (panelRenderer == null) panelRenderer = gameObject.AddComponent<PanelRenderer>();
 
-            if (uiDocument.panelSettings == null)
+            if (panelRenderer.panelSettings == null)
             {
                 // A PanelSettings without a theme renders nothing, so give it an empty one;
                 // the view's own style sheet styles every element.
                 var panelSettings = ScriptableObject.CreateInstance<PanelSettings>();
                 panelSettings.themeStyleSheet = ScriptableObject.CreateInstance<ThemeStyleSheet>();
-                uiDocument.panelSettings = panelSettings;
+                panelRenderer.panelSettings = panelSettings;
             }
         }
 
         private void BuildUI()
         {
-            var root = uiDocument.rootVisualElement;
+            if (document == null) document = new VisualElement();
+            var root = document;
             root.Clear();
             root.styleSheets.Clear();
             root.AddToClassList("dm-document");
@@ -203,7 +220,7 @@ namespace DialogueMachine.Runtime.Unity
 
         private void Rebuild()
         {
-            if (uiDocument == null) return;
+            if (document == null) return;
             BuildUI();
             if (IsOpen && runner != null) Show(runner.CurrentPage, runner.Speaker);
         }

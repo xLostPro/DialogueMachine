@@ -192,7 +192,7 @@ internal static class RuntimeChecks
         check(File.Exists(pkgPath), "Unity package.json exists");
         var pkg = JsonNode.Parse(File.ReadAllText(pkgPath))!.AsObject();
         check(pkg["name"]?.GetValue<string>() == "com.xlostpro.dialoguemachine", "Unity package name is com.xlostpro.dialoguemachine");
-        check(pkg["unity"]?.GetValue<string>() == "2022.3", "Unity package targets Unity 2022.3");
+        check(pkg["unity"]?.GetValue<string>() == "6000.5", "Unity package targets Unity 6.5 (Panel Renderer)");
         var expectedVersion = ProjectVersion(check);
         check(pkg["version"]?.GetValue<string>() == expectedVersion, "Unity package version matches DialogueMachine.csproj");
         var runnerBehSource = File.ReadAllText("Engines/Unity/com.xlostpro.dialoguemachine/Runtime/Unity/DialogueRunnerBehaviour.cs");
