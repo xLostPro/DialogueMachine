@@ -1,6 +1,6 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
-## Unreleased
+## 1.7.0
 
 ### Unity 6.5 or later required
 
@@ -21,6 +21,11 @@ The ready-made dialogue boxes in Unity, Godot and Unreal can now be driven by ga
 - **Typewriter everywhere**: Godot and Unreal gain one, and rich text (bold, colour) now stays formatted while it types in all three.
 - **Restyling**: Unity moves its look into a built-in style sheet with `dm-*` classes; assign your own **Style Sheet** or a UXML **Layout**. Godot controls use Theme type variations (`DialoguePanel`, `DialogueChoiceSelected`, …) and accept a `layout_scene`. Unreal has Style properties (panel brush, fonts, colours, button styles, rich text table) and binds a Widget Blueprint subclass's own widgets by name. The Unity typewriter toggle is now hidden unless **Show Typewriter Toggle** is on, and the Unreal box gains a background panel and hides when the conversation ends.
 - **Unreal**: the plugin now depends on the built-in Enhanced Input plugin.
+
+### Fixes & packages
+
+- **Unreal**: a Text choice requirement against an empty value (`calling != ""`) is no longer read as `"0"`, so it is no longer met when the variable is empty.
+- **Engine packages**: Pre-packaged plugins for Unreal (`DialogueMachine-Unreal-1.7.0.zip`) and Godot (`DialogueMachine-Godot-1.7.0.zip`), plus the Unity UPM package pinned to `#v1.7.0`.
 
 ## 1.6.0
 
