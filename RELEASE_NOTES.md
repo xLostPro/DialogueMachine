@@ -1,5 +1,13 @@
 Dialogue Machine is an offline desktop workspace for branching dialogue.
 
+## 1.7.1
+
+### Unity fixes
+
+- **One press moves the choice highlight once.** With a **Navigate Action** set (or when your game calls `MoveSelection`), `DefaultDialogueView` no longer also lets UI Toolkit's focus navigation move the highlight, which made it move two choices per press: backwards with three choices, stuck with two.
+- **The package's tests no longer import into games.** They moved to `Tests~`, so importing the package no longer warns about `DialogueMachine.Runtime.Tests.asmdef`.
+- **Engine packages**: Unreal (`DialogueMachine-Unreal-1.7.1.zip`) and Godot (`DialogueMachine-Godot-1.7.1.zip`) plugins, plus the Unity UPM package pinned to `#v1.7.1`.
+
 ## 1.7.0
 
 ### Unity 6.5 or later required
