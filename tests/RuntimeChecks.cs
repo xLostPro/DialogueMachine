@@ -205,7 +205,8 @@ internal static class RuntimeChecks
         foreach (var entry in Directory.EnumerateFileSystemEntries(pkgDir, "*", SearchOption.AllDirectories))
         {
             var rel = Path.GetRelativePath(pkgDir, entry).Replace('\\', '/');
-            if (rel.StartsWith("Samples~", StringComparison.Ordinal) || rel.EndsWith(".meta", StringComparison.Ordinal)) continue;
+            // Unity ignores folders ending in ~ (Samples~, Tests~), so they need no .meta.
+            if (rel.Split('/')[0].EndsWith('~') || rel.EndsWith(".meta", StringComparison.Ordinal)) continue;
             var metaPath = entry + ".meta";
             check(File.Exists(metaPath) && System.Text.RegularExpressions.Regex.IsMatch(File.ReadAllText(metaPath), @"\bguid:\s*[0-9a-f]{32}\b"), $"Unity package entry {rel} has a valid .meta file");
         }

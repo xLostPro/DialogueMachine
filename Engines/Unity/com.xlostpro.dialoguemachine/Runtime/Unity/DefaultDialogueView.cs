@@ -83,6 +83,7 @@ namespace DialogueMachine.Runtime.Unity
         private int selectedIndex = -1;
         private int lineFrame = -1;
         private int actionFrame = -1;
+        private bool gameMovesSelection;
 
         public DialogueRunnerBehaviour Runner
         {
@@ -338,6 +339,7 @@ namespace DialogueMachine.Runtime.Unity
         public void MoveSelection(int delta)
         {
             if (!IsShowingChoices || delta == 0) return;
+            gameMovesSelection = true;
             var step = delta > 0 ? 1 : -1;
             var n = Choices.Count;
             for (var i = 0; i < Mathf.Abs(delta); i++)
@@ -479,8 +481,19 @@ namespace DialogueMachine.Runtime.Unity
             // Mouse hover and UI Toolkit focus move the same highlight the game's input moves.
             button.RegisterCallback<PointerEnterEvent>(_ => Highlight(index));
             button.RegisterCallback<FocusInEvent>(_ => Highlight(index));
+            // When the game moves the highlight, UI Toolkit's own focus navigation would move it a second time.
+            button.RegisterCallback<NavigationMoveEvent>(e =>
+            {
+                if (GameMovesSelection) button.focusController?.IgnoreEvent(e);
+            });
             return button;
         }
+
+#if DM_INPUT_SYSTEM
+        private bool GameMovesSelection => gameMovesSelection || navigateAction != null;
+#else
+        private bool GameMovesSelection => gameMovesSelection;
+#endif
 
         private void Highlight(int index)
         {
