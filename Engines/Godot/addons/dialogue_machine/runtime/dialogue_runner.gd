@@ -29,9 +29,14 @@ var current_scene_id: Variant:
 	get:
 		return _scene.get("State", null) if not _scene.is_empty() else null
 
+# The current page's speaker and portrait: the scene's, unless the page starts with `@Speaker [portrait]:`.
 var speaker: String:
 	get:
-		return current_metadata.get("speaker", "Character") if not _scene.is_empty() else ""
+		return str(_page_header()[0]) if not _scene.is_empty() else ""
+
+var portrait: String:
+	get:
+		return str(_page_header()[1]) if not _scene.is_empty() else ""
 
 var title: String:
 	get:
@@ -538,6 +543,10 @@ func refresh_page() -> void:
 	_rebuild_pages()
 	if prev != current_page and current_page != null:
 		line_shown.emit(current_page)
+
+func _page_header() -> Array:
+	var raw = _raw_pages[clampi(page_index, 0, _raw_pages.size() - 1)] if not _raw_pages.is_empty() else ""
+	return DialogueRules.parse_page_header(raw, str(current_metadata.get("speaker", "Character")), str(current_metadata.get("portrait", "")))
 
 func _rebuild_pages() -> void:
 	var raw_text = str(_scene.get("Text", ""))

@@ -101,6 +101,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Dialogue Machine")
     FString GetSpeaker() const;
 
+    /** The current page's portrait key: the scene's portrait unless the page overrides it with `@Speaker [portrait]:`. */
+    UFUNCTION(BlueprintCallable, Category = "Dialogue Machine")
+    FString GetPortrait() const;
+
     UFUNCTION(BlueprintCallable, Category = "Dialogue Machine")
     FString GetTitle() const;
 

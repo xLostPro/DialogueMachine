@@ -69,7 +69,8 @@ internal static class RuntimeChecks
         return new JsonObject
         {
             ["sceneId"] = runner.CurrentSceneId, ["ended"] = runner.IsEnded, ["page"] = runner.CurrentPage, ["plain"] = runner.CurrentPagePlain, ["pageIndex"] = runner.PageIndex, ["pageCount"] = runner.PageCount,
-            ["choices"] = choices, ["canContinue"] = runner.CanContinue, ["numeric"] = numeric, ["text"] = text, ["events"] = events.DeepClone()
+            ["choices"] = choices, ["canContinue"] = runner.CanContinue, ["numeric"] = numeric, ["text"] = text, ["events"] = events.DeepClone(),
+            ["speaker"] = runner.Speaker, ["portrait"] = runner.Portrait
         };
     }
 

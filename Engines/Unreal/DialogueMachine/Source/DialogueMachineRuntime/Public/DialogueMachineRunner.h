@@ -84,7 +84,9 @@ public:
     bool RestoreState(const FString& Json, FString& OutError);
 
     FString GetCurrentSceneId() const { return CurrentScene.IsValid() ? CurrentScene->State : TEXT(""); }
-    FString GetSpeaker() const { return CurrentScene.IsValid() ? CurrentScene->GetSpeaker() : TEXT(""); }
+    // The current page's speaker and portrait: the scene's, unless the page starts with `@Speaker [portrait]:`.
+    FString GetSpeaker() const { FString Speaker, Portrait; GetPageHeader(Speaker, Portrait); return Speaker; }
+    FString GetPortrait() const { FString Speaker, Portrait; GetPageHeader(Speaker, Portrait); return Portrait; }
     FString GetTitle() const { return CurrentScene.IsValid() ? CurrentScene->GetTitle() : TEXT(""); }
     bool IsEnded() const { return bIsEnded; }
     FString GetCurrentPage() const { return (CurrentScene.IsValid() && Pages.IsValidIndex(PageIndex)) ? Pages[PageIndex] : TEXT(""); }
@@ -113,6 +115,7 @@ private:
     bool bIsEnded = false;
 
     bool HasMorePages() const { return PageIndex < Pages.Num() - 1; }
+    void GetPageHeader(FString& OutSpeaker, FString& OutPortrait) const;
     void AddMissingVariables();
     TMap<FString, int32> GetNumbers() const;
     TMap<FString, FString> GetTexts() const;
