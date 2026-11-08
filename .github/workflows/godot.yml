@@ -26,8 +26,11 @@ jobs:
           persist-credentials: false
       - name: Install Godot 4.3 headless
         shell: bash
+        # Through the API: the plain github.com download link can return 504 to scripts while browsers still get it.
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl -fsSL --retry 5 --retry-all-errors "https://github.com/godotengine/godot-builds/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip" -o godot.zip
+          gh release download 4.3-stable -R godotengine/godot-builds -p Godot_v4.3-stable_linux.x86_64.zip -O godot.zip
           echo "fd52bb4ba8acc30ca5accd1c566d470ad7282f891ccc0995dfafabcf92bcf76280ce182bf9d80ebd885f3ed2165d01e1fc3f2928436b15498dfbd98656c2a45a  godot.zip" | sha512sum -c -
           unzip -q godot.zip
           sudo mv Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
